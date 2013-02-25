@@ -34,26 +34,40 @@
         guess
         (recur x (improved-guess guess))))))
 
-(defn fast-expt2-iter
-  "Substance of fast-expt2."
-  {:test #(do (is (= (fast-expt2-iter 3 4 1) 81)))}
-  [b n a]
-  {:pre [(>= n 0)]}
-  (cond
-   (zero? n) a
-   (even? n) (fast-expt2-iter (square b) (half n) a)
-   :else (fast-expt2-iter b (dec n) (* a b))))
-
 (defn fast-expt2
-  "Yet another fast exponential"
+  "Q 1.16"
   {:test #(do (are [b n result] (= (fast-expt2 b n) result)
                    0 0 1
                    0 1 0
                    1 0 1
                    3 4 81)
               (is (thrown? java.lang.AssertionError (fast-expt2 3 -1))))}
+
   [b n]
   {:pre [(>= n 0)]}
-  (fast-expt2-iter b n 1))
+
+  (loop [b b n n a 1]
+    (cond
+     (zero? n) a
+     (odd? n) (* a b (fast-expt2 b (dec n)))
+     :else (recur (square b) (half n) a))))
+
+(defn *-op
+  {:test #(do (are [a b result] (= (*-op a b) result)
+                   0 0 0
+                   1 0 0
+                   0 1 0
+                   1 1 1
+                   1 2 2
+                   2 1 2
+                   3 4 12
+                   -3 4 -12)
+              (is (thrown? java.lang.AssertionError (*-op 1 -1))))}
+
+  [a b]
+  {:pre [(>= b 0)]}
+  (if (= b 0)
+    0
+    (+ a (*-op a (dec b)))))
 
 (run-tests)
