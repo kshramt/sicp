@@ -70,4 +70,26 @@
     0
     (+ a (*-op a (dec b)))))
 
+(defn *-op-fast
+  "Q. 1.17"
+  {:test #(do (are [a b result] (= (*-op-fast a b) result)
+                   0 0 0
+                   1 0 0
+                   0 1 0
+                   1 1 1
+                   1 2 2
+                   2 1 2
+                   3 4 12
+                   -3 4 -12)
+              (is (thrown? java.lang.AssertionError (*-op-fast 1 -1))))}
+
+  [a b]
+  {:pre [(>= b 0)]}
+
+  (loop [a a b b c 0]
+    (cond
+     (zero? b) c
+     (odd? b) (+ c a (*-op-fast a (dec b)))
+     :else (recur (twice a) (half b) c))))
+
 (run-tests)
