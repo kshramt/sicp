@@ -74,4 +74,26 @@
      (odd? b) (+ c a (my-* a (dec b)))
      :else (recur (twice a) (half b) c))))
 
+
+(defn my-expt-with-my-*
+  "Q 1.18"
+  {:test #(do (are [b n result] (= (my-expt b n) result)
+                   0 0 1
+                   0 1 0
+                   1 0 1
+                   3 4 81)
+              (is (thrown? java.lang.AssertionError (my-expt 3 -1))))}
+  [b n]
+  {:pre [(>= n 0)]}
+
+  (letfn
+      [(square-with-my-* [n]
+         (my-* n n))]
+
+    (loop [b b n n a 1]
+      (cond
+       (zero? n) a
+       (odd? n) (my-* (my-* a b) (my-expt-with-my-* b (dec n)))
+       :else (recur (square-with-my-* b) (half n) a)))))
+
 (run-tests)
