@@ -34,14 +34,14 @@
         guess
         (recur x (improved-guess guess))))))
 
-(defn fast-expt2
+(defn my-expt
   "Q 1.16"
-  {:test #(do (are [b n result] (= (fast-expt2 b n) result)
+  {:test #(do (are [b n result] (= (my-expt b n) result)
                    0 0 1
                    0 1 0
                    1 0 1
                    3 4 81)
-              (is (thrown? java.lang.AssertionError (fast-expt2 3 -1))))}
+              (is (thrown? java.lang.AssertionError (my-expt 3 -1))))}
 
   [b n]
   {:pre [(>= n 0)]}
@@ -49,7 +49,7 @@
   (loop [b b n n a 1]
     (cond
      (zero? n) a
-     (odd? n) (* a b (fast-expt2 b (dec n)))
+     (odd? n) (* a b (my-expt b (dec n)))
      :else (recur (square b) (half n) a))))
 
 (defn *-op
