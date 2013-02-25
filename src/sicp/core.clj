@@ -1,5 +1,5 @@
 (ns sicp.core
-  (:require [clojure.test :as c.t])
+  (:require [clojure.test :refer [is are run-tests]])
   (:require [clojure.pprint]))
 
 (defn p
@@ -36,7 +36,7 @@
 
 (defn fast-expt2-iter
   "Substance of fast-expt2."
-  {:test #(do (c.t/is (= (fast-expt2-iter 3 4 1) 81)))}
+  {:test #(do (is (= (fast-expt2-iter 3 4 1) 81)))}
   [b n a]
   {:pre [(>= n 0)]}
   (cond
@@ -46,7 +46,14 @@
 
 (defn fast-expt2
   "Yet another fast exponential"
-  {:test #(do (c.t/is (= (fast-expt2 3 4) 81)))}
+  {:test #(do (are [b n result] (= (fast-expt2 b n) result)
+                   0 0 1
+                   0 1 0
+                   1 0 1
+                   3 4 81)
+              (is (thrown? java.lang.AssertionError (fast-expt2 3 -1))))}
   [b n]
   {:pre [(>= n 0)]}
   (fast-expt2-iter b n 1))
+
+(run-tests)
