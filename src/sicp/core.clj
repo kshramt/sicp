@@ -52,24 +52,6 @@
      (odd? n) (* a b (my-expt b (dec n)))
      :else (recur (square b) (half n) a))))
 
-(defn *-op
-  {:test #(do (are [a b result] (= (*-op a b) result)
-                   0 0 0
-                   1 0 0
-                   0 1 0
-                   1 1 1
-                   1 2 2
-                   2 1 2
-                   3 4 12
-                   -3 4 -12)
-              (is (thrown? java.lang.AssertionError (*-op 1 -1))))}
-
-  [a b]
-  {:pre [(>= b 0)]}
-  (if (= b 0)
-    0
-    (+ a (*-op a (dec b)))))
-
 (defn my-*
   "Q. 1.17"
   {:test #(do (are [a b result] (= (my-* a b) result)
