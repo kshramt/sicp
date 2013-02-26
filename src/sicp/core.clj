@@ -68,11 +68,10 @@
   [a b]
   {:pre [(>= b 0)]}
 
-  (loop [a a b b c 0]
-    (cond
-     (zero? b) c
-     (odd? b) (+ c a (my-* a (dec b)))
-     :else (recur (twice a) (half b) c))))
+  (cond
+   (zero? b) 0
+   (odd? b) (+ a (my-* a (dec b)))
+   :else (recur (twice a) (half b))))
 
 
 (defn my-expt-with-my-*
@@ -84,11 +83,10 @@
          [(square-with-my-* [n]
             (my-* n n))]
 
-       (loop [b b n n a 1]
-         (cond
-          (zero? n) a
-          (odd? n) (my-* (my-* a b) (my-expt-with-my-* b (dec n)))
-          :else (recur (square-with-my-* b) (half n) a)))))
+       (cond
+        (zero? n) 1
+        (odd? n) (my-* b (my-expt-with-my-* b (dec n)))
+        :else (recur (square-with-my-* b) (half n)))))
 
   {:test #(do (are [b n result] (= (my-expt-with-my-* b n) result)
                    0 0 1
