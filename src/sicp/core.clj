@@ -9,13 +9,13 @@
   x)
 
 (defn twice [x]
-  (+ x x))
+  (+' x x))
 
 (defn square [x]
-  (* x x))
+  (*' x x))
 
 (defn cube [x]
-  (* x (square x)))
+  (*' x (square x)))
 
 (defn half [x]
   (/ x 2))
@@ -25,7 +25,7 @@
   (letfn
       [(improved-guess
          [guess]
-         (/ (+ (/ x (square guess)) (twice guess)) 3))
+         (/ (+' (/ x (square guess)) (twice guess)) 3))
        (enough-precision?
          [guess]
          (< (Math/abs (- x (cube guess))) 0.0001))]
@@ -49,7 +49,7 @@
   (loop [b b n n a 1]
     (cond
      (zero? n) a
-     (odd? n) (* a b (my-expt b (dec n)))
+     (odd? n) (*' a b (my-expt b (dec n)))
      :else (recur (square b) (half n) a))))
 
 (defn my-*
@@ -70,7 +70,7 @@
 
   (cond
    (zero? b) 0
-   (odd? b) (+ a (my-* a (dec b)))
+   (odd? b) (+' a (my-* a (dec b)))
    :else (recur (twice a) (half b))))
 
 
@@ -120,15 +120,15 @@
             (loop [a a b b p p q q n n]
               (cond
                (= n 0) b
-               (odd? n) (fib-iter (+ (* b q) (* a (+ p q)))
-                                  (+ (* b p) (* a q))
+               (odd? n) (fib-iter (+' (*' b q) (*' a (+' p q)))
+                                  (+' (*' b p) (*' a q))
                                   p
                                   q
                                   (dec n))
                :else (recur a
                             b
-                            (+ (* p p) (* q q))
-                            (+ (* 2 p q) (* q q))
+                            (+' (*' p p) (*' q q))
+                            (+' (*' 2 p q) (*' q q))
                             (/ n 2)))))]
     (fib-iter 1 0 0 1 n)))
 
