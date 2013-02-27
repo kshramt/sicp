@@ -132,4 +132,17 @@
                             (/ n 2)))))]
     (fib-iter 1 0 0 1 n)))
 
+(defn gcd
+  {:test #(do (are [m n result] (= (gcd m n) result)
+                   45 15 15
+                   3 8 1
+                   46 22 2))}
+
+  [m n]
+
+  (let [[n m] (sort [m n])]
+    (if (= n 0)
+      m
+      (recur n (rem m n)))))
+
 (run-tests)
