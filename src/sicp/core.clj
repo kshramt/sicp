@@ -145,4 +145,39 @@
       m
       (recur n (rem m n)))))
 
+
+(defn smallest-divisor
+  {:test #(do (are [n result] (= (smallest-divisor n) result)
+                    8 2
+                    23 23))}
+
+  [n]
+  {:pre [(>= n 1)]}
+
+  (letfn [(divides? [divisor n]
+            {:pre [(>= n divisor)]}
+            (zero? (rem n divisor)))
+
+          (find-divisor [n test-divisor]
+            (cond
+             (> (square test-divisor) n) n
+             (divides? test-divisor n) test-divisor
+             :else (find-divisor n (inc test-divisor))))]
+
+    (find-divisor n 2)))
+
+(defn prime?
+  {:test #(do (are [n] (prime? n)
+                   2
+                   3
+                   5
+                   7
+                   11
+                   13))}
+
+  [n]
+  {:pre [(>= n 2)]}
+
+  (= n (smallest-divisor n)))
+
 (run-tests)
