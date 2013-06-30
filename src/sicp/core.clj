@@ -180,4 +180,38 @@
 
   (= n (smallest-divisor n)))
 
+(defn sum-integers [a b]
+  (if (> a b)
+    0
+    (+ a (sum-integers (inc a) b))))
+
+(defn sum-cubes [a b]
+  (if (> a b)
+    0
+    (+ (cube a) (sum-cubes (inc a) b))))
+
+(defn pi-sum [a b]
+  (if (> a b)
+    0
+    (+ (/ 1.0 (* a (+ a 2))) (pi-sum (+ a 4) b))))
+
+(defn sum' [term a next b]
+  (if (> a b)
+    0
+    (+ (term a)
+       (sum' term (next a) next b))))
+
+(defn sum-cubes' [a b]
+  (sum' cube a inc b))
+
+(defn sum-integers' [a b]
+  (sum' identity a inc b))
+
+(defn pi-sum' [a b]
+  (letfn [(pi-term [x]
+            (/ 1.0 (* x (+ x 2))))
+          (pi-next [x]
+            (+ x 4))]
+    (sum' pi-term a pi-next b)))
+
 (run-tests)
