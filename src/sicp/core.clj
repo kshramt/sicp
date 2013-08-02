@@ -220,6 +220,16 @@
             (+ x 4))]
     (sum' pi-term a pi-next b)))
 
-
+(defn product'
+  {:test #(do (is (= 3628800 (product' identity 1 inc 10))))}
+  [term a next b]
+  (loop [term term
+         a a
+         next next
+         b b
+         ret 1]
+    (if (> a b)
+      ret
+      (recur term (next a) next b (* ret (term a))))))
 
 (run-tests)
