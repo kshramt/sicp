@@ -246,4 +246,36 @@
     (if (> a b)
       ret
       (recur combiner null-value term (next a) next b (combiner ret (term a))))))
+
+(defn filtered-accumulate'
+  {:test #(do (is (= 3628800 (filtered-accumulate' pos? * 1 identity -1 inc 10)))
+              (is (= 55 (filtered-accumulate' pos? + 0 identity -1 inc 10))))}
+  [cond? combiner null-value term a next b]
+  (loop [cond? cond?
+         combiner combiner
+         null-value null-value
+         term term
+         a a
+         next next
+         b b
+         ret null-value]
+    (if (> a b)
+      ret
+      (if (cond? a)
+        (recur cond? combiner null-value term (next a) next b (combiner ret (term a)))
+        (combiner ret (filtered-accumulate' cond? combiner null-value term (next a) next b))))))
+
+(defn square-sum-of-primes
+  {:test #(do (is (= (+ 4 9 25) (square-sum-of-primes 2 5))))}
+  [a b]
+  (filtered-accumulate' prime? + 0 square a inc b))
+
+(defn product-of-coprimes
+  {:test #(do (is (= (* 1 3 5 7) (product-of-coprimes 1 8))))}
+  [a b]
+  (letfn [(pos-and-coprime?
+            [i]
+            (and (pos? i) (= 1 (gcd i b))))]
+    (filtered-accumulate' pos-and-coprime? * 1 identity a inc b)))
+
 (run-tests)
