@@ -195,11 +195,17 @@
     0
     (+ (/ 1.0 (* a (+ a 2))) (pi-sum (+ a 4) b))))
 
-(defn sum' [term a next b]
-  (if (> a b)
-    0
-    (+ (term a)
-       (sum' term (next a) next b))))
+(defn sum'
+  {:test #(do (is (= 55 (sum' identity 1 inc 10))))}
+  [term a next b]
+  (loop [term term
+         a a
+         next next
+         b b
+         ret 0]
+    (if (> a b)
+      ret
+      (recur term (next a) next b (+ ret (term a))))))
 
 (defn sum-cubes' [a b]
   (sum' cube a inc b))
@@ -213,5 +219,7 @@
           (pi-next [x]
             (+ x 4))]
     (sum' pi-term a pi-next b)))
+
+
 
 (run-tests)
