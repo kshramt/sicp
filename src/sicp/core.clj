@@ -232,4 +232,18 @@
       ret
       (recur term (next a) next b (* ret (term a))))))
 
+(defn accumulate'
+  {:test #(do (is (= 3628800 (accumulate' * 1 identity 1 inc 10)))
+              (is (= 55 (accumulate' + 0 identity 1 inc 10))))}
+  [combiner null-value term a next b]
+  (loop [combiner combiner
+         null-value null-value
+         term term
+         a a
+         next next
+         b b
+         ret null-value]
+    (if (> a b)
+      ret
+      (recur combiner null-value term (next a) next b (combiner ret (term a))))))
 (run-tests)
