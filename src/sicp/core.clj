@@ -278,4 +278,50 @@
             (and (pos? i) (= 1 (gcd i b))))]
     (filtered-accumulate' pos-and-coprime? * 1 identity a inc b)))
 
+(defn close-enough? [x y]
+  (< (Math/abs (- x y)) 0.001))
+
+(defn average [x y]
+  (/ (+ x y) 2))
+
+(defn search [f neg-point pos-point]
+  (let [mid-point (average neg-point pos-point)]
+    (if (close-enough? neg-point pos-point)
+      mid-point
+      (let [test-value (f mid-point)]
+        (cond
+         (pos? test-value) (search f neg-point mid-point)
+         (neg? test-value) (search f mid-point pos-point)
+         :else mid-point)))))
+
+(defn half-interval-method
+  {:test #(do (is (close-enough?
+                   (half-interval-method (fn [x] (- (square x) 2)) 1.0 5.0)
+                   (Math/sqrt 2))))}
+  [f a b]
+  (let [a-value (f a)
+        b-value (f b)]
+    (cond
+     (zero? a-value) a
+     (zero? b-value) b
+     (and (neg? a-value) (pos? b-value)) (search f a b)
+     (and (neg? b-value) (pos? a-value)) (search f b a)
+     :else (throw (Exception. (str "Values are not of opposite sign: " a " " b))))))
+
+(def tolerance 0.00001)
+(defn fixed-point [f first-guess]
+  (letfn [(close-enough? [v1 v2]
+            (< (Math/abs (- v1 v2)) tolerance))
+          (try_ [guess]
+            (let [next (f guess)]
+              (if (close-enough? guess next)
+                next
+                (try_ next))))]
+    (try_ first-guess)))
+
+(defn sqrt' [x]
+  (fixed-point #(average % (/ x %)) 1.0))
+
+(def golden-ratio (fixed-point #(average % (+ 1 (/ 1 %))) 1.0))
+
 (run-tests)
