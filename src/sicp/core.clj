@@ -1,6 +1,8 @@
 (ns sicp.core
   (:require [clojure.test :refer [is are run-tests]])
-  (:require [clojure.pprint]))
+  (:require [clojure.pprint])
+  (:require [clojure.math.numeric-tower])
+  (:require [clojure.repl]))
 
 (defn p_
   "Pretty print and return a value"
