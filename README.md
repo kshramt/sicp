@@ -1,6 +1,6 @@
 # sicp
 
-SICP in Clojure.
+SICP in Clojure with `clojure.core.typed`.
 
 ## License
 
