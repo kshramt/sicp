@@ -7,7 +7,7 @@
 
 (ann clojure.pprint/pprint [Any -> nil])
 
-(ann p_ (All [x] [x -> x]))
+(ann p_ (All [a] [a -> a]))
 (defn p_
   "Pretty print and return a value"
   [x]
@@ -259,6 +259,7 @@
                Number
                ->
                Number]))
+
 (defn sum'
   {:test #(do (is (= 55 (sum' identity 1 inc 10))))}
   ([term a next b] (sum' term a next b 0))
@@ -312,14 +313,14 @@
       (recur term (next a) next b (* ret (term a))))))
 
 
-(ann accumulate' (All [x] [[x * -> x]
-                           x
-                           [AnyInteger -> x]
+(ann accumulate' (All [a] [[a * -> a]
+                           a
+                           [AnyInteger -> a]
                            AnyInteger
                            [AnyInteger -> AnyInteger]
                            AnyInteger
                            ->
-                           x]))
+                           a]))
 (defn accumulate'
   {:test #(do (is (= 3628800 (accumulate' * 1 identity 1 inc 10)))
               (is (= 55 (accumulate' + 0 identity 1 inc 10))))}
@@ -328,15 +329,15 @@
        null-value
        (recur combiner (combiner null-value (term a)) term (next a) next b)))
 
-(ann filtered-accumulate' (All [x] [[AnyInteger -> Boolean]
-                                    [x * -> x]
-                                    x
-                                    [AnyInteger -> x]
+(ann filtered-accumulate' (All [a] [[AnyInteger -> Boolean]
+                                    [a * -> a]
+                                    a
+                                    [AnyInteger -> a]
                                     AnyInteger
                                     [AnyInteger -> AnyInteger]
                                     AnyInteger
                                     ->
-                                    x]))
+                                    a]))
 (defn filtered-accumulate'
   {:test #(do (is (= 3628800 (filtered-accumulate' pos? * 1 identity -1 inc 10)))
               (is (= 55 (filtered-accumulate' pos? + 0 identity -1 inc 10))))}
