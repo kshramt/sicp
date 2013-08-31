@@ -3,11 +3,12 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann AnyInteger letfn> loop>] :as typed]))
+            [clojure.core.typed :refer [ann-form ann AnyInteger letfn> loop>] :as typed]))
 
 (ann clojure.pprint/pprint [Any -> nil])
 (typed/non-nil-return clojure.lang.Numbers/addP :all)
 (typed/non-nil-return clojure.lang.Numbers/multiplyP :all)
+(typed/non-nil-return clojure.lang.Numbers/remainder :all)
 
 (ann p_ (All [a] [a -> a]))
 (defn p_
@@ -175,7 +176,7 @@
 
 (ann rem' [Number Number -> Number])
 (defn rem' [m n]
-  (or (rem m n) (throw (Exception. "Must not happen"))))
+  (rem m n))
 
 (ann gcd [AnyInteger AnyInteger -> AnyInteger])
 (defn gcd
@@ -191,7 +192,6 @@
       n_
       (recur (rem' n_ m_) m_))))
 
-
 (ann smallest-divisor [AnyInteger -> AnyInteger])
 (defn smallest-divisor
   {:test #(do (are [n result] (= (smallest-divisor n) result)
@@ -204,7 +204,7 @@
   (letfn> [divides? :- [AnyInteger AnyInteger -> Boolean]
            (divides? [divisor n]
              {:pre [(>= n divisor)]}
-             (zero? (rem n divisor)))
+             (zero? (rem' n divisor)))
 
            find-divisor :- [AnyInteger AnyInteger -> AnyInteger]
            (find-divisor [n test-divisor]
