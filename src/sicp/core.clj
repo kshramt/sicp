@@ -6,6 +6,8 @@
             [clojure.core.typed :refer [ann AnyInteger letfn> loop>] :as typed]))
 
 (ann clojure.pprint/pprint [Any -> nil])
+(typed/non-nil-return clojure.lang.Numbers/addP :all)
+(typed/non-nil-return clojure.lang.Numbers/multiplyP :all)
 
 (ann p_ (All [a] [a -> a]))
 (defn p_
