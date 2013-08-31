@@ -433,11 +433,10 @@
            try_ :- [Number -> Number]
            (try_ [guess]
              (let [next (f guess)]
-               (do
-                 (println next)
-                 (if (close-enough? guess next)
-                   next
-                   (recur next)))))]
+               (println next)
+               (if (close-enough? guess next)
+                 next
+                 (recur next))))]
     (try_ first-guess)))
 
 (ann sqrt' [Number -> Number])
