@@ -259,7 +259,6 @@
                Number
                ->
                Number]))
-
 (defn sum'
   {:test #(do (is (= 55 (sum' identity 1 inc 10))))}
   ([term a next b] (sum' term a next b 0))
@@ -272,8 +271,10 @@
 (defn sum-cubes' [a b]
   (sum' cube a inc b))
 
-(ann num-identity (Fn [AnyInteger -> AnyInteger]
-                       [Number -> Number]))
+(ann num-identity (All [[a :< Number]]
+                     (Fn [a -> a]
+                         [AnyInteger -> AnyInteger]
+                         [Number -> Number])))
 (defn num-identity [x]
   x)
 
