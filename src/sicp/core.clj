@@ -7,6 +7,7 @@
 
 (ann clojure.pprint/pprint [Any -> nil])
 (typed/non-nil-return clojure.lang.Numbers/addP :all)
+(typed/non-nil-return clojure.lang.Numbers/minusP :all)
 (typed/non-nil-return clojure.lang.Numbers/multiplyP :all)
 (typed/non-nil-return clojure.lang.Numbers/remainder :all)
 
