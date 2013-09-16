@@ -6,6 +6,7 @@
             [clojure.core.typed :refer [ann-form ann AnyInteger letfn> loop>] :as typed]))
 
 (ann clojure.pprint/pprint [Any -> nil])
+(ann clojure.core/mod [Number Number -> Number])
 (typed/non-nil-return clojure.lang.Numbers/addP :all)
 (typed/non-nil-return clojure.lang.Numbers/minusP :all)
 (typed/non-nil-return clojure.lang.Numbers/multiplyP :all)
@@ -55,7 +56,7 @@
        (enough-precision? [guess]
                           (< (abs (- x (cube guess))) 0.0001))]
     (loop> [x :- Number x
-           guess :- Number 1.0]
+            guess :- Number 1.0]
       (if (enough-precision? guess)
         guess
         (recur x (improved-guess guess))))))
@@ -466,5 +467,82 @@
     [Number -> Number])
    1.0))
 
-;(run-tests)
 
+(ann cont-frac [[AnyInteger -> Number]
+                [AnyInteger -> Number]
+                AnyInteger
+                ->
+                Number])
+(defn cont-frac
+  "Q. 1.37-a"
+  {:test #(do (is (= (/ 1 2)
+                     (cont-frac (fn [x] x) (fn [x] x) 2))))}
+  [n d k]
+  {:pre [(>= k 1)]}
+  (letfn> [recur_ :- [[AnyInteger -> Number]
+                      [AnyInteger -> Number]
+                      AnyInteger
+                      AnyInteger
+                      ->
+                      Number]
+           (recur_ [n d i k]
+                   (if (< i k)
+                     (/ (n i)
+                        (+ (d i)
+                           (recur_ n d (inc i) k)))
+                     (/ (n i)
+                        (d i))))]
+          (recur_ n d 1 k)))
+
+(ann cont-frac' [[AnyInteger -> Number]
+                 [AnyInteger -> Number]
+                 AnyInteger
+                 ->
+                 Number])
+(defn cont-frac'
+  "Q. 1.37-b"
+  {:test #(do (is (= (/ 1 2)
+                     (cont-frac' (fn [x] x) (fn [x] x) 2))))}
+  [n d k]
+  {:pre [(>= k 1)]}
+  (loop> [n :- [AnyInteger -> Number] n
+          d :- [AnyInteger -> Number] d
+          i :- AnyInteger k
+          k :- AnyInteger k
+          ret :- Number 0]
+    (if (= i 0)
+      ret
+      (recur n d (dec i) k (/ (n i)
+                              (+ (d i)
+                                 ret))))))
+
+(ann approx-e [AnyInteger -> Number])
+(defn approx-e
+  "Q. 1.38"
+  [k]
+  {:pre [(>= k 1)]}
+  (+ (cont-frac' (fn [_] 1)
+                 (ann-form (fn [x]
+                             (if (= (mod x 3) 2)
+                               (* 2
+                                  (+ (/ (- x 2)
+                                        3)
+                                     1))
+                               1))
+                           [Number -> Number])
+                 k)
+     2))
+
+(ann tan-cf [Number AnyInteger -> Number])
+(defn tan-cf
+  "Q. 1.39"
+  [x k]
+  (cont-frac' (ann-form #(if (= % 1) x (* x x)) [AnyInteger -> Number])
+              (ann-form #(- (* % 2) 1) [AnyInteger -> AnyInteger])
+              k))
+
+(ann average-damp [[Number -> Number] -> [Number -> Number]])
+(defn average-damp [f]
+  (fn [x] (average x (f x))))
+
+;(run-tests)
