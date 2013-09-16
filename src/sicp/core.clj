@@ -545,4 +545,5 @@
 (defn average-damp [f]
   (fn [x] (average x (f x))))
 
-;(run-tests)
+; (require 'sicp.core)(require 'clojure.core.typed)
+; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
