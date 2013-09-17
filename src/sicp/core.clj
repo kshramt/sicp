@@ -1,5 +1,5 @@
 (ns sicp.core
-  (:require [clojure.test :refer [is are run-tests]]
+  (:require [clojure.test :refer [is are]]
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
@@ -8,6 +8,13 @@
 
 (ann clojure.pprint/pprint [Any -> nil])
 (ann clojure.core/mod [Number Number -> Number])
+(ann clojure.test/run-tests [clojure.lang.Namespace *
+                             ->
+                             (HMap :mandatory {:type clojure.lang.Keyword
+                                               :pass AnyInteger
+                                               :test AnyInteger
+                                               :error AnyInteger
+                                               :fail AnyInteger})])
 (typed/non-nil-return clojure.lang.Numbers/addP :all)
 (typed/non-nil-return clojure.lang.Numbers/minusP :all)
 (typed/non-nil-return clojure.lang.Numbers/multiplyP :all)
@@ -546,9 +553,8 @@
 (defn average-damp [f]
   (fn [x] (average x (f x))))
 
-; (require 'sicp.core)(require 'clojure.core.typed)
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
-  (clojure.test/run-tests 'sicp.core)
+  (clojure.test/run-tests)
   (println "ok"))
