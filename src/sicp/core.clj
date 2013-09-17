@@ -3,7 +3,8 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann AnyInteger letfn> loop>] :as typed]))
+            [clojure.core.typed :refer [ann-form ann AnyInteger letfn> loop>] :as typed])
+  (:gen-class))
 
 (ann clojure.pprint/pprint [Any -> nil])
 (ann clojure.core/mod [Number Number -> Number])
@@ -547,3 +548,7 @@
 
 ; (require 'sicp.core)(require 'clojure.core.typed)
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
+(ann -main [String * -> nil])
+(defn -main [& args]
+  (clojure.test/run-tests 'sicp.core)
+  (println "ok"))

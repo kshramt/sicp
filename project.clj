@@ -8,4 +8,5 @@
   :min-lein-version "2.0.0"
   :description "SICP in Clojure"
   :global-vars {*warn-on-reflection* true}
-  :core.typed {:check [sicp.core]})
+  :core.typed {:check [sicp.core]}
+  :main sicp.core)
