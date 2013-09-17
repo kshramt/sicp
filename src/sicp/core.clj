@@ -545,7 +545,7 @@
 (defn tan-cf
   "Q. 1.39"
   [x k]
-  (cont-frac' (ann-form #(if (= % 1) x (square x)) [AnyInteger -> Number])
+  (cont-frac' (ann-form #(if (= % 1) x (* -1 (square x))) [AnyInteger -> Number])
               (ann-form #(- (* % 2) 1) [AnyInteger -> AnyInteger])
               k))
 
