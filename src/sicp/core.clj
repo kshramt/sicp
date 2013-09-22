@@ -554,6 +554,91 @@
 (defn average-damp [f]
   (fn [x] (average x (f x))))
 
+(ann dx double)
+(def dx 0.00001)
+
+(ann deriv [[Number -> Number] -> [Number -> Number]])
+(defn deriv [f]
+  (fn [x] (/ (- (f (+ x dx)) (f (- x dx)))
+             (twice dx))))
+
+(ann newton-transform [[Number -> Number] -> [Number -> Number]])
+(defn newton-transform [f]
+  (fn [x] (- x
+             (/ (f x)
+                ((deriv f) x)))))
+
+(ann newton-method [[Number -> Number] Number -> Number])
+(defn newton-method [f guess]
+  (fixed-point (newton-transform f) guess))
+
+(ann sqrt''' [Number -> Number])
+(defn sqrt''' [x]
+  {:pre [(>= x 0)]}
+  (newton-method (ann-form #(- (square %) x) [Number -> Number])
+                 1.0))
+
+(ann fixed-point-of-transform [[Number -> Number]
+                               [[Number -> Number] -> [Number -> Number]]
+                               Number
+                               ->
+                               Number])
+(defn fixed-point-of-transform [f transform guess]
+  (fixed-point (transform f) guess))
+
+(ann sqrt'''' [Number -> Number])
+(defn sqrt'''' [x]
+  {:pre [(>= x 0)]}
+  (fixed-point-of-transform (ann-form #(/ x %) [Number -> Number])
+                            average-damp
+                            1.0))
+
+(ann sqrt''''' [Number -> Number])
+(defn sqrt''''' [x]
+  {:pre [(>= x 0)]}
+  (fixed-point-of-transform (ann-form #(- (square %) x) [Number -> Number])
+                            newton-transform
+                            1.0))
+
+(ann double_ [[Any -> Any] -> [Any -> Any]])
+(defn double_
+  "Q. 1.41"
+  [f]
+  (fn [x] (f (f x))))
+
+(ann compose (All [a b c] [[b -> c] [a -> b] -> [a -> c]]))
+(defn compose
+  "Q. 1.42"
+  [f g] (fn [x] (f (g x))))
+
+(ann repeated (All [a] (Fn [[a -> a] AnyInteger -> [a -> a]]
+                           [[a -> a] AnyInteger [a -> a] -> [a -> a]])))
+(defn repeated
+  "Q. 1.43"
+  {:test #(do (is (= 5 ((repeated inc 5) 0))))}
+  ([f n] (repeated f n identity))
+  ([f n ret]
+     {:pre [(>= n 0)]}
+     (cond
+      (zero? n) ret
+      (zero? (mod n 2)) (recur (compose f f) (half n) ret)
+      :else (recur f (dec n) (fn [x] (f (ret x)))))))
+
+(ann smooth (Fn [[Number -> Number] -> [Number -> Number]]
+                [[Number -> Number] Number -> [Number -> Number]]))
+(defn smooth
+  "Q. 1.44-1"
+  ([f] (smooth f 0.00001))
+  ([f dx] (fn [x] (/ (+ (f (- x dx))
+                        (twice (f x))
+                        (f (+ x dx)))
+                     4))))
+
+(ann smooth-n [[Number -> Number] AnyInteger -> [Number -> Number]])
+(defn smooth-n
+  "Q. 1.44-2"
+  ([f n] ((repeated smooth n) f)))
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
