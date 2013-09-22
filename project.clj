@@ -9,5 +9,5 @@
   :description "SICP in Clojure"
   :global-vars {*warn-on-reflection* true}
   :core.typed {:check [sicp.core]}
-  :aot :all
+  :profiles {:uberjar {:aot :all}}
   :main sicp.core)
