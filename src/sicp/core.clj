@@ -7,7 +7,8 @@
   (:gen-class))
 
 (ann clojure.pprint/pprint [Any -> nil])
-(ann clojure.core/mod [Number Number -> Number])
+(ann clojure.core/mod (Fn [AnyInteger AnyInteger -> AnyInteger]
+                          [Number Number -> Number]))
 (ann clojure.test/run-tests [clojure.lang.Namespace *
                              ->
                              (HMap :mandatory {:type clojure.lang.Keyword
