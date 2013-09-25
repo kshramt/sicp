@@ -7,6 +7,10 @@
   (:gen-class))
 
 (ann clojure.pprint/pprint [Any -> nil])
+(typed/override-method clojure.lang.Numbers/remainder (Fn [Int Int -> Int]
+                                                          [Num Num -> Num]))
+(ann clojure.core/rem (Fn [Int Int -> Int]
+                          [Num Num -> Num]))
 (ann clojure.core/mod (Fn [Int Int -> Int]
                           [Num Num -> Num]))
 (ann clojure.test/run-tests [clojure.lang.Namespace *
@@ -186,10 +190,6 @@
                            (long (/ n 2))))))]
     (fib-iter 1 0 0 1 n)))
 
-(ann rem' [Num Num -> Num])
-(defn rem' [m n]
-  (rem m n))
-
 (ann gcd [Int Int -> Int])
 (defn gcd
   {:test #(do (are [m n result] (= (gcd m n) result)
@@ -202,7 +202,7 @@
         n_ (if (<= m n) n m)]
     (if (= m_ 0)
       n_
-      (recur (rem' n_ m_) m_))))
+      (recur (rem n_ m_) m_))))
 
 (ann smallest-divisor [Int -> Int])
 (defn smallest-divisor
@@ -216,7 +216,7 @@
   (letfn> [divides? :- [Int Int -> Boolean]
            (divides? [divisor n]
              {:pre [(>= n divisor)]}
-             (zero? (rem' n divisor)))
+             (zero? (rem n divisor)))
 
            find-divisor :- [Int Int -> Int]
            (find-divisor [n test-divisor]
