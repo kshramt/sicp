@@ -195,14 +195,19 @@
   {:test #(do (are [m n result] (= (gcd m n) result)
                    45 15 15
                    3 8 1
-                   46 22 2))}
+                   46 22 2
+                   -46 22 2
+                   46 -22 2
+                   -46 -22 2))}
 
   [m n]
-  (let [m_ (if (<= m n) m n)
-        n_ (if (<= m n) n m)]
-    (if (= m_ 0)
-      n_
-      (recur (rem n_ m_) m_))))
+  (let [abs-m (abs m)
+        abs-n (abs n)
+        small (if (< abs-m abs-n) abs-m abs-n)
+        large (if (> abs-m abs-n) abs-m abs-n)]
+    (if (= small 0)
+      large
+      (recur (rem large small) small))))
 
 (ann smallest-divisor [Int -> Int])
 (defn smallest-divisor
