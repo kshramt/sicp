@@ -891,6 +891,39 @@
                (All [a]
                     [Any a -> a]))))
 
+(ann n-div [Int Int -> Int])
+(defn n-div
+  {:test #(do (is (= (n-div -12 2) 2))
+              (is (= (n-div 8 -2) 3)))}
+  [n div]
+  (loop> [n :- Int (abs n)
+          div :- Int (abs div)
+          ret :- Int 0]
+         (cond
+          (zero? n) ret
+          (zero? (rem n div)) (recur (bigint (/ n div)) div (inc' ret))
+          :else ret)))
+
+(ann car-n [Int -> Int])
+(defn car-n [n]
+  "Q. 2.5"
+  (n-div n 2))
+
+(ann cdr-n [Int -> Int])
+(defn cdr-n [n]
+  "Q. 2.5"
+  (n-div n 3))
+
+(ann cons-n [Int Int -> Int])
+(defn cons-n
+  "Q. 2.5"
+  {:test #(do (is (= (car-n (cons-n 4 5)) 4))
+              (is (= (cdr-n (cons-n 4 5)) 5)))}
+  [m n]
+  {:pre [(>= m 0)
+         (>= n 0)]}
+  (*' (my-expt 2 m)
+      (my-expt 3 n)))
 
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
