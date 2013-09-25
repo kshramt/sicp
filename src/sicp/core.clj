@@ -925,6 +925,34 @@
   (*' (my-expt 2 m)
       (my-expt 3 n)))
 
+(typed/def-alias Church (All [a] [[a -> a] -> [a -> a]]))
+
+(ann add-1 [Church -> Church])
+(defn add-1 [n]
+  (fn [f] (fn [x] (f ((n f) x)))))
+
+(ann add-church [Church Church -> Church])
+(defn add-church
+  "Q. 2.6"
+  [m n]
+  (fn [f] (m f) (n f)))
+
+(ann zero Church)
+(def zero (fn [f] (ann-form (fn [x] x)
+                            (All [a] [a -> a]))))
+
+(ann one Church)
+(def one (fn [f] (fn [x] (f x))))
+
+(ann two Church)
+(def two (fn [f] (fn [x] (f (f x)))))
+
+(ann three Church)
+(def three (fn [f] (fn [x] (f (f (f x))))))
+
+(ann four Church)
+(def four (add-church three one))
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
