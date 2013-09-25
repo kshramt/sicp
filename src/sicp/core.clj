@@ -969,7 +969,14 @@
 
 (ann make-interval [Num Num -> Interval])
 (defn make-interval [l u]
-  [l u])
+  (let [l_ (min l u)
+        u_ (max l u)]
+    [l_ u_]))
+
+(ann equal-interval [Interval Interval -> Boolean])
+(defn equal-interval [x y]
+  (and (= (lower-bound x) (lower-bound y))
+       (= (upper-bound x) (upper-bound y))))
 
 (ann add-interval [Interval Interval -> Interval])
 (defn add-interval [x y]
@@ -984,6 +991,38 @@
         p4 (*' (upper-bound x) (upper-bound y))]
     (make-interval (min p1 p2 p3 p4)
                    (max p1 p2 p3 p4))))
+
+(ann mul-interval' [Interval Interval -> Interval])
+(defn mul-interval'
+  "Q. 2.11"
+  {:test #(do (are [lx ux ly uy lz uz]
+                (equal-interval (mul-interval (make-interval lx ux)
+                                              (make-interval ly uy))
+                                (make-interval lz uz))
+                   1 2, 3 4, 3 8
+                   -1 2, 3 4, -4 8
+                   -2 -1, 3 4, -8 -3
+                   1 2, -3 4, -6 8
+                   -1 2, -3 4, -6 8
+                   -2 -1, -3 4, -8 6
+                   1 2, -4 -3, -8 -3
+                   -1 2, -4 -3, -8 4
+                   -2 -1, -4 -3, 3 8))}
+  [x y]
+  (let [lx (lower-bound x)
+        ux (upper-bound x)
+        ly (lower-bound y)
+        uy (upper-bound y)]
+    (cond
+     (and (>= lx 0) (>= ly 0)) (make-interval (*' lx ly) (*' ux uy))
+     (and (< ux 0) (< uy 0)) (make-interval (*' ux uy) (*' lx ly))
+     (and (< ux 0) (>= ly 0)) (make-interval (*' lx uy) (max (*' lx ux) (*' ly uy)))
+     (and (>= lx 0) (< uy 0)) (make-interval (*' ux ly) (max (*' lx ux) (*' ly uy)))
+     (>= ly 0) (make-interval (*' lx uy) (*' ux uy))
+     (< uy 0) (make-interval (*' ux ly) (*' lx ly))
+     (>= lx 0) (make-interval (*' ux ly) (*' ux uy))
+     (< ux 0) (make-interval (*' lx uy) (*' lx ly))
+     :else (make-interval (min (*' lx uy) (*' ux ly)) (max (*' lx ly) (*' ux uy))))))
 
 (ann inv-interval [Interval -> Interval])
 (defn inv-interval [x]
