@@ -16,6 +16,7 @@
                                                :test AnyInteger
                                                :error AnyInteger
                                                :fail AnyInteger})])
+(ann clojure.math.numeric-tower/ceil [Number -> Number])
 (typed/non-nil-return clojure.lang.Numbers/addP :all)
 (typed/non-nil-return clojure.lang.Numbers/minusP :all)
 (typed/non-nil-return clojure.lang.Numbers/multiplyP :all)
@@ -378,9 +379,13 @@
              (and (pos? i) (= 1 (gcd i b))))]
     (filtered-accumulate' pos-and-coprime? * 1 num-identity a inc b)))
 
-(ann close-enough? [Number Number -> Boolean])
-(defn close-enough? [x y]
-  (< (abs (- x y)) 0.001))
+(ann close-enough? (Fn [Number Number -> Boolean]
+                       [Number Number Number -> Boolean]))
+(defn close-enough?
+  ([x y] (close-enough? x y 0.001))
+  ([x y delta]
+     {:pre [(>= delta 0)]}
+     (<= (abs (- x y)) delta)))
 
 (ann average [Number Number -> Number])
 (defn average [x y]
@@ -425,27 +430,21 @@
 
 (ann fixed-point [[Number -> Number] Number -> Number])
 (defn fixed-point [f first-guess]
-  (letfn> [close-enough? :- [Number Number -> Boolean]
-           (close-enough? [v1 v2]
-             (< (abs (- v1 v2)) tolerance))
-           try_ :- [Number -> Number]
+  (letfn> [try_ :- [Number -> Number]
            (try_ [guess]
              (let [next (f guess)]
-               (if (close-enough? guess next)
+               (if (close-enough? guess next tolerance)
                  next
                  (try_ next))))]
     (try_ first-guess)))
 
 (ann fixed-point' [[Number -> Number] Number -> Number])
 (defn fixed-point' [f first-guess]
-  (letfn> [close-enough? :- [Number Number -> Boolean]
-           (close-enough? [v1 v2]
-             (< (abs (- v1 v2)) tolerance))
-           try_ :- [Number -> Number]
+  (letfn> [try_ :- [Number -> Number]
            (try_ [guess]
              (let [next (f guess)]
                (println next)
-               (if (close-enough? guess next)
+               (if (close-enough? guess next tolerance)
                  next
                  (recur next))))]
     (try_ first-guess)))
@@ -600,6 +599,13 @@
                             newton-transform
                             1.0))
 
+(ann cubic [Number Number Number -> [Number -> Number]])
+(defn cubic
+  "Q. 1.40"
+  {:test #(do (is (< (abs (- (newton-method (cubic 2 3 -22) 1) 2)) tolerance)))}
+  [a b c]
+       (fn [x] (+ c (* x (+ b (* x (+ a (* x (+ 1)))))))))
+
 (ann double_ [[Any -> Any] -> [Any -> Any]])
 (defn double_
   "Q. 1.41"
@@ -639,6 +645,55 @@
   "Q. 1.44-2"
   ([f n] ((repeated smooth n) f)))
 
+(ann log2 [Number -> Number])
+(defn log2 [x]
+  (/ (Math/log (double x)) (Math/log 2.0)))
+
+(ann nth-root [Number AnyInteger -> Number])
+(defn nth-root
+  "Q. 1.45"
+  {:test #(do (is (< (- (nth-root 32 5) 2) tolerance)))}
+  [x n]
+  (letfn> [damp :- [AnyInteger
+                    ->
+                    [[Number -> Number] -> [Number -> Number]]]
+           (damp [n]
+                 (repeated average-damp (dec (bigint (clojure.math.numeric-tower/ceil (log2 n))))))
+           basic :- [Number -> Number]
+           (basic [guess]
+                  (/ x
+                     (Math/pow (double guess) (double (dec n)))))]
+          (fixed-point ((damp n) basic) 1)))
+
+(ann iterative-improve [[Number -> Boolean] [Number -> Number] -> [Number -> Number]])
+(defn iterative-improve
+  "Q. 1.46-1"
+  [is-good? update]
+  (fn [x]
+    (loop> [guess :- Number 1]
+      (if (is-good? guess)
+        guess
+        (recur (update guess))))))
+
+(ann sqrt'''''' [Number -> Number])
+(defn sqrt''''''
+  "Q. 1.46-2"
+  {:test #(do (is (close-enough? (sqrt'''''' 4) 2 tolerance)))}
+  [x]
+  ((iterative-improve (ann-form (fn [guess] (close-enough? guess (/ x guess) tolerance))
+                                [Number -> Boolean])
+                      (average-damp (ann-form (fn [guess] (/ x guess))
+                                              [Number -> Number])))
+   x))
+
+(ann fixed-point'' [[Number -> Number] Number -> Number])
+(defn fixed-point''
+  "Q. 1.46-3"
+  [f first-guess]
+  (iterative-improve (ann-form (fn [guess] (close-enough? guess (f guess)))
+                               [Number -> Boolean])
+                     f)
+  first-guess)
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
