@@ -11,8 +11,8 @@
                                                           [Num Num -> Num]))
 (typed/override-method clojure.lang.Numbers/addP (Fn [Int Int -> Int]
                                                      [Num Num -> Num]))
-(typed/override-method clojure.lang.Numbers/minusP (Fn [Int Int -> Int]
-                                                       [Num Num -> Num]))
+(typed/override-method clojure.lang.Numbers/minusP (Fn [Int * -> Int]
+                                                       [Num * -> Num]))
 (typed/override-method clojure.lang.Numbers/multiplyP (Fn [Int Int -> Int]
                                                           [Num Num -> Num]))
 (typed/override-method clojure.lang.Numbers/incP (Fn [Int -> Int]
