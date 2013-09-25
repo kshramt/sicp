@@ -702,11 +702,6 @@
 
 (typed/def-alias Rat (I (Vec Int) (CountRange 2 2)))
 
-(ann make-rat [Int Int -> Rat])
-(defn make-rat [n d]
-  (let [g (gcd n d)]
-       [(bigint (/ n g)) (bigint (/ d g))]))
-
 (ann numer [Rat -> Int])
 (defn numer [x]
   (first x))
@@ -714,6 +709,25 @@
 (ann denom [Rat -> Int])
 (defn denom [x]
   (second x))
+
+(ann make-rat [Int Int -> Rat])
+(defn make-rat
+  "Q. 2.1"
+  {:test #(do (is (= (numer (make-rat -6 -10)) 3))
+              (is (= (denom (make-rat -6 -10)) 5))
+              (is (= (numer (make-rat 6 -10)) -3))
+              (is (= (denom (make-rat 6 -10)) 5))
+              (is (= (numer (make-rat -6 10)) -3))
+              (is (= (denom (make-rat -6 10)) 5))
+              (is (= (numer (make-rat 6 10)) 3))
+              (is (= (denom (make-rat 6 10)) 5)))}
+  [n d]
+  (let [sig (if (neg? (* n d)) -1 1)
+        abs-n (abs n)
+        abs-d (abs d)
+        g (gcd abs-n abs-d)]
+       [(bigint (* sig (/ abs-n g)))
+        (bigint (/ abs-d g))]))
 
 (ann print-rat [Rat -> nil])
 (defn print-rat [x]
