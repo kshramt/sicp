@@ -767,6 +767,49 @@
   (= (* (numer x) (denom y))
      (* (denom x) (numer y))))
 
+(typed/def-alias Point2D (I (Vec Num) (CountRange 2 2)))
+
+(ann x-point [Point2D -> Num])
+(defn x-point [p]
+  (first p))
+
+(ann y-point [Point2D -> Num])
+(defn y-point [p]
+  (second p))
+
+(ann print-point [Point2D -> nil])
+(defn print-point [p]
+  (println "(" (x-point p) ", " (y-point p) ")"))
+
+(ann make-point [Num Num -> Point2D])
+(defn make-point [x y]
+  [x y])
+
+(typed/def-alias Line2D (I (Vec Point2D) (CountRange 2 2)))
+
+(ann start-segment [Line2D -> Point2D])
+(defn start-segment [l]
+  (first l))
+
+(ann end-segment [Line2D -> Point2D])
+(defn end-segment [l]
+  (second l))
+
+(ann make-segment [Point2D Point2D -> Line2D])
+(defn make-segment [p q]
+  [p q])
+
+(ann midpoint-segment [Line2D -> Point2D])
+(defn midpoint-segment
+  "Q. 2.2"
+  [l]
+  (make-point (average (x-point (start-segment l))
+                       (x-point (end-segment l)))
+              (average (y-point (start-segment l))
+                       (y-point (end-segment l)))))
+
+
+
 ;(print-rat (add-rat (make-rat 1 3) (make-rat 3 3)))
 
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
