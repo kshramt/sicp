@@ -869,7 +869,6 @@
                (All [a]
                     [Any a -> a]))))
 
-;(print-rat (add-rat (make-rat 1 3) (make-rat 3 3)))
 
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
