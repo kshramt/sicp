@@ -808,7 +808,46 @@
               (average (y-point (start-segment l))
                        (y-point (end-segment l)))))
 
+(typed/def-alias Rectangle (HMap :mandatory {:origin Point2D
+                                             :width Num
+                                             :height Num
+                                             :angle Num}))
 
+(ann width-rectangle [Rectangle -> Num])
+(defn width-rectangle [r]
+  (:width r))
+
+(ann height-rectangle [Rectangle -> Num])
+(defn height-rectangle [r]
+  (:height r))
+
+(ann perimeter-rectangle [Rectangle -> Num])
+(defn perimeter-rectangle [r]
+  (* 2 (+ (width-rectangle r) (height-rectangle r))))
+
+(ann area-rectangle [Rectangle -> Num])
+(defn area-rectangle [r]
+  (* (width-rectangle r) (height-rectangle r)))
+
+(typed/def-alias Rectangle' (HMap :mandatory {:origin Point2D
+                                              :diag Point2D
+                                              :angle Num}))
+
+(ann width-rectangle' [Rectangle' -> Num])
+(defn width-rectangle' [r]
+  (x-point (:diag r)))
+
+(ann height-rectangle' [Rectangle' -> Num])
+(defn height-rectangle' [r]
+  (y-point (:diag r)))
+
+(ann perimeter-rectangle' [Rectangle' -> Num])
+(defn perimeter-rectangle' [r]
+  (* 2 (+ (width-rectangle' r) (height-rectangle' r))))
+
+(ann area-rectangle' [Rectangle' -> Num])
+(defn area-rectangle' [r]
+  (* (width-rectangle' r) (height-rectangle' r)))
 
 ;(print-rat (add-rat (make-rat 1 3) (make-rat 3 3)))
 
