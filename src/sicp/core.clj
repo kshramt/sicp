@@ -3,7 +3,7 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann AnyInteger letfn> loop>] :as typed])
+            [clojure.core.typed :refer [ann-form ann AnyInteger letfn> loop> Vec] :as typed])
   (:gen-class))
 
 (ann clojure.pprint/pprint [Any -> nil])
@@ -694,6 +694,60 @@
                                [Number -> Boolean])
                      f)
   first-guess)
+
+(typed/def-alias Rat (I (Vec AnyInteger) (CountRange 2 2)))
+
+(ann make-rat [AnyInteger AnyInteger -> Rat])
+(defn make-rat [n d]
+  (let [g (gcd n d)]
+       [(/ n g) (/ d g)]))
+
+(ann numer [Rat -> AnyInteger])
+(defn numer [x]
+  (first x))
+
+(ann denom [Rat -> AnyInteger])
+(defn denom [x]
+  (second x))
+
+(ann print-rat [Rat -> nil])
+(defn print-rat [x]
+  (println (numer x) "/" (denom x)))
+
+(ann add-rat [Rat Rat -> Rat])
+(defn add-rat [x y]
+  (make-rat (+ (* (numer x) (denom y))
+               (* (numer y) (denom x)))
+            (* (denom x) (denom y))))
+
+(ann neg-rat [Rat -> Rat])
+(defn neg-rat [x]
+  (make-rat (* -1 (numer x))
+            (denom x)))
+
+(ann sub-rat [Rat Rat -> Rat])
+(defn sub-rat [x y]
+  (add-rat x (neg-rat y)))
+
+(ann mul-rat [Rat Rat -> Rat])
+(defn mul-rat [x y]
+  (make-rat (* (numer x) (numer y))
+            (* (denom x) (denom y))))
+
+(ann inv-rat [Rat -> Rat])
+(defn inv-rat [x]
+  (make-rat (denom x)
+            (numer x)))
+
+(ann div-rat [Rat Rat -> Rat])
+(defn div-rat [x y]
+  (mul-rat x
+           (inv-rat y)))
+(ann equal-rat? [Rat Rat -> Boolean])
+(defn equal-rat? [x y]
+  (= (* (numer x) (denom y))
+     (* (denom x) (numer y))))
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
