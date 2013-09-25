@@ -973,6 +973,19 @@
         u_ (max l u)]
     [l_ u_]))
 
+(ann make-center-width [Num Num -> Interval])
+(defn make-center-width [c w]
+  {:pre [(>= w 0)]}
+  (make-interval (-' c w) (+' c w)))
+
+(ann center [Interval -> Num])
+(defn center [i]
+  (average (lower-bound i) (upper-bound i)))
+
+(ann width [Interval -> Num])
+(defn width [i]
+  (half (-' (upper-bound i) (lower-bound i))))
+
 (ann equal-interval [Interval Interval -> Boolean])
 (defn equal-interval [x y]
   (and (= (lower-bound x) (lower-bound y))
@@ -1042,6 +1055,23 @@
 (ann sub-interval [Interval Interval -> Interval])
 (defn sub-interval [x y]
   (add-interval x (neg-interval y)))
+
+(ann make-center-parcent [Num Num -> Interval])
+(defn make-center-parcent
+  "Q. 2.12"
+  [c p]
+  (make-center-width c (*' (/ p 100) c)))
+
+(ann parcent [Interval -> Num])
+(defn parcent
+  "Q. 2.12"
+  {:test #(do (is (= (parcent (mul-interval (make-center-parcent 100 1)
+                                            (make-center-parcent 200 1)))
+                     (*' 100
+                         (/ (half (-' (*' 202 101) (*' 198 99)))
+                            (half (+' (*' 202 101) (*' 198 99))))))))}
+  [i]
+  (*' 100 (abs (/ (width i) (center i)))))
 
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
