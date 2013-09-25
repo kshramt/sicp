@@ -75,7 +75,10 @@
         guess
         (recur x (improved-guess guess))))))
 
-(ann my-expt [Num Int -> Num])
+(ann my-expt (Fn [Int Int -> Int]
+                 [Int Int Int -> Int]
+                 [Num Int -> Num]
+                 [Num Int Num -> Num]))
 (defn my-expt
   "Q 1.16"
   {:test #(do (are [b n result] (= (my-expt b n) result)
@@ -85,16 +88,13 @@
                    3 4 81)
               (is (thrown? java.lang.AssertionError (my-expt 3 -1))))}
 
-  [b n]
-  {:pre [(>= n 0)]}
-
-  (loop> [b :- Num b
-          n :- Int n
-          a :- Num 1]
-    (cond
-     (zero? n) a
-     (odd? n) (* a b (my-expt b (dec n)))
-     :else (recur (square b) (half n) a))))
+  ([b n] (my-expt b n 1))
+  ([b n ret]
+     {:pre [(>= n 0)]}
+     (cond
+      (zero? n) ret
+      (odd? n) (* ret b (my-expt b (dec n)))
+      :else (recur (square b) (half n) ret))))
 
 (ann my-* (Fn [Int Int -> Int]
               [Num Int -> Num]))
