@@ -3,20 +3,20 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann AnyInteger letfn> loop> Vec] :as typed])
+            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> Vec] :as typed])
   (:gen-class))
 
 (ann clojure.pprint/pprint [Any -> nil])
-(ann clojure.core/mod (Fn [AnyInteger AnyInteger -> AnyInteger]
-                          [Number Number -> Number]))
+(ann clojure.core/mod (Fn [Int Int -> Int]
+                          [Num Num -> Num]))
 (ann clojure.test/run-tests [clojure.lang.Namespace *
                              ->
                              (HMap :mandatory {:type clojure.lang.Keyword
-                                               :pass AnyInteger
-                                               :test AnyInteger
-                                               :error AnyInteger
-                                               :fail AnyInteger})])
-(ann clojure.math.numeric-tower/ceil [Number -> Number])
+                                               :pass Int
+                                               :test Int
+                                               :error Int
+                                               :fail Int})])
+(ann clojure.math.numeric-tower/ceil [Num -> Num])
 (typed/non-nil-return clojure.lang.Numbers/addP :all)
 (typed/non-nil-return clojure.lang.Numbers/minusP :all)
 (typed/non-nil-return clojure.lang.Numbers/multiplyP :all)
@@ -29,49 +29,49 @@
   (clojure.pprint/pprint x)
   x)
 
-(ann twice (Fn [AnyInteger -> AnyInteger]
-               [Number -> Number]))
+(ann twice (Fn [Int -> Int]
+               [Num -> Num]))
 (defn twice [x]
   (+ x x))
 
-(ann square (Fn [AnyInteger -> AnyInteger]
-                [Number -> Number]))
+(ann square (Fn [Int -> Int]
+                [Num -> Num]))
 (defn square [x]
   (* x x))
 
-(ann cube (Fn [AnyInteger -> AnyInteger]
-              [Number -> Number]))
+(ann cube (Fn [Int -> Int]
+              [Num -> Num]))
 (defn cube [x]
   (* x (square x)))
 
-(ann half [Number -> Number])
+(ann half [Num -> Num])
 (defn half [x]
   (/ x 2))
 
-(ann abs (Fn [AnyInteger -> AnyInteger]
-             [Number -> Number]))
+(ann abs (Fn [Int -> Int]
+             [Num -> Num]))
 (defn abs [x]
   (if (neg? x)
     (* -1 x)
     x))
 
-(ann third-root [Number -> Number])
+(ann third-root [Num -> Num])
 (defn third-root
   [x]
   (letfn>
-      [improved-guess :- [Number -> Number]
+      [improved-guess :- [Num -> Num]
        (improved-guess [guess]
                        (/ (+ (/ x (square guess)) (twice guess)) 3))
-       enough-precision? :- [Number -> Boolean]
+       enough-precision? :- [Num -> Boolean]
        (enough-precision? [guess]
                           (< (abs (- x (cube guess))) 0.0001))]
-    (loop> [x :- Number x
-            guess :- Number 1.0]
+    (loop> [x :- Num x
+            guess :- Num 1.0]
       (if (enough-precision? guess)
         guess
         (recur x (improved-guess guess))))))
 
-(ann my-expt [Number AnyInteger -> Number])
+(ann my-expt [Num Int -> Num])
 (defn my-expt
   "Q 1.16"
   {:test #(do (are [b n result] (= (my-expt b n) result)
@@ -84,16 +84,16 @@
   [b n]
   {:pre [(>= n 0)]}
 
-  (loop> [b :- Number b
-          n :- AnyInteger n
-          a :- Number 1]
+  (loop> [b :- Num b
+          n :- Int n
+          a :- Num 1]
     (cond
      (zero? n) a
      (odd? n) (* a b (my-expt b (dec n)))
      :else (recur (square b) (half n) a))))
 
-(ann my-* (Fn [AnyInteger AnyInteger -> AnyInteger]
-              [Number AnyInteger -> Number]))
+(ann my-* (Fn [Int Int -> Int]
+              [Num Int -> Num]))
 (defn my-*
   "Q. 1.17"
   {:test #(do (are [a b result] (= (my-* a b) result)
@@ -116,13 +116,13 @@
    :else (recur (twice a) (half b))))
 
 
-(ann my-expt-with-my-* [AnyInteger AnyInteger -> AnyInteger])
+(ann my-expt-with-my-* [Int Int -> Int])
 (defn my-expt-with-my-*
   "Q 1.18"
   ([b n]
      {:pre [(>= n 0)]}
 
-     (letfn> [square-with-my-* :- [AnyInteger -> AnyInteger]
+     (letfn> [square-with-my-* :- [Int -> Int]
               (square-with-my-* [n]
                 (my-* n n))]
 
@@ -138,7 +138,7 @@
                    3 4 81)
               (is (thrown? java.lang.AssertionError (my-expt-with-my-* 3 -1))))})
 
-(ann fib [AnyInteger -> AnyInteger])
+(ann fib [Int -> Int])
 (defn fib
   "Q 1.19"
   {:test #(do (are [n result] (= (fib n) result)
@@ -157,21 +157,21 @@
   [n]
   {:pre [(>= n 1)]}
 
-  (letfn> [fib-iter :- [AnyInteger
-                        AnyInteger
-                        AnyInteger
-                        AnyInteger
-                        AnyInteger
+  (letfn> [fib-iter :- [Int
+                        Int
+                        Int
+                        Int
+                        Int
                         ->
-                        AnyInteger]
+                        Int]
           (fib-iter [a b p q n]
             {:pre [(>= n 0)]}
 
-           (loop> [a :- AnyInteger a
-                   b :- AnyInteger b
-                   p :- AnyInteger p
-                   q :- AnyInteger q
-                   n :- AnyInteger n]
+           (loop> [a :- Int a
+                   b :- Int b
+                   p :- Int p
+                   q :- Int q
+                   n :- Int n]
              (cond
               (= n 0) b
               (odd? n) (fib-iter (+ (* b q) (* a (+ p q)))
@@ -186,11 +186,11 @@
                            (long (/ n 2))))))]
     (fib-iter 1 0 0 1 n)))
 
-(ann rem' [Number Number -> Number])
+(ann rem' [Num Num -> Num])
 (defn rem' [m n]
   (rem m n))
 
-(ann gcd [AnyInteger AnyInteger -> AnyInteger])
+(ann gcd [Int Int -> Int])
 (defn gcd
   {:test #(do (are [m n result] (= (gcd m n) result)
                    45 15 15
@@ -204,7 +204,7 @@
       n_
       (recur (rem' n_ m_) m_))))
 
-(ann smallest-divisor [AnyInteger -> AnyInteger])
+(ann smallest-divisor [Int -> Int])
 (defn smallest-divisor
   {:test #(do (are [n result] (= (smallest-divisor n) result)
                     8 2
@@ -213,12 +213,12 @@
   [n]
   {:pre [(>= n 1)]}
 
-  (letfn> [divides? :- [AnyInteger AnyInteger -> Boolean]
+  (letfn> [divides? :- [Int Int -> Boolean]
            (divides? [divisor n]
              {:pre [(>= n divisor)]}
              (zero? (rem' n divisor)))
 
-           find-divisor :- [AnyInteger AnyInteger -> AnyInteger]
+           find-divisor :- [Int Int -> Int]
            (find-divisor [n test-divisor]
              (cond
               (> (square test-divisor) n) n
@@ -227,7 +227,7 @@
 
     (find-divisor n 2)))
 
-(ann prime? [AnyInteger -> Boolean])
+(ann prime? [Int -> Boolean])
 (defn prime?
   {:test #(do (are [n] (prime? n)
                    2
@@ -242,37 +242,37 @@
 
   (= n (smallest-divisor n)))
 
-(ann sum-integers [AnyInteger AnyInteger -> AnyInteger])
+(ann sum-integers [Int Int -> Int])
 (defn sum-integers [a b]
   (if (> a b)
     0
     (+ a (sum-integers (inc a) b))))
 
-(ann sum-cubes [AnyInteger AnyInteger -> AnyInteger])
+(ann sum-cubes [Int Int -> Int])
 (defn sum-cubes [a b]
   (if (> a b)
     0
     (+ (cube a) (sum-cubes (inc a) b))))
 
-(ann pi-sum [AnyInteger AnyInteger -> Number])
+(ann pi-sum [Int Int -> Num])
 (defn pi-sum [a b]
   (if (> a b)
     0
     (+ (/ 1.0 (* a (+ a 2))) (pi-sum (+ a 4) b))))
 
-(ann sum' (Fn [[AnyInteger -> Number]
-               AnyInteger
-               [AnyInteger -> AnyInteger]
-               AnyInteger
+(ann sum' (Fn [[Int -> Num]
+               Int
+               [Int -> Int]
+               Int
                ->
-               Number]
-              [[AnyInteger -> Number]
-               AnyInteger
-               [AnyInteger -> AnyInteger]
-               AnyInteger
-               Number
+               Num]
+              [[Int -> Num]
+               Int
+               [Int -> Int]
+               Int
+               Num
                ->
-               Number]))
+               Num]))
 (defn sum'
   {:test #(do (is (= 55 (sum' identity 1 inc 10))))}
   ([term a next b] (sum' term a next b 0))
@@ -281,44 +281,44 @@
       ret
       (recur term (next a) next b (+ ret (term a))))))
 
-(ann sum-cubes' [AnyInteger AnyInteger -> Number])
+(ann sum-cubes' [Int Int -> Num])
 (defn sum-cubes' [a b]
   (sum' cube a inc b))
 
-(ann num-identity (All [[a :< Number]]
+(ann num-identity (All [[a :< Num]]
                      (Fn [a -> a]
-                         [AnyInteger -> AnyInteger]
-                         [Number -> Number])))
+                         [Int -> Int]
+                         [Num -> Num])))
 (defn num-identity [x]
   x)
 
-(ann sum-integers' [AnyInteger AnyInteger -> Number])
+(ann sum-integers' [Int Int -> Num])
 (defn sum-integers' [a b]
   (sum' num-identity a inc b))
 
-(ann pi-sum' [AnyInteger AnyInteger -> Number])
+(ann pi-sum' [Int Int -> Num])
 (defn pi-sum' [a b]
-  (letfn> [pi-term :- [AnyInteger -> Number]
+  (letfn> [pi-term :- [Int -> Num]
            (pi-term [x]
              (/ 1.0 (* x (+ x 2))))
-           pi-next :- [AnyInteger -> AnyInteger]
+           pi-next :- [Int -> Int]
            (pi-next [x]
              (+ x 4))]
     (sum' pi-term a pi-next b)))
 
-(ann product' (Fn [[Number -> Number]
-                   Number
-                   [Number -> Number]
-                   Number
+(ann product' (Fn [[Num -> Num]
+                   Num
+                   [Num -> Num]
+                   Num
                    ->
-                   Number]
-                  [[Number -> Number]
-                   Number
-                   [Number -> Number]
-                   Number
-                   Number
+                   Num]
+                  [[Num -> Num]
+                   Num
+                   [Num -> Num]
+                   Num
+                   Num
                    ->
-                   Number]))
+                   Num]))
 (defn product'
   {:test #(do (is (= 3628800 (product' identity 1 inc 10))))}
   ([term a next b] (product' term a next b 1))
@@ -330,10 +330,10 @@
 
 (ann accumulate' (All [a] [[a * -> a]
                            a
-                           [AnyInteger -> a]
-                           AnyInteger
-                           [AnyInteger -> AnyInteger]
-                           AnyInteger
+                           [Int -> a]
+                           Int
+                           [Int -> Int]
+                           Int
                            ->
                            a]))
 (defn accumulate'
@@ -344,13 +344,13 @@
        null-value
        (recur combiner (combiner null-value (term a)) term (next a) next b)))
 
-(ann filtered-accumulate' (All [a] [[AnyInteger -> Boolean]
+(ann filtered-accumulate' (All [a] [[Int -> Boolean]
                                     [a * -> a]
                                     a
-                                    [AnyInteger -> a]
-                                    AnyInteger
-                                    [AnyInteger -> AnyInteger]
-                                    AnyInteger
+                                    [Int -> a]
+                                    Int
+                                    [Int -> Int]
+                                    Int
                                     ->
                                     a]))
 (defn filtered-accumulate'
@@ -363,39 +363,39 @@
       (recur pred combiner (combiner null-value (term a)) term (next a) next b)
       (recur pred combiner null-value term (next a) next b))))
 
-(ann square-sum-of-primes [AnyInteger AnyInteger -> AnyInteger])
+(ann square-sum-of-primes [Int Int -> Int])
 (defn square-sum-of-primes
   {:test #(do (is (= (+ 4 9 25) (square-sum-of-primes 2 5))))}
   [a b]
   (filtered-accumulate' prime? + 0 square a inc b))
 
-(ann product-of-coprimes [AnyInteger AnyInteger -> AnyInteger])
+(ann product-of-coprimes [Int Int -> Int])
 (defn product-of-coprimes
   {:test #(do (is (= (* 1 3 5 7) (product-of-coprimes 1 8))))}
   [a b]
-  (letfn> [pos-and-coprime? :- [AnyInteger -> Boolean]
+  (letfn> [pos-and-coprime? :- [Int -> Boolean]
            (pos-and-coprime?
              [i]
              (and (pos? i) (= 1 (gcd i b))))]
     (filtered-accumulate' pos-and-coprime? * 1 num-identity a inc b)))
 
-(ann close-enough? (Fn [Number Number -> Boolean]
-                       [Number Number Number -> Boolean]))
+(ann close-enough? (Fn [Num Num -> Boolean]
+                       [Num Num Num -> Boolean]))
 (defn close-enough?
   ([x y] (close-enough? x y 0.001))
   ([x y delta]
      {:pre [(>= delta 0)]}
      (<= (abs (- x y)) delta)))
 
-(ann average [Number Number -> Number])
+(ann average [Num Num -> Num])
 (defn average [x y]
   (/ (+ x y) 2))
 
-(ann search [[Number -> Number]
-             Number
-             Number
+(ann search [[Num -> Num]
+             Num
+             Num
              ->
-             Number])
+             Num])
 (defn search [f neg-point pos-point]
   (let [mid-point (average neg-point pos-point)]
     (if (close-enough? neg-point pos-point)
@@ -406,11 +406,11 @@
          (neg? test-value) (search f mid-point pos-point)
          :else mid-point)))))
 
-(ann half-interval-method [[Number -> Number]
-                           Number
-                           Number
+(ann half-interval-method [[Num -> Num]
+                           Num
+                           Num
                            ->
-                           Number])
+                           Num])
 (defn half-interval-method
   {:test #(do (is (close-enough?
                    (half-interval-method (fn [x] (- (square x) 2)) 1.0 5.0)
@@ -428,9 +428,9 @@
 (ann tolerance double)
 (def tolerance 0.00001)
 
-(ann fixed-point [[Number -> Number] Number -> Number])
+(ann fixed-point [[Num -> Num] Num -> Num])
 (defn fixed-point [f first-guess]
-  (letfn> [try_ :- [Number -> Number]
+  (letfn> [try_ :- [Num -> Num]
            (try_ [guess]
              (let [next (f guess)]
                (if (close-enough? guess next tolerance)
@@ -438,9 +438,9 @@
                  (try_ next))))]
     (try_ first-guess)))
 
-(ann fixed-point' [[Number -> Number] Number -> Number])
+(ann fixed-point' [[Num -> Num] Num -> Num])
 (defn fixed-point' [f first-guess]
-  (letfn> [try_ :- [Number -> Number]
+  (letfn> [try_ :- [Num -> Num]
            (try_ [guess]
              (let [next (f guess)]
                (println next)
@@ -449,50 +449,50 @@
                  (recur next))))]
     (try_ first-guess)))
 
-(ann sqrt' [Number -> Number])
+(ann sqrt' [Num -> Num])
 (defn sqrt' [x]
   {:pre [(>= x 0)]}
   (fixed-point
    (ann-form
     #(average % (/ x %))
-    [Number -> Number])
+    [Num -> Num])
    1.0))
 
-(ann sqrt'' [Number -> Number])
+(ann sqrt'' [Num -> Num])
 (defn sqrt'' [x]
   {:pre [(>= x 0)]}
   (fixed-point'
    (ann-form
     #(average % (/ x %))
-    [Number -> Number])
+    [Num -> Num])
    1.0))
 
-(ann golden-ratio Number)
+(ann golden-ratio Num)
 (def golden-ratio
   (fixed-point
    (ann-form
     #(average % (+ 1 (/ 1 %)))
-    [Number -> Number])
+    [Num -> Num])
    1.0))
 
 
-(ann cont-frac [[AnyInteger -> Number]
-                [AnyInteger -> Number]
-                AnyInteger
+(ann cont-frac [[Int -> Num]
+                [Int -> Num]
+                Int
                 ->
-                Number])
+                Num])
 (defn cont-frac
   "Q. 1.37-a"
   {:test #(do (is (= (/ 1 2)
                      (cont-frac (fn [x] x) (fn [x] x) 2))))}
   [n d k]
   {:pre [(>= k 1)]}
-  (letfn> [recur_ :- [[AnyInteger -> Number]
-                      [AnyInteger -> Number]
-                      AnyInteger
-                      AnyInteger
+  (letfn> [recur_ :- [[Int -> Num]
+                      [Int -> Num]
+                      Int
+                      Int
                       ->
-                      Number]
+                      Num]
            (recur_ [n d i k]
                    (if (< i k)
                      (/ (n i)
@@ -502,29 +502,29 @@
                         (d i))))]
           (recur_ n d 1 k)))
 
-(ann cont-frac' [[AnyInteger -> Number]
-                 [AnyInteger -> Number]
-                 AnyInteger
+(ann cont-frac' [[Int -> Num]
+                 [Int -> Num]
+                 Int
                  ->
-                 Number])
+                 Num])
 (defn cont-frac'
   "Q. 1.37-b"
   {:test #(do (is (= (/ 1 2)
                      (cont-frac' (fn [x] x) (fn [x] x) 2))))}
   [n d k]
   {:pre [(>= k 1)]}
-  (loop> [n :- [AnyInteger -> Number] n
-          d :- [AnyInteger -> Number] d
-          i :- AnyInteger k
-          k :- AnyInteger k
-          ret :- Number 0]
+  (loop> [n :- [Int -> Num] n
+          d :- [Int -> Num] d
+          i :- Int k
+          k :- Int k
+          ret :- Num 0]
     (if (= i 0)
       ret
       (recur n d (dec i) k (/ (n i)
                               (+ (d i)
                                  ret))))))
 
-(ann approx-e [AnyInteger -> Number])
+(ann approx-e [Int -> Num])
 (defn approx-e
   "Q. 1.38"
   [k]
@@ -537,69 +537,69 @@
                                         3)
                                      1))
                                1))
-                           [Number -> Number])
+                           [Num -> Num])
                  k)
      2))
 
-(ann tan-cf [Number AnyInteger -> Number])
+(ann tan-cf [Num Int -> Num])
 (defn tan-cf
   "Q. 1.39"
   [x k]
-  (cont-frac' (ann-form #(if (= % 1) x (* -1 (square x))) [AnyInteger -> Number])
-              (ann-form #(- (* % 2) 1) [AnyInteger -> AnyInteger])
+  (cont-frac' (ann-form #(if (= % 1) x (* -1 (square x))) [Int -> Num])
+              (ann-form #(- (* % 2) 1) [Int -> Int])
               k))
 
-(ann average-damp [[Number -> Number] -> [Number -> Number]])
+(ann average-damp [[Num -> Num] -> [Num -> Num]])
 (defn average-damp [f]
   (fn [x] (average x (f x))))
 
 (ann dx double)
 (def dx 0.00001)
 
-(ann deriv [[Number -> Number] -> [Number -> Number]])
+(ann deriv [[Num -> Num] -> [Num -> Num]])
 (defn deriv [f]
   (fn [x] (/ (- (f (+ x dx)) (f (- x dx)))
              (twice dx))))
 
-(ann newton-transform [[Number -> Number] -> [Number -> Number]])
+(ann newton-transform [[Num -> Num] -> [Num -> Num]])
 (defn newton-transform [f]
   (fn [x] (- x
              (/ (f x)
                 ((deriv f) x)))))
 
-(ann newton-method [[Number -> Number] Number -> Number])
+(ann newton-method [[Num -> Num] Num -> Num])
 (defn newton-method [f guess]
   (fixed-point (newton-transform f) guess))
 
-(ann sqrt''' [Number -> Number])
+(ann sqrt''' [Num -> Num])
 (defn sqrt''' [x]
   {:pre [(>= x 0)]}
-  (newton-method (ann-form #(- (square %) x) [Number -> Number])
+  (newton-method (ann-form #(- (square %) x) [Num -> Num])
                  1.0))
 
-(ann fixed-point-of-transform [[Number -> Number]
-                               [[Number -> Number] -> [Number -> Number]]
-                               Number
+(ann fixed-point-of-transform [[Num -> Num]
+                               [[Num -> Num] -> [Num -> Num]]
+                               Num
                                ->
-                               Number])
+                               Num])
 (defn fixed-point-of-transform [f transform guess]
   (fixed-point (transform f) guess))
 
-(ann sqrt'''' [Number -> Number])
+(ann sqrt'''' [Num -> Num])
 (defn sqrt'''' [x]
   {:pre [(>= x 0)]}
-  (fixed-point-of-transform (ann-form #(/ x %) [Number -> Number])
+  (fixed-point-of-transform (ann-form #(/ x %) [Num -> Num])
                             average-damp
                             1.0))
 
-(ann sqrt''''' [Number -> Number])
+(ann sqrt''''' [Num -> Num])
 (defn sqrt''''' [x]
   {:pre [(>= x 0)]}
-  (fixed-point-of-transform (ann-form #(- (square %) x) [Number -> Number])
+  (fixed-point-of-transform (ann-form #(- (square %) x) [Num -> Num])
                             newton-transform
                             1.0))
 
-(ann cubic [Number Number Number -> [Number -> Number]])
+(ann cubic [Num Num Num -> [Num -> Num]])
 (defn cubic
   "Q. 1.40"
   {:test #(do (is (< (abs (- (newton-method (cubic 2 3 -22) 1) 2)) tolerance)))}
@@ -617,8 +617,8 @@
   "Q. 1.42"
   [f g] (fn [x] (f (g x))))
 
-(ann repeated (All [a] (Fn [[a -> a] AnyInteger -> [a -> a]]
-                           [[a -> a] AnyInteger [a -> a] -> [a -> a]])))
+(ann repeated (All [a] (Fn [[a -> a] Int -> [a -> a]]
+                           [[a -> a] Int [a -> a] -> [a -> a]])))
 (defn repeated
   "Q. 1.43"
   {:test #(do (is (= 5 ((repeated inc 5) 0))))}
@@ -630,8 +630,8 @@
       (zero? (mod n 2)) (recur (compose f f) (half n) ret)
       :else (recur f (dec n) (fn [x] (f (ret x)))))))
 
-(ann smooth (Fn [[Number -> Number] -> [Number -> Number]]
-                [[Number -> Number] Number -> [Number -> Number]]))
+(ann smooth (Fn [[Num -> Num] -> [Num -> Num]]
+                [[Num -> Num] Num -> [Num -> Num]]))
 (defn smooth
   "Q. 1.44-1"
   ([f] (smooth f 0.00001))
@@ -640,73 +640,73 @@
                         (f (+ x dx)))
                      4))))
 
-(ann smooth-n [[Number -> Number] AnyInteger -> [Number -> Number]])
+(ann smooth-n [[Num -> Num] Int -> [Num -> Num]])
 (defn smooth-n
   "Q. 1.44-2"
   ([f n] ((repeated smooth n) f)))
 
-(ann log2 [Number -> Number])
+(ann log2 [Num -> Num])
 (defn log2 [x]
   (/ (Math/log (double x)) (Math/log 2.0)))
 
-(ann nth-root [Number AnyInteger -> Number])
+(ann nth-root [Num Int -> Num])
 (defn nth-root
   "Q. 1.45"
   {:test #(do (is (< (- (nth-root 32 5) 2) tolerance)))}
   [x n]
-  (letfn> [damp :- [AnyInteger
+  (letfn> [damp :- [Int
                     ->
-                    [[Number -> Number] -> [Number -> Number]]]
+                    [[Num -> Num] -> [Num -> Num]]]
            (damp [n]
                  (repeated average-damp (dec (bigint (clojure.math.numeric-tower/ceil (log2 n))))))
-           basic :- [Number -> Number]
+           basic :- [Num -> Num]
            (basic [guess]
                   (/ x
                      (Math/pow (double guess) (double (dec n)))))]
           (fixed-point ((damp n) basic) 1)))
 
-(ann iterative-improve [[Number -> Boolean] [Number -> Number] -> [Number -> Number]])
+(ann iterative-improve [[Num -> Boolean] [Num -> Num] -> [Num -> Num]])
 (defn iterative-improve
   "Q. 1.46-1"
   [is-good? update]
   (fn [x]
-    (loop> [guess :- Number 1]
+    (loop> [guess :- Num 1]
       (if (is-good? guess)
         guess
         (recur (update guess))))))
 
-(ann sqrt'''''' [Number -> Number])
+(ann sqrt'''''' [Num -> Num])
 (defn sqrt''''''
   "Q. 1.46-2"
   {:test #(do (is (close-enough? (sqrt'''''' 4) 2 tolerance)))}
   [x]
   ((iterative-improve (ann-form (fn [guess] (close-enough? guess (/ x guess) tolerance))
-                                [Number -> Boolean])
+                                [Num -> Boolean])
                       (average-damp (ann-form (fn [guess] (/ x guess))
-                                              [Number -> Number])))
+                                              [Num -> Num])))
    x))
 
-(ann fixed-point'' [[Number -> Number] Number -> Number])
+(ann fixed-point'' [[Num -> Num] Num -> Num])
 (defn fixed-point''
   "Q. 1.46-3"
   [f first-guess]
   (iterative-improve (ann-form (fn [guess] (close-enough? guess (f guess)))
-                               [Number -> Boolean])
+                               [Num -> Boolean])
                      f)
   first-guess)
 
-(typed/def-alias Rat (I (Vec AnyInteger) (CountRange 2 2)))
+(typed/def-alias Rat (I (Vec Int) (CountRange 2 2)))
 
-(ann make-rat [AnyInteger AnyInteger -> Rat])
+(ann make-rat [Int Int -> Rat])
 (defn make-rat [n d]
   (let [g (gcd n d)]
        [(/ n g) (/ d g)]))
 
-(ann numer [Rat -> AnyInteger])
+(ann numer [Rat -> Int])
 (defn numer [x]
   (first x))
 
-(ann denom [Rat -> AnyInteger])
+(ann denom [Rat -> Int])
 (defn denom [x]
   (second x))
 
@@ -747,6 +747,8 @@
 (defn equal-rat? [x y]
   (= (* (numer x) (denom y))
      (* (denom x) (numer y))))
+
+;(print-rat (add-rat (make-rat 1 3) (make-rat 3 3)))
 
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
