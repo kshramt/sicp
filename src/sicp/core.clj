@@ -953,6 +953,57 @@
 (ann four Church)
 (def four (add-church three one))
 
+(typed/def-alias Interval (I (Vec Num) (CountRange 2 2)))
+
+(ann lower-bound [Interval -> Num])
+(defn lower-bound
+  "Q. 2.7"
+  [i]
+  (first i))
+
+(ann upper-bound [Interval -> Num])
+(defn upper-bound
+  "Q. 2.7"
+  [i]
+  (second i))
+
+(ann make-interval [Num Num -> Interval])
+(defn make-interval [l u]
+  [l u])
+
+(ann add-interval [Interval Interval -> Interval])
+(defn add-interval [x y]
+  (make-interval (+' (lower-bound x) (lower-bound y))
+                 (+' (upper-bound x) (upper-bound y))))
+
+(ann mul-interval [Interval Interval -> Interval])
+(defn mul-interval [x y]
+  (let [p1 (*' (lower-bound x) (lower-bound y))
+        p2 (*' (lower-bound x) (upper-bound y))
+        p3 (*' (upper-bound x) (lower-bound y))
+        p4 (*' (upper-bound x) (upper-bound y))]
+    (make-interval (min p1 p2 p3 p4)
+                   (max p1 p2 p3 p4))))
+
+(ann inv-interval [Interval -> Interval])
+(defn inv-interval [x]
+  {:pre [(>= (*' (lower-bound x) (upper-bound x)) 0)]}
+  (make-interval (/ 1 (upper-bound x))
+                 (/ 1 (lower-bound x))))
+
+(ann div-interval [Interval Interval -> Interval])
+(defn div-interval [x y]
+  (mul-interval x (inv-interval y)))
+
+(ann neg-interval [Interval -> Interval])
+(defn neg-interval [x]
+  (make-interval (-' (upper-bound x))
+                 (-' (lower-bound x))))
+
+(ann sub-interval [Interval Interval -> Interval])
+(defn sub-interval [x y]
+  (add-interval x (neg-interval y)))
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
