@@ -700,7 +700,7 @@
 (ann make-rat [Int Int -> Rat])
 (defn make-rat [n d]
   (let [g (gcd n d)]
-       [(/ n g) (/ d g)]))
+       [(bigint (/ n g)) (bigint (/ d g))]))
 
 (ann numer [Rat -> Int])
 (defn numer [x]
