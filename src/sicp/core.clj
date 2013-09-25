@@ -849,6 +849,26 @@
 (defn area-rectangle' [r]
   (* (width-rectangle' r) (height-rectangle' r)))
 
+(ann cons_ (All [a b]
+                (Fn [a b -> [[a b -> a] -> a]]
+                    [a b -> [[a b -> b] -> b]])))
+(defn cons_ [x y]
+  (fn [m] (m x y)))
+
+(ann car (All [a b]
+              [[[a b -> a] -> a] -> a]))
+(defn car [z]
+  (z (ann-form (fn [p _] p)
+               (All [a]
+                    [a Any -> a]))))
+
+(ann cdr (All [a b]
+              [[[a b -> b] -> b] -> b]))
+(defn cdr [z]
+  (z (ann-form (fn [_ q] q)
+               (All [a]
+                    [Any a -> a]))))
+
 ;(print-rat (add-rat (make-rat 1 3) (make-rat 3 3)))
 
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
