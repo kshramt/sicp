@@ -1112,6 +1112,12 @@ Skip...
          coll
          (recur next_))))
 
+(ann last_ (All [a] [(NonEmptyColl a) -> a]))
+(defn last_ [coll]
+  (if (empty? (rest coll))
+    (first coll)
+    (recur coll)))
+
 (ann append (All [a b] [(Coll a) (Coll b) -> (Coll (U a b))]))
 (defn append
   {:test #(do (is (= (append [1 2] [3 4]) [1 2 3 4])))}
