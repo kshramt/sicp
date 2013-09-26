@@ -3,7 +3,7 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> Vec] :as typed])
+            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec] :as typed])
   (:gen-class))
 
 (ann clojure.pprint/pprint [Any -> nil])
@@ -557,16 +557,15 @@
   [k]
   {:pre [(>= k 1)]}
   (+' (cont-frac' (fn [_] 1)
-                 (ann-form (fn [x]
-                             (if (= (mod x 3) 2)
-                               (*' 2
-                                   (+' (/ (-' x 2)
-                                          3)
-                                       1))
-                               1))
-                           [Num -> Num])
-                 k)
-     2))
+                  (fn> [x :- Num]
+                    (if (= (mod x 3) 2)
+                      (*' 2
+                          (+' (/ (-' x 2)
+                                 3)
+                              1))
+                      1))
+                  k)
+      2))
 
 (ann tan-cf [Num Int -> Num])
 (defn tan-cf
@@ -707,18 +706,15 @@
   "Q. 1.46-2"
   {:test #(do (is (close-enough? (sqrt'''''' 4) 2 tolerance)))}
   [x]
-  ((iterative-improve (ann-form (fn [guess] (close-enough? guess (/ x guess) tolerance))
-                                [Num -> Boolean])
-                      (average-damp (ann-form (fn [guess] (/ x guess))
-                                              [Num -> Num])))
+  ((iterative-improve (fn> [guess :- Num] (close-enough? guess (/ x guess) tolerance))
+                      (average-damp (fn> [guess :- Num] (/ x guess))))
    x))
 
 (ann fixed-point'' [[Num -> Num] Num -> Num])
 (defn fixed-point''
   "Q. 1.46-3"
   [f first-guess]
-  (iterative-improve (ann-form (fn [guess] (close-enough? guess (f guess)))
-                               [Num -> Boolean])
+  (iterative-improve (fn> [guess :- Num] (close-enough? guess (f guess)))
                      f)
   first-guess)
 
