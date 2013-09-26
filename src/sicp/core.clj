@@ -373,7 +373,7 @@
        (recur combiner (combiner null-value (term a)) term (next a) next b)))
 
 (ann filtered-accumulate' (All [a] [[Int -> Boolean]
-                                    [a * -> a]
+                                    [a a -> a]
                                     a
                                     [Int -> a]
                                     Int
