@@ -1069,6 +1069,39 @@
   [i]
   (*' 100 (abs (/ (width i) (center i)))))
 
+(ann approx-relative-error-of-mul [Num Num -> Num])
+(defn approx-relative-error-of-mul
+  "Q. 2.13"
+  [re1 re2]
+  (+' re1 re2))
+
+"
+# Q. 2.14
+
+Assume relative errors, $e_{1}$ and $e_{2}$, are small.
+Relative error of `par1` is $(e_{1} + e_{2}) + (e_{1} + e_{2}) = 2(e_{1} + e_{2})$.
+Relative error of `par2` is $0 + (0 + e_{1}) + (0 + e_{2}) = e_{1} + e_{2}$.
+"
+
+"
+# Q. 2.15
+
+Eva is right since every appearance of variable `x` in a fomula is mistakenly considered to add a new independent error.
+"
+
+"
+# Q. 2.16
+
+Skip...
+
+```
+(typed/def-alias Interval (HMap :mandatory {:l Num :u Num :id Int}))
+(typed/def-alias IntervalOp [(U Interval IntervalOpRet)
+                             (U Interval IntervalOpRet)
+                             -> IntervalOpRet])
+```
+"
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
