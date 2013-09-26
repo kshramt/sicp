@@ -3,7 +3,7 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec] :as typed])
+            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec NonEmptySeqable Seqable] :as typed])
   (:gen-class))
 
 (ann clojure.pprint/pprint [Any -> nil])
