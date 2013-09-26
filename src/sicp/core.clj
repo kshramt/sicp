@@ -1137,6 +1137,63 @@ Skip...
     []
     (conj (reverse_' (rest coll)) (first coll))))
 
+(ann first-denomination [Int -> Int])
+(defn first-denomination [kinds-of-coins]
+  (cond
+   (= kinds-of-coins 1) 1
+   (= kinds-of-coins 2) 5
+   (= kinds-of-coins 3) 10
+   (= kinds-of-coins 4) 25
+   (= kinds-of-coins 5) 50
+   :else (throw (Exception. (str "kinds-of-coins are out of range: " kinds-of-coins)))))
+
+(ann cc [Int Int -> Int])
+(defn cc [amount kinds-of-coins]
+  (cond
+   (zero? amount) 1
+   (or (< amount 0) (zero? kinds-of-coins)) 0
+   :else (+' (cc amount
+                 (dec' kinds-of-coins))
+             (cc (-' amount
+                     (first-denomination kinds-of-coins))
+                 kinds-of-coins))))
+
+(ann count-change [Int -> Int])
+(defn count-change [amount]
+  (cc amount 5))
+
+(ann us-coins (NonEmptyColl Int))
+(def us-coins [50 25 10 5 1])
+
+(ann uk-coins (NonEmptyColl Int))
+(def uk-coins [10000 5000 2000 1000 500 200 100 50])
+
+(ann first-denomination' [(Coll Int) -> Int])
+(defn first-denomination' [coin-values]
+  (bigint (first coin-values)))
+
+(ann except-first-denomination [(Coll Int) -> (Coll Int)])
+(defn except-first-denomination [coin-values]
+  (rest coin-values))
+
+(ann no-more? [(Coll Int) -> Boolean])
+(defn no-more? [coin-values]
+  (empty? coin-values))
+
+(ann cc' [Int (Coll Int) -> Int])
+(defn cc'
+  "Q. 2.19"
+  {:test #(do (is (= (cc' 100 us-coins) 292)))}
+  [amount coin-values]
+  (cond
+   (zero? amount) 1
+   (or (< amount 0) (no-more? coin-values)) 0
+   :else (+ (cc' amount
+                 (rest coin-values))
+            (cc' (-' amount
+                     (first-denomination' coin-values))
+                coin-values))))
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
