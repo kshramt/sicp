@@ -1223,6 +1223,29 @@ Skip...
                   more))
     [n]))
 
+(ann map_ (All [a b] [[a -> b] (Coll a) -> (Coll b)]))
+(defn map_ [f coll]
+  (if (empty? coll)
+    ()
+    (cons (f (first coll))
+          (map_ f (rest coll)))))
+
+(ann square-list (Fn [(Coll Int) -> (Coll Int)]
+                     [(Coll Num) -> (Coll Num)]))
+(defn square-list
+  "Q. 2.21-1"
+  [coll]
+  (if (empty? coll)
+    ()
+    (cons (square (first coll)) (square-list (rest coll)))))
+
+(ann square-list' (Fn [(Coll Int) -> (Coll Int)]
+                      [(Coll Num) -> (Coll Num)]))
+(defn square-list'
+  "Q. 2.21-2"
+  [coll]
+  (map square coll))
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
