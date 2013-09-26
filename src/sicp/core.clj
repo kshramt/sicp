@@ -3,7 +3,7 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec NonEmptySeqable Seqable] :as typed])
+            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec Coll NonEmptyColl] :as typed])
   (:gen-class))
 
 (ann clojure.pprint/pprint [Any -> nil])
@@ -1102,7 +1102,7 @@ Skip...
 ```
 "
 
-(ann last-pair [(NonEmptySeqable Any) -> Any])
+(ann last-pair [(NonEmptyColl Any) -> Any])
 (defn last-pair
   "Q. 2.17"
   [coll]
@@ -1112,7 +1112,7 @@ Skip...
          coll
          (recur next_))))
 
-(ann append [(Seqable Any) (Seqable Any) -> (Seqable Any)])
+(ann append [(Coll Any) (Coll Any) -> (Coll Any)])
 (defn append
   {:test #(do (is (= (append [1 2] [3 4]) [1 2 3 4])))}
   [coll1 coll2]
@@ -1120,7 +1120,7 @@ Skip...
     coll2
     (cons (first coll1) (append (rest coll1) coll2))))
 
-(ann reverse_ [(Seqable Any) -> (Seqable Any)])
+(ann reverse_ [(Coll Any) -> (Coll Any)])
 (defn reverse_
   "Q. 2.18"
   {:test #(do (is (= (reverse_ [1 2 3]) [3 2 1])))}
