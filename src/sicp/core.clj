@@ -1194,6 +1194,29 @@ Skip...
                      (first-denomination' coin-values))
                 coin-values))))
 
+(ann filter_ (All [a] [[a -> Boolean] (Coll a) -> (Coll a)]))
+(defn filter_ [f coll]
+  (if (empty? coll)
+    ()
+    (let [v (first coll)]
+      (if (f v)
+        (cons v (filter_ f (rest coll)))
+        (recur f (rest coll))))))
+
+(ann same-parity [Int Int * -> (Coll Int)])
+(defn same-parity
+  "2.20"
+  {:test #(do (is (= (same-parity 1 2 3 4 5 6 7) [1 3 5 7]))
+              (is (= (same-parity 2 3 4 5 6 7) [2 4 6])))}
+  [n & more]
+  (if more
+    (cons n
+          (filter (if (even? n)
+                    even?
+                    odd?)
+                  more))
+    [n]))
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
