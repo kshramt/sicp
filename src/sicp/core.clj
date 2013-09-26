@@ -1102,6 +1102,16 @@ Skip...
 ```
 "
 
+(ann last-pair [(NonEmptySeqable Any) -> Any])
+(defn last-pair
+  "Q. 2.17"
+  [coll]
+  {:pre [(not (empty? coll))]}
+  (let [next_ (next coll)]
+       (if (empty? next_)
+         coll
+         (recur next_))))
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
