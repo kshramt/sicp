@@ -322,7 +322,7 @@
 
 (ann sum-integers' [Int Int -> Num])
 (defn sum-integers' [a b]
-  (sum' num-identity a inc' b))
+  (sum' identity a inc' b))
 
 (ann pi-sum' [Int Int -> Num])
 (defn pi-sum' [a b]
