@@ -632,7 +632,7 @@
   [a b c]
        (fn [x] (+' c (*' x (+' b (*' x (+' a (*' x (+' 1)))))))))
 
-(ann double_ [[Any -> Any] -> [Any -> Any]])
+(ann double_ (All [a] [[a -> a] -> [a -> a]]))
 (defn double_
   "Q. 1.41"
   [f]
@@ -1102,7 +1102,7 @@ Skip...
 ```
 "
 
-(ann last-pair [(NonEmptyColl Any) -> Any])
+(ann last-pair (All [a] [(NonEmptyColl a) -> (NonEmptyColl a)]))
 (defn last-pair
   "Q. 2.17"
   [coll]
@@ -1112,7 +1112,7 @@ Skip...
          coll
          (recur next_))))
 
-(ann append [(Coll Any) (Coll Any) -> (Coll Any)])
+(ann append (All [a b] [(Coll a) (Coll b) -> (Coll (U a b))]))
 (defn append
   {:test #(do (is (= (append [1 2] [3 4]) [1 2 3 4])))}
   [coll1 coll2]
@@ -1120,7 +1120,7 @@ Skip...
     coll2
     (cons (first coll1) (append (rest coll1) coll2))))
 
-(ann reverse_ [(Coll Any) -> (Coll Any)])
+(ann reverse_ (All [a] [(Coll a) -> (Coll a)]))
 (defn reverse_
   "Q. 2.18"
   {:test #(do (is (= (reverse_ [1 2 3]) [3 2 1])))}
