@@ -1112,6 +1112,23 @@ Skip...
          coll
          (recur next_))))
 
+(ann append [(Seqable Any) (Seqable Any) -> (Seqable Any)])
+(defn append
+  {:test #(do (is (= (append [1 2] [3 4]) [1 2 3 4])))}
+  [coll1 coll2]
+  (if (empty? coll1)
+    coll2
+    (cons (first coll1) (append (rest coll1) coll2))))
+
+(ann reverse_ [(Seqable Any) -> (Seqable Any)])
+(defn reverse_
+  "Q. 2.18"
+  {:test #(do (is (= (reverse_ [1 2 3]) [3 2 1])))}
+  [coll]
+  (if (empty? coll)
+    coll
+    (append (reverse_ (rest coll)) [(first coll)])))
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
