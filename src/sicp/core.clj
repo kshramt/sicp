@@ -6,7 +6,7 @@
             [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec Coll NonEmptyColl] :as typed])
   (:gen-class))
 
-(ann clojure.pprint/pprint [Any -> nil])
+(ann ^:no-check clojure.pprint/pprint [Any -> nil])
 (typed/override-method clojure.lang.Numbers/remainder (Fn [Int Int -> Int]
                                                           [Num Num -> Num]))
 (typed/override-method clojure.lang.Numbers/addP (Fn [Int Int -> Int]
@@ -19,35 +19,35 @@
                                                      [Num -> Num]))
 (typed/override-method clojure.lang.Numbers/decP (Fn [Int -> Int]
                                                      [Num -> Num]))
-(ann clojure.core/rem (Fn [Int Int -> Int]
+(ann ^:no-check clojure.core/rem (Fn [Int Int -> Int]
                           [Num Num -> Num]))
-(ann clojure.core/mod (Fn [Int Int -> Int]
+(ann ^:no-check clojure.core/mod (Fn [Int Int -> Int]
                           [Num Num -> Num]))
-(ann clojure.core/+' (All [[a :< Num]]
+(ann ^:no-check clojure.core/+' (All [[a :< Num]]
                           (Fn [-> Long]
                               [a -> a]
                               [Int Int * -> Int]
                               [Num Num * -> Num])))
 ; `(All [[a :< Num]] [a -> a])` is not true since `(type (-' Long/MIN_VALUE))` is BigInt.
-(ann clojure.core/-' (Fn [Int * -> Int]
+(ann ^:no-check clojure.core/-' (Fn [Int * -> Int]
                          [Num * -> Num]))
-(ann clojure.core/*' (All [[a :< Num]]
+(ann ^:no-check clojure.core/*' (All [[a :< Num]]
                           (Fn [-> Long]
                               [a -> a]
                               [Int Int * -> Int]
                               [Num Num * -> Num])))
-(ann clojure.test/run-tests [clojure.lang.Namespace *
+(ann ^:no-check clojure.test/run-tests [clojure.lang.Namespace *
                              ->
                              (HMap :mandatory {:type clojure.lang.Keyword
                                                :pass Int
                                                :test Int
                                                :error Int
                                                :fail Int})])
-(ann inc' (Fn [Int -> Int]
+(ann ^:no-check inc' (Fn [Int -> Int]
               [Num -> Num]))
-(ann dec' (Fn [Int -> Int]
+(ann ^:no-check dec' (Fn [Int -> Int]
               [Num -> Num]))
-(ann clojure.math.numeric-tower/ceil [Num -> Num])
+(ann ^:no-check clojure.math.numeric-tower/ceil [Num -> Num])
 
 (ann p_ (All [a] [a -> a]))
 (defn p_
