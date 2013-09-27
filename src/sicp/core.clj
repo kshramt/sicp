@@ -1284,6 +1284,108 @@ Skip...
                 (fringe x)
                 [x])
               (fringe (rest coll)))))))
+
+(typed/def-alias BinaryMobil (Rec [this]
+                                  (HMap :mandatory
+                                        {:left (HMap :mandatory
+                                                     {:length Num
+                                                      :structure (U Num this)})
+                                         :right (HMap :mandatory
+                                                      {:length Num
+                                                       :structure (U Num this)})})))
+
+(typed/tc-ignore
+;; Type Error: Local binding left expected type
+;; expected: (HMap :mandatory {:length Num, :structure Num})
+;; actual:   (HMap :mandatory {:length Num, :structure (U Num BinaryMobil)})
+;; (ann make-mobile' [(HMap :mandatory
+;;                          {:length Num
+;;                           :structure (U Num BinaryMobil)})
+;;                    (HMap :mandatory
+;;                          {:length Num
+;;                           :structure (U Num BinaryMobil)})
+;;                    -> BinaryMobil])
+;; (defn make-mobile' [left right]
+;;   {:left left
+;;    :right right})
+
+(defn make-mobile [left right]
+  {:left left
+   :right right})
+
+(defn make-branch [length structure]
+  {:length length
+   :structure structure})
+ )
+
+(ann left-branch [BinaryMobil
+                  -> (HMap :mandatory
+                           {:length Num
+                            :structure (U Num BinaryMobil)})])
+(defn left-branch
+  "Q. 2.29-a"
+  [m]
+  (:left m))
+
+(ann right-branch [BinaryMobil
+                   -> (HMap :mandatory
+                            {:length Num
+                             :structure (U Num BinaryMobil)})])
+(defn right-branch
+  "Q. 2.29-a"
+  [m]
+  (:right m))
+
+(ann branch-length [(HMap :mandatory
+                          {:length Num
+                           :structure (U Num BinaryMobil)})
+                    -> Num])
+(defn branch-length
+  "Q. 2.29-a"
+  [b]
+  (:length b))
+
+(ann branch-structure [(HMap :mandatory
+                             {:length Num
+                              :structure (U Num BinaryMobil)})
+                       -> (U Num BinaryMobil)])
+(defn branch-structure
+  "Q. 2.29-a"
+  [b]
+  (:structure b))
+
+(typed/tc-ignore
+
+(defn total-weight
+  "Q. 2-29-b"
+  [m]
+  (if (coll? m)
+    (+' (total-weight (branch-structure (left-branch m)))
+        (total-weight (branch-structure (right-branch m))))
+    m))
+
+(defn is-balanced
+  "Q. 2-29-c"
+  {:test #(do (is (is-balanced (make-mobile
+                                (make-branch 3 1)
+                                (make-branch 1
+                                             (make-mobile
+                                              (make-branch 1 2)
+                                              (make-branch 2 1)))))))}
+  [m]
+  (if (coll? m)
+    (letfn [(branch-moment [b]
+              (*' (branch-length b)
+                  (total-weight (branch-structure b))))]
+      (let [lb (left-branch m)
+            ls (branch-structure lb)
+            rb (right-branch m)
+            rs (branch-structure rb)]
+        (and (is-balanced ls)
+             (is-balanced rs)
+             (= (branch-moment lb)
+                (branch-moment rb)))))
+    true))
 )
 
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
