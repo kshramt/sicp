@@ -36,7 +36,7 @@
                                          [a -> a]
                                          [Int Int * -> Int]
                                          [Num Num * -> Num])))
-(ann ^:no-check clojure.test/run-tests [clojure.lang.Namespace *
+(ann ^:no-check clojure.test/run-tests [(U clojure.lang.Namespace clojure.lang.Symbol) *
                                         ->
                                         (HMap :mandatory {:type clojure.lang.Keyword
                                                           :pass Int
