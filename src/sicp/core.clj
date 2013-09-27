@@ -1112,9 +1112,10 @@ Skip...
 (defn last_
   {:test #(do (is (= (last_ [1 2 3]) 3)))}
   [coll]
-  (if (empty? (rest coll))
-    (first coll)
-    (recur (rest coll))))
+  (let [rest_ (rest coll)]
+    (if (empty? rest_)
+      (first coll)
+      (recur rest_))))
 
 (ann append (All [a b] [(Coll a) (Coll b) -> (Coll (U a b))]))
 (defn append
