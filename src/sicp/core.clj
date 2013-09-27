@@ -1407,8 +1407,29 @@ Skip...
                  (square-tree' e)
                  (square e)))
        t))
+
+(defn tree-map
+  "Q. 2.31"
+  {:test #(do (is (= (tree-map square [1 [2 [3]] 4]) [1 [4 [9]] 16])))}
+  [f coll]
+  (map (fn [x] (if (coll? x)
+                 (tree-map f x)
+                 (f x)))
+       coll))
 )
 
+(ann subsets (All [a] [(Coll a) -> (Coll (Coll a))]))
+(defn subsets
+  "Q. 2.32"
+  {:test #(do (is (= (set (subsets [1 2 3]))
+                     #{[] [1] [2] [3] [1 2] [2 3] [1 3] [1 2 3]})))}
+  [s]
+  (if (empty? s)
+    [[]]
+    (let [more (subsets (rest s))]
+      (append more (map_ (fn> [coll :- (Coll a)] ; XXX: is this ok?
+                              (cons (first s) coll))
+                         more)))))
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
