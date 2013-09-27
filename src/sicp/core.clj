@@ -714,7 +714,7 @@
                      f)
   first-guess)
 
-(typed/def-alias Rat (I (Vec Int) (CountRange 2 2)))
+(typed/def-alias Rat (Vector* Int Int))
 
 (ann numer [Rat -> Int])
 (defn numer [x]
@@ -781,7 +781,7 @@
   (= (*' (numer x) (denom y))
      (*' (denom x) (numer y))))
 
-(typed/def-alias Point2D (I (Vec Num) (CountRange 2 2)))
+(typed/def-alias Point2D (Vector* Num Num))
 
 (ann x-point [Point2D -> Num])
 (defn x-point [p]
@@ -799,7 +799,7 @@
 (defn make-point [x y]
   [x y])
 
-(typed/def-alias Line2D (I (Vec Point2D) (CountRange 2 2)))
+(typed/def-alias Line2D (Vector* Point2D Point2D))
 
 (ann start-segment [Line2D -> Point2D])
 (defn start-segment [l]
@@ -943,7 +943,7 @@
 (ann four Church)
 (def four (add-church three one))
 
-(typed/def-alias Interval (I (Vec Num) (CountRange 2 2)))
+(typed/def-alias Interval (Vector* Num Num))
 
 (ann lower-bound [Interval -> Num])
 (defn lower-bound
