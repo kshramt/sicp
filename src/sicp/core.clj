@@ -1286,7 +1286,7 @@ Skip...
                 [x])
               (fringe (rest coll)))))))
 
-(typed/def-alias BinaryMobil (Rec [this]
+(typed/def-alias BinaryMobile (Rec [this]
                                   (HMap :mandatory
                                         {:left (HMap :mandatory
                                                      {:length Num
@@ -1295,25 +1295,25 @@ Skip...
                                                       {:length Num
                                                        :structure (U Num this)})})))
 
-(typed/ann-record BinaryMobil' [left :- BinaryMobilBranch
-                               right :- BinaryMobilBranch])
-(defrecord BinaryMobil' [left right])
+(typed/ann-record BinaryMobile' [left :- BinaryMobileBranch
+                               right :- BinaryMobileBranch])
+(defrecord BinaryMobile' [left right])
 
-(typed/ann-record BinaryMobilBranch [length :- Num
-                                     structure :- (U Num BinaryMobil')])
-(defrecord BinaryMobilBranch [length structure])
+(typed/ann-record BinaryMobileBranch [length :- Num
+                                     structure :- (U Num BinaryMobile')])
+(defrecord BinaryMobileBranch [length structure])
 
 (typed/tc-ignore
 ;; Type Error: Local binding left expected type
 ;; expected: (HMap :mandatory {:length Num, :structure Num})
-;; actual:   (HMap :mandatory {:length Num, :structure (U Num BinaryMobil)})
+;; actual:   (HMap :mandatory {:length Num, :structure (U Num BinaryMobile)})
 ;; (ann make-mobile' [(HMap :mandatory
 ;;                          {:length Num
-;;                           :structure (U Num BinaryMobil)})
+;;                           :structure (U Num BinaryMobile)})
 ;;                    (HMap :mandatory
 ;;                          {:length Num
-;;                           :structure (U Num BinaryMobil)})
-;;                    -> BinaryMobil])
+;;                           :structure (U Num BinaryMobile)})
+;;                    -> BinaryMobile])
 ;; (defn make-mobile' [left right]
 ;;   {:left left
 ;;    :right right})
@@ -1328,31 +1328,31 @@ Skip...
  )
 
 
-(ann make-mobile' [BinaryMobilBranch BinaryMobilBranch
-                  -> BinaryMobil'])
+(ann make-mobile' [BinaryMobileBranch BinaryMobileBranch
+                  -> BinaryMobile'])
 (defn make-mobile' [left right]
-  (->BinaryMobil' left right))
+  (->BinaryMobile' left right))
 
-(ann make-branch' [Num (U Num BinaryMobil')
-                  -> BinaryMobilBranch])
+(ann make-branch' [Num (U Num BinaryMobile')
+                  -> BinaryMobileBranch])
 (defn make-branch' [length structure]
-  (->BinaryMobilBranch length structure))
+  (->BinaryMobileBranch length structure))
 
-(ann left-branch (Fn [BinaryMobil
+(ann left-branch (Fn [BinaryMobile
                       -> (HMap :mandatory
                                {:length Num
-                                :structure (U Num BinaryMobil)})]
-                     [BinaryMobil' -> BinaryMobilBranch]))
+                                :structure (U Num BinaryMobile)})]
+                     [BinaryMobile' -> BinaryMobileBranch]))
 (defn left-branch
   "Q. 2.29-a"
   [m]
   (:left m))
 
-(ann right-branch (Fn [BinaryMobil
+(ann right-branch (Fn [BinaryMobile
                       -> (HMap :mandatory
                                {:length Num
-                                :structure (U Num BinaryMobil)})]
-                     [BinaryMobil' -> BinaryMobilBranch]))
+                                :structure (U Num BinaryMobile)})]
+                     [BinaryMobile' -> BinaryMobileBranch]))
 (defn right-branch
   "Q. 2.29-a"
   [m]
@@ -1360,9 +1360,9 @@ Skip...
 
 (ann branch-length (Fn [(HMap :mandatory
                               {:length Num
-                               :structure (U Num BinaryMobil)})
+                               :structure (U Num BinaryMobile)})
                         -> Num]
-                       [BinaryMobilBranch -> Num]))
+                       [BinaryMobileBranch -> Num]))
 (defn branch-length
   "Q. 2.29-a"
   [b]
@@ -1370,9 +1370,9 @@ Skip...
 
 (ann branch-structure (Fn [(HMap :mandatory
                                  {:length Num
-                                  :structure (U Num BinaryMobil)})
-                           -> (U Num BinaryMobil)]
-                          [BinaryMobilBranch -> (U Num BinaryMobil')]))
+                                  :structure (U Num BinaryMobile)})
+                           -> (U Num BinaryMobile)]
+                          [BinaryMobileBranch -> (U Num BinaryMobile')]))
 (defn branch-structure
   "Q. 2.29-a"
   [b]
