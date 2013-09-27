@@ -43,10 +43,6 @@
                                                :test Int
                                                :error Int
                                                :fail Int})])
-(ann ^:no-check inc' (Fn [Int -> Int]
-              [Num -> Num]))
-(ann ^:no-check dec' (Fn [Int -> Int]
-              [Num -> Num]))
 (ann ^:no-check clojure.math.numeric-tower/ceil [Num -> Num])
 
 (ann p_ (All [a] [a -> a]))
