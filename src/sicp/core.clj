@@ -1426,7 +1426,7 @@ Skip...
   (if (empty? s)
     [[]]
     (let [more (subsets (rest s))]
-      (append more (map_ (fn> [coll :- (Coll a)] ; XXX: is this ok?
+      (append more (map_ (fn> [coll :- (Coll a)] ; XXX: anaphoric?
                               (cons (first s) coll))
                          more)))))
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
