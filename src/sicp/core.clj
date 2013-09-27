@@ -872,16 +872,14 @@
 (ann car (All [a b]
               [[[a b -> a] -> a] -> a]))
 (defn car [z]
-  (z (ann-form (fn [p _] p)
-               (All [a]
-                    [a Any -> a]))))
+  (z (fn> [p :- a
+           _ :- b] p)))
 
 (ann cdr (All [a b]
               [[[a b -> b] -> b] -> b]))
 (defn cdr [z]
-  (z (ann-form (fn [_ q] q)
-               (All [a]
-                    [Any a -> a]))))
+  (z (fn> [_ :- a
+           q :- b] q)))
 
 (ann n-div [Int Int -> Int])
 (defn n-div
