@@ -1242,6 +1242,50 @@ Skip...
   [coll]
   (map square coll))
 
+(typed/tc-ignore
+; Functions that use `coll?`
+
+(defn count-leaves
+  {:test #(do (is (= (count-leaves [[1 2] 3 4]) 4)))}
+  [t]
+  (cond
+   (not (coll? t)) 1
+   (empty? t) 0
+   :else (+' (count-leaves (first t))
+             (count-leaves (rest t)))))
+
+"
+# Q. 2.26
+
+(1 2 3 4 5 6)
+((1 2 3) 4 5 6)
+((1 2 3) (4 5 6))
+"
+(defn deep-reverse
+  "Q. 2.27"
+  {:test #(do (is (= (deep-reverse [[1 2] [3 4]]) [[4 3] [2 1]])))}
+  [coll]
+  (if (empty? coll)
+    coll
+    (append (deep-reverse (rest coll))
+            [(let [x (first coll)]
+               (if (coll? x)
+                 (deep-reverse x)
+                 x))])))
+
+(defn fringe
+  "Q. 2.28"
+  {:test #(do (is (= (fringe  [[1 2] [3 [4]]]) [1 2 3 4])))}
+  [coll]
+  (if (empty? coll)
+    coll
+    (let [x (first coll)]
+      (append (if (coll? x)
+                (fringe x)
+                [x])
+              (fringe (rest coll)))))))
+)
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
