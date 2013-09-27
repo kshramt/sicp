@@ -20,29 +20,29 @@
 (typed/override-method clojure.lang.Numbers/decP (Fn [Int -> Int]
                                                      [Num -> Num]))
 (ann ^:no-check clojure.core/rem (Fn [Int Int -> Int]
-                          [Num Num -> Num]))
+                                     [Num Num -> Num]))
 (ann ^:no-check clojure.core/mod (Fn [Int Int -> Int]
-                          [Num Num -> Num]))
+                                     [Num Num -> Num]))
 (ann ^:no-check clojure.core/+' (All [[a :< Num]]
-                          (Fn [-> Long]
-                              [a -> a]
-                              [Int Int * -> Int]
-                              [Num Num * -> Num])))
+                                     (Fn [-> Long]
+                                         [a -> a]
+                                         [Int Int * -> Int]
+                                         [Num Num * -> Num])))
 ; `(All [[a :< Num]] [a -> a])` is not true since `(type (-' Long/MIN_VALUE))` is BigInt.
 (ann ^:no-check clojure.core/-' (Fn [Int * -> Int]
-                         [Num * -> Num]))
+                                    [Num * -> Num]))
 (ann ^:no-check clojure.core/*' (All [[a :< Num]]
-                          (Fn [-> Long]
-                              [a -> a]
-                              [Int Int * -> Int]
-                              [Num Num * -> Num])))
+                                     (Fn [-> Long]
+                                         [a -> a]
+                                         [Int Int * -> Int]
+                                         [Num Num * -> Num])))
 (ann ^:no-check clojure.test/run-tests [clojure.lang.Namespace *
-                             ->
-                             (HMap :mandatory {:type clojure.lang.Keyword
-                                               :pass Int
-                                               :test Int
-                                               :error Int
-                                               :fail Int})])
+                                        ->
+                                        (HMap :mandatory {:type clojure.lang.Keyword
+                                                          :pass Int
+                                                          :test Int
+                                                          :error Int
+                                                          :fail Int})])
 (ann ^:no-check clojure.math.numeric-tower/ceil [Num -> Num])
 
 (ann p_ (All [a] [a -> a]))
@@ -82,17 +82,17 @@
 (defn third-root
   [x]
   (letfn>
-      [improved-guess :- [Num -> Num]
-       (improved-guess [guess]
-                       (/ (+' (/ x (square guess)) (twice guess)) 3))
-       enough-precision? :- [Num -> Boolean]
-       (enough-precision? [guess]
-                          (< (abs (-' x (cube guess))) 0.0001))]
-    (loop> [x :- Num x
-            guess :- Num 1.0]
-      (if (enough-precision? guess)
-        guess
-        (recur x (improved-guess guess))))))
+   [improved-guess :- [Num -> Num]
+    (improved-guess [guess]
+                    (/ (+' (/ x (square guess)) (twice guess)) 3))
+    enough-precision? :- [Num -> Boolean]
+    (enough-precision? [guess]
+                       (< (abs (-' x (cube guess))) 0.0001))]
+   (loop> [x :- Num x
+           guess :- Num 1.0]
+          (if (enough-precision? guess)
+            guess
+            (recur x (improved-guess guess))))))
 
 (ann my-expt (Fn [Int Int -> Int]
                  [Int Int Int -> Int]
@@ -147,12 +147,12 @@
 
      (letfn> [square-with-my-* :- [Int -> Int]
               (square-with-my-* [n]
-                (my-* n n))]
+                                (my-* n n))]
 
-       (cond
-        (zero? n) 1
-        (odd? n) (my-* b (my-expt-with-my-* b (dec' n)))
-        :else (recur (square-with-my-* b) (half n)))))
+             (cond
+              (zero? n) 1
+              (odd? n) (my-* b (my-expt-with-my-* b (dec' n)))
+              :else (recur (square-with-my-* b) (half n)))))
 
   {:test #(do (are [b n result] (= (my-expt-with-my-* b n) result)
                    0 0 1
@@ -187,27 +187,27 @@
                         Int
                         ->
                         Int]
-          (fib-iter [a b p q n]
-            {:pre [(>= n 0)]}
+           (fib-iter [a b p q n]
+                     {:pre [(>= n 0)]}
 
-           (loop> [a :- Int a
-                   b :- Int b
-                   p :- Int p
-                   q :- Int q
-                   n :- Int n]
-             (cond
-              (= n 0) b
-              (odd? n) (fib-iter (+' (*' b q) (*' a (+' p q)))
-                                 (+' (*' b p) (*' a q))
-                                 p
-                                 q
-                                 (dec' n))
-              :else (recur a
-                           b
-                           (+' (*' p p) (*' q q))
-                           (+' (*' 2 p q) (*' q q))
-                           (long (/ n 2))))))]
-    (fib-iter 1 0 0 1 n)))
+                     (loop> [a :- Int a
+                             b :- Int b
+                             p :- Int p
+                             q :- Int q
+                             n :- Int n]
+                            (cond
+                             (= n 0) b
+                             (odd? n) (fib-iter (+' (*' b q) (*' a (+' p q)))
+                                                (+' (*' b p) (*' a q))
+                                                p
+                                                q
+                                                (dec' n))
+                             :else (recur a
+                                          b
+                                          (+' (*' p p) (*' q q))
+                                          (+' (*' 2 p q) (*' q q))
+                                          (long (/ n 2))))))]
+          (fib-iter 1 0 0 1 n)))
 
 (ann gcd [Int Int -> Int])
 (defn gcd
@@ -231,25 +231,25 @@
 (ann smallest-divisor [Int -> Int])
 (defn smallest-divisor
   {:test #(do (are [n result] (= (smallest-divisor n) result)
-                    8 2
-                    23 23))}
+                   8 2
+                   23 23))}
 
   [n]
   {:pre [(>= n 1)]}
 
   (letfn> [divides? :- [Int Int -> Boolean]
            (divides? [divisor n]
-             {:pre [(>= n divisor)]}
-             (zero? (rem n divisor)))
+                     {:pre [(>= n divisor)]}
+                     (zero? (rem n divisor)))
 
            find-divisor :- [Int Int -> Int]
            (find-divisor [n test-divisor]
-             (cond
-              (> (square test-divisor) n) n
-              (divides? test-divisor n) test-divisor
-              :else (find-divisor n (inc' test-divisor))))]
+                         (cond
+                          (> (square test-divisor) n) n
+                          (divides? test-divisor n) test-divisor
+                          :else (find-divisor n (inc' test-divisor))))]
 
-    (find-divisor n 2)))
+          (find-divisor n 2)))
 
 (ann prime? [Int -> Boolean])
 (defn prime?
@@ -302,17 +302,17 @@
   ([term a next b] (sum' term a next b 0))
   ([term a next b ret]
      (if (> a b)
-      ret
-      (recur term (next a) next b (+' ret (term a))))))
+       ret
+       (recur term (next a) next b (+' ret (term a))))))
 
 (ann sum-cubes' [Int Int -> Num])
 (defn sum-cubes' [a b]
   (sum' cube a inc' b))
 
 (ann num-identity (All [[a :< Num]]
-                     (Fn [a -> a]
-                         [Int -> Int]
-                         [Num -> Num])))
+                       (Fn [a -> a]
+                           [Int -> Int]
+                           [Num -> Num])))
 (defn num-identity [x]
   x)
 
@@ -324,11 +324,11 @@
 (defn pi-sum' [a b]
   (letfn> [pi-term :- [Int -> Num]
            (pi-term [x]
-             (/ 1.0 (*' x (+' x 2))))
+                    (/ 1.0 (*' x (+' x 2))))
            pi-next :- [Int -> Int]
            (pi-next [x]
-             (+' x 4))]
-    (sum' pi-term a pi-next b)))
+                    (+' x 4))]
+          (sum' pi-term a pi-next b)))
 
 (ann product' (Fn [[Num -> Num]
                    Num
@@ -347,9 +347,9 @@
   {:test #(do (is (= 3628800 (product' identity 1 inc' 10))))}
   ([term a next b] (product' term a next b 1))
   ([term a next b ret]
-    (if (> a b)
-      ret
-      (recur term (next a) next b (*' ret (term a))))))
+     (if (> a b)
+       ret
+       (recur term (next a) next b (*' ret (term a))))))
 
 
 (ann accumulate' (All [a] [[a * -> a]
@@ -364,9 +364,9 @@
   {:test #(do (is (= 3628800 (accumulate' *' 1 identity 1 inc' 10)))
               (is (= 55 (accumulate' +' 0 identity 1 inc' 10))))}
   [combiner null-value term a next b]
-     (if (> a b)
-       null-value
-       (recur combiner (combiner null-value (term a)) term (next a) next b)))
+  (if (> a b)
+    null-value
+    (recur combiner (combiner null-value (term a)) term (next a) next b)))
 
 (ann filtered-accumulate' (All [a] [[Int -> Boolean]
                                     [a a -> a]
@@ -399,9 +399,9 @@
   [a b]
   (letfn> [pos-and-coprime? :- [Int -> Boolean]
            (pos-and-coprime?
-             [i]
-             (and (pos? i) (= 1 (gcd i b))))]
-    (filtered-accumulate' pos-and-coprime? *' 1 num-identity a inc' b)))
+            [i]
+            (and (pos? i) (= 1 (gcd i b))))]
+          (filtered-accumulate' pos-and-coprime? *' 1 num-identity a inc' b)))
 
 (ann close-enough? (Fn [Num Num -> Boolean]
                        [Num Num Num -> Boolean]))
@@ -456,22 +456,22 @@
 (defn fixed-point [f first-guess]
   (letfn> [try_ :- [Num -> Num]
            (try_ [guess]
-             (let [next (f guess)]
-               (if (close-enough? guess next tolerance)
-                 next
-                 (try_ next))))]
-    (try_ first-guess)))
+                 (let [next (f guess)]
+                   (if (close-enough? guess next tolerance)
+                     next
+                     (try_ next))))]
+          (try_ first-guess)))
 
 (ann fixed-point' [[Num -> Num] Num -> Num])
 (defn fixed-point' [f first-guess]
   (letfn> [try_ :- [Num -> Num]
            (try_ [guess]
-             (let [next (f guess)]
-               (println next)
-               (if (close-enough? guess next tolerance)
-                 next
-                 (recur next))))]
-    (try_ first-guess)))
+                 (let [next (f guess)]
+                   (println next)
+                   (if (close-enough? guess next tolerance)
+                     next
+                     (recur next))))]
+          (try_ first-guess)))
 
 (ann sqrt' [Num -> Num])
 (defn sqrt' [x]
@@ -520,7 +520,7 @@
                    (if (< i k)
                      (/ (n i)
                         (+' (d i)
-                           (recur_ n d (inc' i) k)))
+                            (recur_ n d (inc' i) k)))
                      (/ (n i)
                         (d i))))]
           (recur_ n d 1 k)))
@@ -541,11 +541,11 @@
           i :- Int k
           k :- Int k
           ret :- Num 0]
-    (if (= i 0)
-      ret
-      (recur n d (dec' i) k (/ (n i)
-                              (+' (d i)
-                                  ret))))))
+         (if (= i 0)
+           ret
+           (recur n d (dec' i) k (/ (n i)
+                                    (+' (d i)
+                                        ret))))))
 
 (ann approx-e [Int -> Num])
 (defn approx-e
@@ -554,12 +554,12 @@
   {:pre [(>= k 1)]}
   (+' (cont-frac' (fn [_] 1)
                   (fn> [x :- Num]
-                    (if (= (mod x 3) 2)
-                      (*' 2
-                          (+' (/ (-' x 2)
-                                 3)
-                              1))
-                      1))
+                       (if (= (mod x 3) 2)
+                         (*' 2
+                             (+' (/ (-' x 2)
+                                    3)
+                                 1))
+                         1))
                   k)
       2))
 
@@ -626,7 +626,7 @@
   "Q. 1.40"
   {:test #(do (is (< (abs (-' (newton-method (cubic 2 3 -22) 1) 2)) tolerance)))}
   [a b c]
-       (fn [x] (+' c (*' x (+' b (*' x (+' a (*' x (+' 1)))))))))
+  (fn [x] (+' c (*' x (+' b (*' x (+' a (*' x (+' 1)))))))))
 
 (ann double_ (All [a] [[a -> a] -> [a -> a]]))
 (defn double_
@@ -693,9 +693,9 @@
   [is-good? update]
   (fn [x]
     (loop> [guess :- Num 1]
-      (if (is-good? guess)
-        guess
-        (recur (update guess))))))
+           (if (is-good? guess)
+             guess
+             (recur (update guess))))))
 
 (ann sqrt'''''' [Num -> Num])
 (defn sqrt''''''
@@ -740,8 +740,8 @@
         abs-n (abs n)
         abs-d (abs d)
         g (gcd abs-n abs-d)]
-       [(bigint (*' sig (/ abs-n g)))
-        (bigint (/ abs-d g))]))
+    [(bigint (*' sig (/ abs-n g)))
+     (bigint (/ abs-d g))]))
 
 (ann print-rat [Rat -> nil])
 (defn print-rat [x]
@@ -1002,15 +1002,15 @@
                 (equal-interval (mul-interval (make-interval lx ux)
                                               (make-interval ly uy))
                                 (make-interval lz uz))
-                   1 2, 3 4, 3 8
-                   -1 2, 3 4, -4 8
-                   -2 -1, 3 4, -8 -3
-                   1 2, -3 4, -6 8
-                   -1 2, -3 4, -6 8
-                   -2 -1, -3 4, -8 6
-                   1 2, -4 -3, -8 -3
-                   -1 2, -4 -3, -8 4
-                   -2 -1, -4 -3, 3 8))}
+                1 2, 3 4, 3 8
+                -1 2, 3 4, -4 8
+                -2 -1, 3 4, -8 -3
+                1 2, -3 4, -6 8
+                -1 2, -3 4, -6 8
+                -2 -1, -3 4, -8 6
+                1 2, -4 -3, -8 -3
+                -1 2, -4 -3, -8 4
+                -2 -1, -4 -3, 3 8))}
   [x y]
   (let [lx (lower-bound x)
         ux (upper-bound x)
@@ -1102,9 +1102,9 @@ Skip...
   [coll]
   {:pre [(not (empty? coll))]}
   (let [next_ (next coll)]
-       (if (empty? next_)
-         coll
-         (recur next_))))
+    (if (empty? next_)
+      coll
+      (recur next_))))
 
 (ann last_ (All [a] [(NonEmptyColl a) -> a]))
 (defn last_
@@ -1195,7 +1195,7 @@ Skip...
                  (rest coin-values))
             (cc' (-' amount
                      (first-denomination' coin-values))
-                coin-values))))
+                 coin-values))))
 
 (ann filter_ (All [a] [[a -> Boolean] (Coll a) -> (Coll a)]))
 (defn filter_ [f coll]
@@ -1284,23 +1284,24 @@ Skip...
       (append (if (coll? x)
                 (fringe x)
                 [x])
-              (fringe (rest coll)))))))
+              (fringe (rest coll))))))
+)
 
 (typed/def-alias BinaryMobile (Rec [this]
-                                  (HMap :mandatory
-                                        {:left (HMap :mandatory
-                                                     {:length Num
-                                                      :structure (U Num this)})
-                                         :right (HMap :mandatory
+                                   (HMap :mandatory
+                                         {:left (HMap :mandatory
                                                       {:length Num
-                                                       :structure (U Num this)})})))
+                                                       :structure (U Num this)})
+                                          :right (HMap :mandatory
+                                                       {:length Num
+                                                        :structure (U Num this)})})))
 
 (typed/ann-record BinaryMobile' [left :- BinaryMobileBranch
-                               right :- BinaryMobileBranch])
+                                 right :- BinaryMobileBranch])
 (defrecord BinaryMobile' [left right])
 
 (typed/ann-record BinaryMobileBranch [length :- Num
-                                     structure :- (U Num BinaryMobile')])
+                                      structure :- (U Num BinaryMobile')])
 (defrecord BinaryMobileBranch [length structure])
 
 (typed/tc-ignore
@@ -1325,16 +1326,16 @@ Skip...
 (defn make-branch [length structure]
   {:length length
    :structure structure})
- )
+)
 
 
 (ann make-mobile' [BinaryMobileBranch BinaryMobileBranch
-                  -> BinaryMobile'])
+                   -> BinaryMobile'])
 (defn make-mobile' [left right]
   (->BinaryMobile' left right))
 
 (ann make-branch' [Num (U Num BinaryMobile')
-                  -> BinaryMobileBranch])
+                   -> BinaryMobileBranch])
 (defn make-branch' [length structure]
   (->BinaryMobileBranch length structure))
 
@@ -1349,10 +1350,10 @@ Skip...
   (:left m))
 
 (ann right-branch (Fn [BinaryMobile
-                      -> (HMap :mandatory
-                               {:length Num
-                                :structure (U Num BinaryMobile)})]
-                     [BinaryMobile' -> BinaryMobileBranch]))
+                       -> (HMap :mandatory
+                                {:length Num
+                                 :structure (U Num BinaryMobile)})]
+                      [BinaryMobile' -> BinaryMobileBranch]))
 (defn right-branch
   "Q. 2.29-a"
   [m]
@@ -1399,9 +1400,9 @@ Skip...
               (is (is-balanced (make-mobile'
                                 (make-branch' 3 1)
                                 (make-branch' 1
-                                             (make-mobile'
-                                              (make-branch' 1 2)
-                                              (make-branch' 2 1)))))))}
+                                              (make-mobile'
+                                               (make-branch' 1 2)
+                                               (make-branch' 2 1)))))))}
   [m]
   (if (coll? m)
     (letfn [(branch-moment [b]
