@@ -1462,5 +1462,5 @@ Skip...
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
-  (clojure.test/run-tests)
+  (clojure.test/run-tests 'sicp.core)
   (println "ok"))
