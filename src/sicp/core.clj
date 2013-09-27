@@ -1386,6 +1386,25 @@ Skip...
              (= (branch-moment lb)
                 (branch-moment rb)))))
     true))
+
+(defn square-tree
+  "Q. 2.30-1"
+  {:test #(do (is (= (square-tree [1 [2 [3]] 4]) [1 [4 [9]] 16])))}
+  [t]
+  (cond
+   (not (coll? t)) (square t)
+   (empty? t) []
+   :else (cons (square-tree (first t))
+               (square-tree (rest t)))))
+
+(defn square-tree'
+  "Q. 2.30-2"
+  {:test #(do (is (= (square-tree' [1 [2 [3]] 4]) [1 [4 [9]] 16])))}
+  [t]
+  (map (fn [e] (if (coll? e)
+                 (square-tree' e)
+                 (square e)))
+       t))
 )
 
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
