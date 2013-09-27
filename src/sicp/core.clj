@@ -1080,7 +1080,7 @@ Relative error of `par2` is $0 + (0 + e_{1}) + (0 + e_{2}) = e_{1} + e_{2}$.
 "
 # Q. 2.15
 
-Every appearance of variable `x` in a fomula is mistakenly considered to add a new independent error.
+Each appearance of a variable `x` in a formula is mistakenly considered to be a new independent error.
 "
 
 "
