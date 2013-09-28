@@ -1206,11 +1206,12 @@ Skip...
 (ann filter_ (All [a] [[a -> Boolean] (Coll a) -> (Coll a)]))
 (defn filter_ [f coll]
   (if (empty? coll)
-    ()
-    (let [v (first coll)]
-      (if (f v)
-        (cons v (filter_ f (rest coll)))
-        (recur f (rest coll))))))
+    []
+    (let [x (first coll)
+          xs (rest coll)]
+      (if (f x)
+        (cons x (filter_ f xs))
+        (recur f xs)))))
 
 (ann same-parity [Int Int * -> (Coll Int)])
 (defn same-parity
