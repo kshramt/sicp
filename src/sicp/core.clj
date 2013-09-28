@@ -1297,13 +1297,13 @@ Skip...
                                                        {:length Num
                                                         :structure (U Num this)})})))
 
-(typed/ann-record BinaryMobile' [left :- BinaryMobileBranch
-                                 right :- BinaryMobileBranch])
+(typed/ann-record BinaryMobile' [left :- BinaryMobileBranch'
+                                 right :- BinaryMobileBranch'])
 (defrecord BinaryMobile' [left right])
 
-(typed/ann-record BinaryMobileBranch [length :- Num
-                                      structure :- (U Num BinaryMobile')])
-(defrecord BinaryMobileBranch [length structure])
+(typed/ann-record BinaryMobileBranch' [length :- Num
+                                       structure :- (U Num BinaryMobile')])
+(defrecord BinaryMobileBranch' [length structure])
 
 (typed/tc-ignore
 ;; Type Error: Local binding left expected type
@@ -1330,21 +1330,21 @@ Skip...
 )
 
 
-(ann make-mobile' [BinaryMobileBranch BinaryMobileBranch
+(ann make-mobile' [BinaryMobileBranch' BinaryMobileBranch'
                    -> BinaryMobile'])
 (defn make-mobile' [left right]
   (->BinaryMobile' left right))
 
 (ann make-branch' [Num (U Num BinaryMobile')
-                   -> BinaryMobileBranch])
+                   -> BinaryMobileBranch'])
 (defn make-branch' [length structure]
-  (->BinaryMobileBranch length structure))
+  (->BinaryMobileBranch' length structure))
 
 (ann left-branch (Fn [BinaryMobile
                       -> (HMap :mandatory
                                {:length Num
                                 :structure (U Num BinaryMobile)})]
-                     [BinaryMobile' -> BinaryMobileBranch]))
+                     [BinaryMobile' -> BinaryMobileBranch']))
 (defn left-branch
   "Q. 2.29-a"
   [m]
@@ -1354,7 +1354,7 @@ Skip...
                        -> (HMap :mandatory
                                 {:length Num
                                  :structure (U Num BinaryMobile)})]
-                      [BinaryMobile' -> BinaryMobileBranch]))
+                      [BinaryMobile' -> BinaryMobileBranch']))
 (defn right-branch
   "Q. 2.29-a"
   [m]
@@ -1364,7 +1364,7 @@ Skip...
                               {:length Num
                                :structure (U Num BinaryMobile)})
                         -> Num]
-                       [BinaryMobileBranch -> Num]))
+                       [BinaryMobileBranch' -> Num]))
 (defn branch-length
   "Q. 2.29-a"
   [b]
@@ -1374,7 +1374,7 @@ Skip...
                                  {:length Num
                                   :structure (U Num BinaryMobile)})
                            -> (U Num BinaryMobile)]
-                          [BinaryMobileBranch -> (U Num BinaryMobile')]))
+                          [BinaryMobileBranch' -> (U Num BinaryMobile')]))
 (defn branch-structure
   "Q. 2.29-a"
   [b]
@@ -1382,6 +1382,8 @@ Skip...
 
 (typed/tc-ignore
 
+(ann total-weight (Fn [BinaryMobile -> Num]
+                      [BinaryMobile' -> Num]))
 (defn total-weight
   "Q. 2-29-b"
   [m]
@@ -1390,6 +1392,8 @@ Skip...
         (total-weight (branch-structure (right-branch m))))
     m))
 
+(ann total-weight (Fn [(U Num BinaryMobile) -> Boolean]
+                      [(U Num BinaryMobile') -> Boolean]))
 (defn is-balanced
   "Q. 2-29-c"
   {:test #(do (is (is-balanced (make-mobile
