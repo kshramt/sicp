@@ -36,6 +36,11 @@
                                          [a -> a]
                                          [Int Int * -> Int]
                                          [Num Num * -> Num])))
+(ann ^:no-check clojure.core/coll? [Any -> Boolean
+                                    :filters
+                                    {:then (is (typed/Coll Any) 0),
+                                     :else (! (typed/Coll Any) 0)}])
+
 (ann ^:no-check clojure.test/run-tests [(U clojure.lang.Namespace clojure.lang.Symbol) *
                                         ->
                                         (HMap :mandatory {:type clojure.lang.Keyword
