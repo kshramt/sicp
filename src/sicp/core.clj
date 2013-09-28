@@ -1535,6 +1535,33 @@ Skip...
   [coll]
   (accumulate (fn> [_ :- Any
                     sum :- Int] (inc sum)) 0 coll))
+
+(ann horner-eval [Num (NonEmptyColl Num) -> Num])
+(defn horner-eval
+  "Q. 2.34"
+  {:test #(do (is (= (horner-eval 2 [1 3 0 5 0 1]) 79)))}
+  [x coefficient-seqence]
+  (accumulate (fn> [this-term :- Num
+                    higher-terms :- Num]
+                   (+' this-term
+                       (*' x
+                           higher-terms)))
+              0
+              coefficient-seqence))
+
+(ann count-leaves' [(Coll Any) -> Int])
+(defn count-leaves'
+  "Q. 2.35"
+  {:test #(do (is (= (count-leaves' [[1 2] 3 4]) 4)))}
+  [tree]
+  (accumulate (fn> [x :- Any
+                    sum :- Int]
+                   (if (coll? x)
+                     (+' sum
+                         (count-leaves' x))
+                     (inc' sum)))
+              0
+              tree))
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
