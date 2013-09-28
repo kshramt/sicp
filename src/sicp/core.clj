@@ -1029,8 +1029,8 @@
 
 (ann inv-interval [Interval -> Interval])
 (defn inv-interval [x]
-  {:pre [(or (< upper-bound 0)
-             (> lower-bound 0))]}
+  {:pre [(or (< (upper-bound x) 0)
+             (> (lower-bound x) 0))]}
   (make-interval (/ 1 (upper-bound x))
                  (/ 1 (lower-bound x))))
 
