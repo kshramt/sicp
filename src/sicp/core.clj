@@ -1249,9 +1249,7 @@ Skip...
   [coll]
   (map square coll))
 
-(typed/tc-ignore
-; Functions that use `coll?`
-
+(ann count-leaves [Any -> Int])
 (defn count-leaves
   {:test #(do (is (= (count-leaves [[1 2] 3 4]) 4)))}
   [t]
@@ -1268,6 +1266,8 @@ Skip...
 ((1 2 3) 4 5 6)
 ((1 2 3) (4 5 6))
 "
+
+(ann deep-reverse [(Coll Any) -> (Coll Any)])
 (defn deep-reverse
   "Q. 2.27"
   {:test #(do (is (= (deep-reverse [[1 2] [3 4]]) [[4 3] [2 1]])))}
@@ -1280,6 +1280,7 @@ Skip...
                  (deep-reverse x)
                  x))])))
 
+(ann fringe [(Coll Any) -> (Coll Any)])
 (defn fringe
   "Q. 2.28"
   {:test #(do (is (= (fringe  [[1 2] [3 [4]]]) [1 2 3 4])))}
@@ -1291,16 +1292,14 @@ Skip...
                 (fringe x)
                 [x])
               (fringe (rest coll))))))
-)
 
-(typed/def-alias BinaryMobile (Rec [this]
-                                   (HMap :mandatory
-                                         {:left (HMap :mandatory
-                                                      {:length Num
-                                                       :structure (U Num this)})
-                                          :right (HMap :mandatory
-                                                       {:length Num
-                                                        :structure (U Num this)})})))
+(typed/def-alias BinaryMobile (HMap :mandatory
+                                    {:left BinaryMobileBranch
+                                     :right BinaryMobileBranch}))
+(typed/def-alias BinaryMobileBranch (HMap :mandatory
+                                          {:length Num
+                                           :structure BinaryMobileStructure}))
+(typed/def-alias BinaryMobileStructure (U Num BinaryMobile))
 
 (typed/ann-record BinaryMobile' [left :- BinaryMobileBranch'
                                  right :- BinaryMobileBranch'])
@@ -1309,96 +1308,69 @@ Skip...
 (typed/ann-record BinaryMobileBranch' [length :- Num
                                        structure :- (U Num BinaryMobile')])
 (defrecord BinaryMobileBranch' [length structure])
+(typed/def-alias BinaryMobileStructure' (U Num BinaryMobile'))
 
-(typed/tc-ignore
-;; Type Error: Local binding left expected type
-;; expected: (HMap :mandatory {:length Num, :structure Num})
-;; actual:   (HMap :mandatory {:length Num, :structure (U Num BinaryMobile)})
-;; (ann make-mobile' [(HMap :mandatory
-;;                          {:length Num
-;;                           :structure (U Num BinaryMobile)})
-;;                    (HMap :mandatory
-;;                          {:length Num
-;;                           :structure (U Num BinaryMobile)})
-;;                    -> BinaryMobile])
-;; (defn make-mobile' [left right]
-;;   {:left left
-;;    :right right})
-
+(ann make-mobile [BinaryMobileBranch BinaryMobileBranch
+                  -> BinaryMobile])
 (defn make-mobile [left right]
   {:left left
    :right right})
 
+(ann make-branch [Num BinaryMobileStructure -> BinaryMobileBranch])
 (defn make-branch [length structure]
   {:length length
    :structure structure})
-)
-
 
 (ann make-mobile' [BinaryMobileBranch' BinaryMobileBranch'
                    -> BinaryMobile'])
 (defn make-mobile' [left right]
   (->BinaryMobile' left right))
 
-(ann make-branch' [Num (U Num BinaryMobile')
+(ann make-branch' [Num BinaryMobileStructure'
                    -> BinaryMobileBranch'])
 (defn make-branch' [length structure]
   (->BinaryMobileBranch' length structure))
 
-(ann left-branch (Fn [BinaryMobile
-                      -> (HMap :mandatory
-                               {:length Num
-                                :structure (U Num BinaryMobile)})]
+(ann left-branch (Fn [BinaryMobile -> BinaryMobileBranch]
                      [BinaryMobile' -> BinaryMobileBranch']))
 (defn left-branch
   "Q. 2.29-a"
   [m]
   (:left m))
 
-(ann right-branch (Fn [BinaryMobile
-                       -> (HMap :mandatory
-                                {:length Num
-                                 :structure (U Num BinaryMobile)})]
+(ann right-branch (Fn [BinaryMobile -> BinaryMobileBranch]
                       [BinaryMobile' -> BinaryMobileBranch']))
 (defn right-branch
   "Q. 2.29-a"
   [m]
   (:right m))
 
-(ann branch-length (Fn [(HMap :mandatory
-                              {:length Num
-                               :structure (U Num BinaryMobile)})
-                        -> Num]
+(ann branch-length (Fn [BinaryMobileBranch -> Num]
                        [BinaryMobileBranch' -> Num]))
 (defn branch-length
   "Q. 2.29-a"
   [b]
   (:length b))
 
-(ann branch-structure (Fn [(HMap :mandatory
-                                 {:length Num
-                                  :structure (U Num BinaryMobile)})
-                           -> (U Num BinaryMobile)]
-                          [BinaryMobileBranch' -> (U Num BinaryMobile')]))
+(ann branch-structure (Fn [BinaryMobileBranch -> BinaryMobileStructure]
+                          [BinaryMobileBranch' -> BinaryMobileStructure']))
 (defn branch-structure
   "Q. 2.29-a"
   [b]
   (:structure b))
 
-(typed/tc-ignore
-
-(ann total-weight (Fn [BinaryMobile -> Num]
-                      [BinaryMobile' -> Num]))
+(ann total-weight (Fn [BinaryMobileStructure -> Num]
+                      [BinaryMobileStructure' -> Num]))
 (defn total-weight
   "Q. 2-29-b"
   [m]
-  (if (coll? m)
+  (if (number? m) ; (U (I (Coll Any) Num) BinaryMobile) /= BinaryMobile
+    m
     (+' (total-weight (branch-structure (left-branch m)))
-        (total-weight (branch-structure (right-branch m))))
-    m))
+        (total-weight (branch-structure (right-branch m))))))
 
-(ann total-weight (Fn [(U Num BinaryMobile) -> Boolean]
-                      [(U Num BinaryMobile') -> Boolean]))
+(ann is-balanced (Fn [BinaryMobileStructure -> Boolean]
+                     [BinaryMobileStructure' -> Boolean]))
 (defn is-balanced
   "Q. 2-29-c"
   {:test #(do (is (is-balanced (make-mobile
@@ -1414,10 +1386,13 @@ Skip...
                                                (make-branch' 1 2)
                                                (make-branch' 2 1)))))))}
   [m]
-  (if (coll? m)
-    (letfn [(branch-moment [b]
-              (*' (branch-length b)
-                  (total-weight (branch-structure b))))]
+  (if (number? m)
+    true
+    (letfn> [branch-moment :- (Fn [BinaryMobileBranch -> Num]
+                                  [BinaryMobileBranch' -> Num])
+             (branch-moment [b]
+                            (*' (branch-length b)
+                                (total-weight (branch-structure b))))]
       (let [lb (left-branch m)
             ls (branch-structure lb)
             rb (right-branch m)
@@ -1425,26 +1400,41 @@ Skip...
         (and (is-balanced ls)
              (is-balanced rs)
              (= (branch-moment lb)
-                (branch-moment rb)))))
-    true))
+                (branch-moment rb)))))))
 
+(typed/tc-ignore
+
+; Recursive map seems to be not typable...
+
+(typed/def-alias IntTree (Coll (U Int IntTree)))
+(typed/def-alias NumTree (Coll (U Num NumTree)))
+
+(ann square-tree [(Coll Num) -> (Coll Num)])
 (defn square-tree
   "Q. 2.30-1"
   {:test #(do (is (= (square-tree [1 [2 [3]] 4]) [1 [4 [9]] 16])))}
   [t]
-  (cond
-   (not (coll? t)) (square t)
-   (empty? t) []
-   :else (cons (square-tree (first t))
-               (square-tree (rest t)))))
+  (if (empty? t)
+    []
+    (cons (let [t1 (first t)]
+            (if (number? t1)
+              (square t1)
+              (square-tree t1)))
+          (square-tree (rest t)))))
 
+(ann square-tree' (Fn [IntTree -> IntTree]
+                      [NumTree -> NumTree]))
 (defn square-tree'
   "Q. 2.30-2"
   {:test #(do (is (= (square-tree' [1 [2 [3]] 4]) [1 [4 [9]] 16])))}
   [t]
-  (map (fn [e] (if (coll? e)
-                 (square-tree' e)
-                 (square e)))
+  (map_ (ann-form (fn [e] (if (number? e)
+                            (square e)
+                            (square-tree' e)))
+                  (Fn [Int -> Int]
+                      [IntTree -> IntTree]
+                      [Num -> Num]
+                      [NumTree -> NumTree]))
        t))
 
 (defn tree-map
