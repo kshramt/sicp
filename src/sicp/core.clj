@@ -1221,10 +1221,10 @@ Skip...
   [n & more]
   (if more
     (cons n
-          (filter (if (even? n)
-                    even?
-                    odd?)
-                  more))
+          (filter_ (if (even? n)
+                     even?
+                     odd?)
+                   more))
     [n]))
 
 (ann map_ (All [a b] [[a -> b] (Coll a) -> (Coll b)]))
