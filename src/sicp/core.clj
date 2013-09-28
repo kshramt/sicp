@@ -180,10 +180,10 @@
                    8 21
                    9 34
                    10 55)
-              (is (thrown? java.lang.AssertionError (fib 0))))}
+              (is (thrown? java.lang.AssertionError (fib -1))))}
 
   [n]
-  {:pre [(>= n 1)]}
+  {:pre [(>= n 0)]}
 
   (letfn> [fib-iter :- [Int
                         Int
@@ -1460,6 +1460,81 @@ Skip...
       (append more (map_ (fn> [coll :- (Coll a)] ; XXX: anaphoric?
                               (cons (first s) coll))
                          more)))))
+
+(ann accumulate (All [a b] (Fn [[a b -> b] b (Coll a) -> b]
+                               [[a (Coll (U a b)) -> (Coll (U a b))] (Coll (U a b)) (Coll a) ; core.typed does not infer`b` = `(Coll (U a b))`
+                                -> (Coll (U a b))])))
+(defn accumulate
+  {:test #(do (is (= (accumulate +' 0 [1 2]) 3)))}
+  [f zero coll]
+  (if (empty? coll)
+    zero
+    (f (first coll)
+       (accumulate f zero (rest coll)))))
+
+(ann enumerate-interval [Int Int -> (Coll Int)])
+(defn enumerate-interval [low high]
+  (if (> low high)
+    []
+    (cons low (enumerate-interval (inc low)
+                                  high))))
+
+(typed/tc-ignore
+
+(ann sum-odd-squares [(Rec [this] (Coll (U Int this))) -> Int])
+(defn sum-odd-squares
+  [tree]
+  (accumulate +'
+              0
+              (map_ square
+                    (filter_ odd?
+                             (fringe tree)))))
+)
+
+(ann flip (All [a b c] [[a b -> c]
+                        -> [b a -> c]]))
+(defn flip [f]
+  (fn> [y :- b
+        x :- a] (f x y)))
+
+(ann even-fib [Int -> (Coll Int)])
+(defn even-fib [n]
+  (filter_ even?
+           (map_ fib
+                 (enumerate-interval 0 n))))
+
+(ann map_2_33 (All [a b] [[a -> b] (Coll a) -> (Coll b)]))
+(defn map_2_33
+  "Q. 2.33-1"
+  {:test #(do (is (= (map_2_33 square [1 2 3]) [1 4 9])))}
+  [f coll]
+  (accumulate (fn> [x :- a
+                    y :- (Coll b)] (append [(f x)]
+                                           y))
+              []
+              coll))
+
+(ann append_2_33 (All [a b] [(Coll a) (Coll b)
+                             -> (Coll (U a b))]))
+(defn append_2_33
+  "Q. 2.33-2"
+  {:test #(do (is (= (append_2_33 [1 2] [3 4]) [1 2 3 4]))
+              (is (= (append_2_33 [] [3 4]) [3 4]))
+              (is (= (append_2_33 [1 2] []) [1 2]))
+              (is (= (append_2_33 [1 2] [[[3]]]) [1 2 [[3]]])))}
+  [coll1 coll2]
+  (accumulate cons coll2 coll1))
+
+(ann length_2_33 [(Coll Any) -> Int])
+(defn length_2_33
+  "Q. 2.33-3"
+  {:test #(do (is (= (length_2_33 []) 0))
+              (is (= (length_2_33 [1]) 1))
+              (is (= (length_2_33 [1 2]) 2))
+              (is (= (length_2_33 [[] 2 [[]]]) 3)))}
+  [coll]
+  (accumulate (fn> [_ :- Any
+                    sum :- Int] (inc sum)) 0 coll))
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
