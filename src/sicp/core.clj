@@ -1586,6 +1586,65 @@ Skip...
       (cons (accumulate op init (map_ first colls))
         (accumulate-n op init (map_ rest colls))))))
 )
+
+(ann dot-product (Fn [(Coll Int) (Coll Int) -> Int]
+                     [(Coll Num) (Coll Num) -> Num]))
+(defn dot-product
+  {:test #(do (is (= (dot-product [1 2] [3 4]) 11)))}
+  [v w]
+  (accumulate +' 0 (map *' v w)))
+
+(ann matrix-*-vector [(Coll (Coll Num)) (Coll Num)
+                      -> (Coll Num)])
+(defn matrix-*-vector
+  "Q. 3.27"
+  {:test #(do (is (= (matrix-*-vector [[1 2]
+                                       [3 4]] [5 6])
+                     [17 39])))}
+  [m v]
+  (map_ (fn> [row :- (Coll Num)] (dot-product row v))
+        m))
+
+(ann transpose (All [a] [(Coll (Coll a)) -> (Coll (Coll a))]))
+(defn transpose
+  "Q. 3.27"
+  {:test #(do (is (= (transpose [[1 2]
+                                 [3 4]])
+                     [[1 3]
+                      [2 4]]))
+              (is (= (transpose [[3 4]])
+                     [[3]
+                      [4]])))}
+  [m]
+  (if (empty? m)
+    m
+    (accumulate (fn> [column :- (Coll a)
+                      rows :- (Coll (Coll a))]
+                     (map (fn> [x :- a
+                                row :- (Coll a)]
+                               (cons x row))
+                          column
+                          rows))
+                (repeat (count (first m)) [])
+                m))
+  )
+
+(ann matrix-*-matrix [(Coll (Coll Num)) (Coll (Coll Num))
+                      -> (Coll (Coll Num))])
+(defn matrix-*-matrix
+  "Q. 3.27"
+  {:test #(do (is (= (matrix-*-matrix [[1]
+                                       [2]]
+                                      [[3 4]])
+                     [[3 4]
+                      [6 8]])))}
+  [m n]
+  (let [cols (transpose n)]
+    (map (fn> [row :- (Coll Num)]
+              (map (fn> [column :- (Coll Num)]
+                        (dot-product row column))
+                   cols))
+         m)))
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
