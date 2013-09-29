@@ -1566,6 +1566,26 @@ Skip...
                      (inc' sum)))
               0
               tree))
+
+(typed/tc-ignore
+
+(ann accumulate-n (All [a b] (Fn [[a b -> b] b (Coll (Coll a)) -> (Coll b)])))
+(defn accumulate-n
+  "Q. 2.36"
+  {:test #(do (is (= (accumulate-n +' 0 [[1 2 3]
+                                         [4 5 6]
+                                         [7 8 9]
+                                         [10 11 12]])
+                     [22 26 30])))}
+  [op init colls]
+  {:pre [(apply = (map count colls))]}
+  (if (empty? colls)
+    []
+    (if (some empty? colls)
+      []
+      (cons (accumulate op init (map_ first colls))
+        (accumulate-n op init (map_ rest colls))))))
+)
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
