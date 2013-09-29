@@ -1281,13 +1281,17 @@ Skip...
                  (deep-reverse x)
                  x))])))
 
-(ann fringe [(Coll Any) -> (Coll Any)])
+(typed/def-alias Tree (TFn [[a :variance :covariant]] (Rec [this] (typed/Coll (U a this)))))
+
+;(ann fringe [(Coll Any) -> (Coll Any)])
+;(ann fringe (All [a] [(Tree a) -> (Coll a)]))
+(ann fringe [(Tree Any) -> (Coll Any)])
 (defn fringe
   "Q. 2.28"
   {:test #(do (is (= (fringe  [[1 2] [3 [4]]]) [1 2 3 4])))}
   [coll]
   (if (empty? coll)
-    coll
+    []
     (let [x (first coll)]
       (append (if (coll? x)
                 (fringe x)
