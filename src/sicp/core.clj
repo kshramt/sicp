@@ -1214,12 +1214,12 @@ Skip...
                      (first-denomination' coin-values))
                  coin-values))))
 
-(ann filter_ (All [a] [[a -> Boolean] (Coll a) -> (Coll a)]))
+(ann filter_ (All [a] [[a -> Boolean] (Option (Seqable a))
+                       -> (Option (Seqable a))]))
 (defn filter_ [f coll]
-  (if (empty? coll)
-    []
-    (let [x (first coll)
-          xs (rest coll)]
+  (if-let [s (seq coll)]
+    (let [x (first s)
+          xs (rest s)]
       (if (f x)
         (cons x (filter_ f xs))
         (recur f xs)))))
@@ -1523,7 +1523,7 @@ Skip...
   (fn> [y :- b
         x :- a] (f x y)))
 
-(ann even-fib [Int -> (Coll Int)])
+(ann even-fib [Int -> (Option (Seqable Int))])
 (defn even-fib [n]
   (filter_ even?
            (map_ fib
