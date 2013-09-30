@@ -1158,14 +1158,6 @@ Skip...
     coll
     (append (reverse_ (rest coll)) [(first coll)])))
 
-(ann reverse_' [(Coll Any) -> (Coll Any)])
-(defn reverse_'
-  {:test #(do (is (= (reverse_' [1 2 3]) [3 2 1])))}
-  [coll]
-  (if (empty? coll)
-    []
-    (conj (reverse_' (rest coll)) (first coll))))
-
 (ann first-denomination [Int -> Int])
 (defn first-denomination [kinds-of-coins]
   (cond
