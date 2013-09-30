@@ -1147,7 +1147,8 @@ Skip...
                              (Option (Seqable a))
                              -> (Option (Seqable (U a b)))])))
 (defn reduce_
-  {:test #(do (is (= (reduce_ +' 0 [1 2]) 3)))}
+  {:test #(do (is (= (reduce_ +' 0 [1 2]) 3))
+              (is (= (reduce_ / 1 [2 3]) 2/3)))}
   [f zero coll]
   (if-let [s (seq coll)]
     (f (first s)
@@ -1722,6 +1723,23 @@ Skip...
                         (dot-product row column))
                    cols))
          m)))
+
+"
+# Q. 2.38
+(assert (= (op a b) (op b a)))
+"
+
+(ann fold-left (All [a b] (Fn [[a b -> b] b (Option (Seqable a)) -> b]
+                              [[a (Option (Seqable (U a b)))
+                                -> (Option (Seqable (U a b)))]
+                               (Option (Seqable (U a b)))
+                               (Option (Seqable a))
+                               -> (Option (Seqable (U a b)))])))
+(defn fold-left [op initial coll]
+  {:test #(do (is (= (fold-left / 1 [2 3]) 1/6)))}
+  (if-let [s (seq coll)]
+    (recur op (op (first s) initial) (rest s))
+    initial))
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
