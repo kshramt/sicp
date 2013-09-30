@@ -1139,15 +1139,41 @@ Skip...
                              -> (Option (ASeq a))]
                             [(Option (Seqable a)) (Option (Seqable b))
                              -> (Option (ASeq (U a b)))])))
+(ann reduce_ (All [a b] (Fn [[a b -> b] b (Option (Seqable a)) -> b]
+                            ; core.typed does not infer`b` = `(Coll (U a b))`
+                            [[a (Option (Seqable (U a b)))
+                              -> (Option (Seqable (U a b)))]
+                             (Option (Seqable (U a b)))
+                             (Option (Seqable a))
+                             -> (Option (Seqable (U a b)))])))
+(defn reduce_
+  {:test #(do (is (= (reduce_ +' 0 [1 2]) 3)))}
+  [f zero coll]
+  (if-let [s (seq coll)]
+    (f (first s)
+       (reduce_ f zero (rest s)))
+    zero))
+
 (ann append_ (All [a b] [(Option (Seqable a)) (Option (Seqable b))
-                         -> (U (ASeq (U a b))
-                               (Option (Seqable b)))]))
+                         -> (Option (Seqable (U a b)))]))
+
 (defn append_
-  {:test #(do (is (= (append_ [1 2] [3 4]) [1 2 3 4])))}
+  {:test #(do (is (= (append_ [1 2] [3 4]) [1 2 3 4]))
+              (is (= (append_ [] [3 4]) [3 4]))
+              (is (= (append_ [1 2] []) [1 2]))
+              (is (= (append_ [1 2] [[[3]]]) [1 2 [[3]]])))}
+  [coll1 coll2]
+  (reduce_ cons coll2 coll1))
+
+(ann append_' (All [a b] [(Option (Seqable a)) (Option (Seqable b))
+                          -> (U (ASeq (U a b))
+                                (Option (Seqable b)))]))
+(defn append_'
+  {:test #(do (is (= (append_' [1 2] [3 4]) [1 2 3 4])))}
   [coll1 coll2]
   (if-let [s (seq coll1)]
     (cons (first s)
-          (append_ (rest s) coll2))
+          (append_' (rest s) coll2))
     coll2))
 
 (ann reverse_ (All [a] [(Option (Seqable a)) -> (Option (Seqable a))]))
@@ -1239,12 +1265,25 @@ Skip...
                    more))
     [n]))
 
+
 (ann map_ (All [a b] [[a -> b] (Option (Seqable a))
                       -> (Option (Seqable b))]))
-(defn map_ [f coll]
+(defn map_
+  "Q. 2.33-1"
+  {:test #(do (is (= (map_ square [1 2 3]) [1 4 9])))}
+  [f coll]
+  (reduce_ (fn> [x :- a
+                 y :- (Option (Seqable b))]
+                (append_ [(f x)] y))
+           []
+           coll))
+
+(ann map_' (All [a b] [[a -> b] (Option (Seqable a))
+                       -> (Option (Seqable b))]))
+(defn map_' [f coll]
   (if-let [s (seq coll)]
     (cons (f (first s))
-          (map_ f (rest s)))))
+          (map_' f (rest s)))))
 
 (ann square-list (Fn [(Coll Int) -> (Coll Int)]
                      [(Coll Num) -> (Coll Num)]))
@@ -1497,21 +1536,6 @@ Skip...
     (f (first coll)
        (accumulate f zero (rest coll)))))
 
-(ann reduce_ (All [a b] (Fn [[a b -> b] b (Option (Seqable a)) -> b]
-                            ; core.typed does not infer`b` = `(Coll (U a b))`
-                            [[a (Option (Seqable (U a b)))
-                              -> (Option (Seqable (U a b)))]
-                             (Option (Seqable (U a b)))
-                             (Option (Seqable a))
-                             -> (Option (Seqable (U a b)))])))
-(defn reduce_
-  {:test #(do (is (= (reduce_ +' 0 [1 2]) 3)))}
-  [f zero coll]
-  (if-let [s (seq coll)]
-    (f (first s)
-       (reduce_ f zero (rest s)))
-    zero))
-
 (ann enumerate-interval [Int Int -> (Coll Int)])
 (defn enumerate-interval [low high]
   (if (> low high)
@@ -1552,6 +1576,7 @@ Skip...
 
 (ann append_2_33 (All [a b] [(Option (Seqable a)) (Option (Seqable b))
                              -> (Option (Seqable (U a b)))]))
+
 (defn append_2_33
   "Q. 2.33-2"
   {:test #(do (is (= (append_2_33 [1 2] [3 4]) [1 2 3 4]))
@@ -1646,8 +1671,7 @@ Skip...
   {:test #(do (is (= (matrix-*-vector [[1 2]
                                        [3 4]] [5 6])
                      [17 39]))
-              (is (= (matrix-*-vector nil [5 6])
-                     nil))
+              (is (empty? (matrix-*-vector nil [5 6])))
               (is (= (matrix-*-vector [nil
                                        [3 4]] [5 6])
                      [0 39]))
