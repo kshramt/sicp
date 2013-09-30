@@ -3,7 +3,8 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec Coll NonEmptyColl] :as typed])
+            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec Coll NonEmptyColl Option Seqable NonEmptySeqable EmptySeqable] :as typed])
+  (:import (clojure.lang ASeq))
   (:gen-class))
 
 (ann ^:no-check clojure.pprint/pprint [Any -> nil])
@@ -1129,6 +1130,25 @@ Skip...
     coll2
     (cons (first coll1) (append (rest coll1) coll2))))
 
+#_(ann append_ (All [a b] (Fn [(NonEmptySeqable a) (NonEmptySeqable b)
+                             -> (clojure.lang.ASeq (U a b))]
+                            [(Option (EmptySeqable a)) (Option (Seqable b))
+                             -> (Option (Seqable b))]
+                            [(Option (Seqable a)) (Option EmptySeqable)
+                             -> (Option (ASeq a))]
+                            [(Option (Seqable a)) (Option (Seqable b))
+                             -> (Option (ASeq (U a b)))])))
+(ann append_ (All [a b] [(Option (Seqable a)) (Option (Seqable b))
+                         -> (U (ASeq (U a b))
+                               (Option (Seqable b)))]))
+(defn append_
+  {:test #(do (is (= (append_ [1 2] [3 4]) [1 2 3 4])))}
+  [coll1 coll2]
+  (if-let [s (seq coll1)]
+    (cons (first s)
+          (append_ (rest s) coll2))
+    coll2))
+
 (ann reverse_ (All [a] [(Coll a) -> (Coll a)]))
 (defn reverse_
   "Q. 2.18"
@@ -1475,6 +1495,17 @@ Skip...
     zero
     (f (first coll)
        (accumulate f zero (rest coll)))))
+
+(ann reduce_ (All [a b] (Fn [[a b -> b] b (Option (Seqable a)) -> b]
+                            [[a (Seqable (U a b)) -> (Seqable (U a b))] (Seqable (U a b)) (Option (Seqable a)) ; core.typed does not infer`b` = `(Coll (U a b))`
+                             -> (Seqable (U a b))])))
+(defn reduce_
+  {:test #(do (is (= (reduce_ +' 0 [1 2]) 3)))}
+  [f zero coll]
+  (if-let [s (seq coll)]
+    (f (first s)
+       (reduce_ f zero (rest s)))
+    zero))
 
 (ann enumerate-interval [Int Int -> (Coll Int)])
 (defn enumerate-interval [low high]
