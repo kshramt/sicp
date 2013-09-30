@@ -1238,12 +1238,12 @@ Skip...
                    more))
     [n]))
 
-(ann map_ (All [a b] [[a -> b] (Coll a) -> (Coll b)]))
+(ann map_ (All [a b] [[a -> b] (Option (Seqable a))
+                      -> (Option (Seqable b))]))
 (defn map_ [f coll]
-  (if (empty? coll)
-    ()
-    (cons (f (first coll))
-          (map_ f (rest coll)))))
+  (if-let [s (seq coll)]
+    (cons (f (first s))
+          (map_ f (rest s)))))
 
 (ann square-list (Fn [(Coll Int) -> (Coll Int)]
                      [(Coll Num) -> (Coll Num)]))
@@ -1463,18 +1463,27 @@ Skip...
        coll))
 )
 
-(ann subsets (All [a] [(Coll a) -> (Coll (Coll a))]))
+(ann never-nil (All [a] [(Option a) -> a]))
+(defn never-nil [a]
+  (assert (not (nil? a)))
+  a)
+
+(ann subsets (All [a] [(Option (Seqable a))
+                       -> (Seqable (Seqable a))]))
 (defn subsets
   "Q. 2.32"
   {:test #(do (is (= (set (subsets [1 2 3]))
                      #{[] [1] [2] [3] [1 2] [2 3] [1 3] [1 2 3]})))}
-  [s]
-  (if (empty? s)
-    [[]]
-    (let [more (subsets (rest s))]
-      (append more (map_ (fn> [coll :- (Coll a)] ; XXX: anaphoric?
-                              (cons (first s) coll))
-                         more)))))
+  [coll]
+  (if-let [s (seq coll)]
+     (let [s1 (first s)
+           subs (subsets (rest s))]
+       (never-nil ; TODO: Modify type of `append_`
+        (append_ subs
+                 (map_ (fn> [sub :- (Option (Seqable a))] ; XXX: anaphoric?
+                            (cons s1 sub))
+                       subs))))
+     [[]]))
 
 (ann accumulate (All [a b] (Fn [[a b -> b] b (Coll a) -> b]
                                [[a (Coll (U a b)) -> (Coll (U a b))] (Coll (U a b)) (Coll a) ; core.typed does not infer`b` = `(Coll (U a b))`
@@ -1609,22 +1618,31 @@ Skip...
         (accumulate-n op init (map_ rest colls))))))
 )
 
-(ann dot-product (Fn [(Coll Int) (Coll Int) -> Int]
-                     [(Coll Num) (Coll Num) -> Num]))
+(ann dot-product (Fn [(Option (Seqable Int)) (Option (Seqable Int)) -> Int]
+                     [(Option (Seqable Num)) (Option (Seqable Num)) -> Num]))
 (defn dot-product
   {:test #(do (is (= (dot-product [1 2] [3 4]) 11)))}
   [v w]
-  (accumulate +' 0 (map *' v w)))
+  (reduce_ +' 0 (map *' v w)))
 
-(ann matrix-*-vector [(Coll (Coll Num)) (Coll Num)
-                      -> (Coll Num)])
+(ann matrix-*-vector [(Option (Seqable (Option (Seqable Num))))
+                      (Option (Seqable Num))
+                      -> (Option (Seqable Num))])
 (defn matrix-*-vector
   "Q. 3.27"
   {:test #(do (is (= (matrix-*-vector [[1 2]
                                        [3 4]] [5 6])
-                     [17 39])))}
+                     [17 39]))
+              (is (= (matrix-*-vector nil [5 6])
+                     nil))
+              (is (= (matrix-*-vector [nil
+                                       [3 4]] [5 6])
+                     [0 39]))
+              (is (= (matrix-*-vector [[1 2]
+                                       [3 4]] nil)
+                     [0 0])))}
   [m v]
-  (map_ (fn> [row :- (Coll Num)] (dot-product row v))
+  (map_ (fn> [row :- (Option (Seqable Num))] (dot-product row v))
         m))
 
 (ann transpose (All [a] [(Coll (Coll a)) -> (Coll (Coll a))]))
