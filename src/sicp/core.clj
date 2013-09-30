@@ -4,8 +4,9 @@
             [clojure.math.numeric-tower]
             [clojure.repl]
             [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec Coll NonEmptyColl Option Seqable NonEmptySeqable EmptySeqable] :as typed])
-  (:import (clojure.lang ASeq))
+  (:import (clojure.lang ASeq LazySeq))
   (:gen-class))
+(set! *warn-on-reflection* false)
 
 (ann ^:no-check clojure.pprint/pprint [Any -> nil])
 (typed/override-method clojure.lang.Numbers/remainder (Fn [Int Int -> Int]
@@ -1514,6 +1515,13 @@ Skip...
     (cons low (enumerate-interval (inc low)
                                   high))))
 
+(ann range_ [Int Int -> (LazySeq Int)])
+(defn range_ [low high]
+  (lazy-seq
+   (if (> low high)
+     []
+     (cons low (range_ (inc low) high)))))
+
 (typed/tc-ignore
 
 (ann sum-odd-squares [(Rec [this] (Coll (U Int this))) -> Int])
@@ -1536,7 +1544,7 @@ Skip...
 (defn even-fib [n]
   (filter_ even?
            (map_ fib
-                 (enumerate-interval 0 n))))
+                 (range_ 0 n))))
 
 (ann map_2_33 (All [a b] [[a -> b] (Coll a) -> (Coll b)]))
 (defn map_2_33
