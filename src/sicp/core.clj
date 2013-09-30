@@ -1149,14 +1149,13 @@ Skip...
           (append_ (rest s) coll2))
     coll2))
 
-(ann reverse_ (All [a] [(Coll a) -> (Coll a)]))
+(ann reverse_ (All [a] [(Option (Seqable a)) -> (Option (Seqable a))]))
 (defn reverse_
   "Q. 2.18"
   {:test #(do (is (= (reverse_ [1 2 3]) [3 2 1])))}
   [coll]
-  (if (empty? coll)
-    coll
-    (append (reverse_ (rest coll)) [(first coll)])))
+  (if-let [s (seq coll)]
+    (append_ (reverse_ (rest s)) [(first s)])))
 
 (ann first-denomination [Int -> Int])
 (defn first-denomination [kinds-of-coins]
