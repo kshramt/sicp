@@ -1740,6 +1740,28 @@ Skip...
   (if-let [s (seq coll)]
     (recur op (op (first s) initial) (rest s))
     initial))
+
+(ann reverse_2_39_1 (All [a]
+                         [(Option (Seqable a))
+                          -> (Option (Seqable a))]))
+(defn reverse_2_39_1
+  "Q. 2.39"
+  {:test #(do (is (= (reverse_2_39_1 [1 2 3]) [3 2 1])))}
+  [coll]
+  (reduce_ (fn> [x :- a
+                 ret :- (Option (Seqable a))] (append_ ret [x]))
+           nil
+           coll))
+
+(ann reverse_2_39_2 (All [a]
+                         [(Option (Seqable a))
+                          -> (Option (Seqable a))]))
+(defn reverse_2_39_2
+  "Q. 2.39"
+  {:test #(do (is (= (reverse_2_39_2 [1 2 3]) [3 2 1])))}
+  [coll]
+  (fold-left cons nil coll))
+
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
