@@ -1498,8 +1498,12 @@ Skip...
        (accumulate f zero (rest coll)))))
 
 (ann reduce_ (All [a b] (Fn [[a b -> b] b (Option (Seqable a)) -> b]
-                            [[a (Seqable (U a b)) -> (Seqable (U a b))] (Seqable (U a b)) (Option (Seqable a)) ; core.typed does not infer`b` = `(Coll (U a b))`
-                             -> (Seqable (U a b))])))
+                            ; core.typed does not infer`b` = `(Coll (U a b))`
+                            [[a (Option (Seqable (U a b)))
+                              -> (Option (Seqable (U a b)))]
+                             (Option (Seqable (U a b)))
+                             (Option (Seqable a))
+                             -> (Option (Seqable (U a b)))])))
 (defn reduce_
   {:test #(do (is (= (reduce_ +' 0 [1 2]) 3)))}
   [f zero coll]
