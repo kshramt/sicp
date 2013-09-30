@@ -1550,19 +1550,8 @@ Skip...
            (map_ fib
                  (range_ 0 n))))
 
-(ann map_2_33 (All [a b] [[a -> b] (Coll a) -> (Coll b)]))
-(defn map_2_33
-  "Q. 2.33-1"
-  {:test #(do (is (= (map_2_33 square [1 2 3]) [1 4 9])))}
-  [f coll]
-  (accumulate (fn> [x :- a
-                    y :- (Coll b)] (append [(f x)]
-                                           y))
-              []
-              coll))
-
-(ann append_2_33 (All [a b] [(Coll a) (Coll b)
-                             -> (Coll (U a b))]))
+(ann append_2_33 (All [a b] [(Option (Seqable a)) (Option (Seqable b))
+                             -> (Option (Seqable (U a b)))]))
 (defn append_2_33
   "Q. 2.33-2"
   {:test #(do (is (= (append_2_33 [1 2] [3 4]) [1 2 3 4]))
@@ -1570,9 +1559,21 @@ Skip...
               (is (= (append_2_33 [1 2] []) [1 2]))
               (is (= (append_2_33 [1 2] [[[3]]]) [1 2 [[3]]])))}
   [coll1 coll2]
-  (accumulate cons coll2 coll1))
+  (reduce_ cons coll2 coll1))
 
-(ann length_2_33 [(Coll Any) -> Int])
+(ann map_2_33 (All [a b] [[a -> b] (Option (Seqable a))
+                          -> (Option (Seqable b))]))
+(defn map_2_33
+  "Q. 2.33-1"
+  {:test #(do (is (= (map_2_33 square [1 2 3]) [1 4 9])))}
+  [f coll]
+  (reduce_ (fn> [x :- a
+                 y :- (Option (Seqable b))]
+                (append_2_33 [(f x)] y))
+           []
+           coll))
+
+(ann length_2_33 [(Option (Seqable Any)) -> Int])
 (defn length_2_33
   "Q. 2.33-3"
   {:test #(do (is (= (length_2_33 []) 0))
@@ -1580,8 +1581,8 @@ Skip...
               (is (= (length_2_33 [1 2]) 2))
               (is (= (length_2_33 [[] 2 [[]]]) 3)))}
   [coll]
-  (accumulate (fn> [_ :- Any
-                    sum :- Int] (inc sum)) 0 coll))
+  (reduce_ (fn> [_ :- Any
+                 sum :- Int] (inc sum)) 0 coll))
 
 (ann horner-eval [Num (NonEmptyColl Num) -> Num])
 (defn horner-eval
