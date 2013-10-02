@@ -1131,13 +1131,13 @@ Skip...
     coll2
     (cons (first coll1) (append (rest coll1) coll2))))
 
-(ann reduce_ (All [a b] (Fn [[a b -> b] b (Option (Seqable a)) -> b]
+(ann reduce_ (All [a b] (Fn [[a b -> b] b (Seqable a) -> b]
                             ; core.typed does not infer`b` = `(Coll (U a b))`
-                            [[a (Option (Seqable (U a b)))
-                              -> (Option (Seqable (U a b)))]
-                             (Option (Seqable (U a b)))
-                             (Option (Seqable a))
-                             -> (Option (Seqable (U a b)))])))
+                            [[a (Seqable (U a b))
+                              -> (Seqable (U a b))]
+                             (Seqable (U a b))
+                             (Seqable a)
+                             -> (Seqable (U a b))])))
 (defn reduce_
   {:test #(do (is (= (reduce_ +' 0 [1 2]) 3))
               (is (= (reduce_ / 1 [2 3]) 2/3)))}
@@ -1147,8 +1147,8 @@ Skip...
        (reduce_ f zero (rest s)))
     zero))
 
-(ann append_ (All [a b] [(Option (Seqable a)) (Option (Seqable b))
-                         -> (Option (Seqable (U a b)))]))
+(ann append_ (All [a b] [(Seqable a) (Seqable b)
+                         -> (Seqable (U a b))]))
 
 (defn append_
   {:test #(do (is (= (append_ [1 2] [3 4]) [1 2 3 4]))
@@ -1158,9 +1158,9 @@ Skip...
   [coll1 coll2]
   (reduce_ cons coll2 coll1))
 
-(ann append_' (All [a b] [(Option (Seqable a)) (Option (Seqable b))
+(ann append_' (All [a b] [(Seqable a) (Seqable b)
                           -> (U (ASeq (U a b))
-                                (Option (Seqable b)))]))
+                                (Seqable b))]))
 (defn append_'
   {:test #(do (is (= (append_' [1 2] [3 4]) [1 2 3 4])))}
   [coll1 coll2]
@@ -1169,13 +1169,14 @@ Skip...
           (append_' (rest s) coll2))
     coll2))
 
-(ann reverse_ (All [a] [(Option (Seqable a)) -> (Option (Seqable a))]))
+(ann reverse_ (All [a] [(Seqable a) -> (Seqable a)]))
 (defn reverse_
   "Q. 2.18"
   {:test #(do (is (= (reverse_ [1 2 3]) [3 2 1])))}
   [coll]
   (if-let [s (seq coll)]
-    (append_ (reverse_ (rest s)) [(first s)])))
+    (append_ (reverse_ (rest s)) [(first s)])
+    coll))
 
 (ann first-denomination [Int -> Int])
 (defn first-denomination [kinds-of-coins]
@@ -1234,15 +1235,16 @@ Skip...
                      (first-denomination' coin-values))
                  coin-values))))
 
-(ann filter_ (All [a] [[a -> Boolean] (Option (Seqable a))
-                       -> (Option (Seqable a))]))
+(ann filter_ (All [a] [[a -> Boolean] (Seqable a)
+                       -> (Seqable a)]))
 (defn filter_ [f coll]
   (if-let [s (seq coll)]
     (let [x (first s)
           xs (rest s)]
       (if (f x)
         (cons x (filter_ f xs))
-        (recur f xs)))))
+        (recur f xs)))
+    coll))
 
 (ann same-parity [Int Int * -> (Coll Int)])
 (defn same-parity
@@ -1259,14 +1261,13 @@ Skip...
     [n]))
 
 
-(ann map_ (All [a b] [[a -> b] (Option (Seqable a))
-                      -> (Option (Seqable b))]))
+(ann map_ (All [a b] [[a -> b] (Seqable a) -> (Seqable b)]))
 (defn map_
   "Q. 2.33-1"
   {:test #(do (is (= (map_ square [1 2 3]) [1 4 9])))}
   [f coll]
   (reduce_ (fn> [x :- a
-                 y :- (Option (Seqable b))]
+                 y :- (Seqable b)]
                 (append_ [(f x)] y))
            []
            coll))
@@ -1501,7 +1502,7 @@ Skip...
   (assert (not (nil? a)))
   a)
 
-(ann subsets (All [a] [(Option (Seqable a))
+(ann subsets (All [a] [(Seqable a)
                        -> (Seqable (Seqable a))]))
 (defn subsets
   "Q. 2.32"
@@ -1511,12 +1512,11 @@ Skip...
   (if-let [s (seq coll)]
      (let [s1 (first s)
            subs (subsets (rest s))]
-       (never-nil ; TODO: Modify type of `append_`
-        (append_ subs
-                 (map_ (fn> [sub :- (Option (Seqable a))] ; XXX: anaphoric?
-                            (cons s1 sub))
-                       subs))))
-     [[]]))
+       (append_ subs
+                (map_ (fn> [sub :- (Seqable a)] ; XXX: anaphoric?
+                           (cons s1 sub))
+                      subs)))
+     [coll]))
 
 (ann accumulate (All [a b] (Fn [[a b -> b] b (Coll a) -> b]
                                [[a (Coll (U a b)) -> (Coll (U a b))] (Coll (U a b)) (Coll a) ; core.typed does not infer`b` = `(Coll (U a b))`
@@ -1561,14 +1561,13 @@ Skip...
   (fn> [y :- b
         x :- a] (f x y)))
 
-(ann even-fib [Int -> (Option (Seqable Int))])
+(ann even-fib [Int -> (Seqable Int)])
 (defn even-fib [n]
   (filter_ even?
            (map_ fib
                  (range_ 0 n))))
 
-(ann append_2_33 (All [a b] [(Option (Seqable a)) (Option (Seqable b))
-                             -> (Option (Seqable (U a b)))]))
+(ann append_2_33 (All [a b] [(Seqable a) (Seqable b) -> (Seqable (U a b))]))
 
 (defn append_2_33
   "Q. 2.33-2"
@@ -1579,19 +1578,18 @@ Skip...
   [coll1 coll2]
   (reduce_ cons coll2 coll1))
 
-(ann map_2_33 (All [a b] [[a -> b] (Option (Seqable a))
-                          -> (Option (Seqable b))]))
+(ann map_2_33 (All [a b] [[a -> b] (Seqable a) -> (Seqable b)]))
 (defn map_2_33
   "Q. 2.33-1"
   {:test #(do (is (= (map_2_33 square [1 2 3]) [1 4 9])))}
   [f coll]
   (reduce_ (fn> [x :- a
-                 y :- (Option (Seqable b))]
+                 y :- (Seqable b)]
                 (append_2_33 [(f x)] y))
            []
            coll))
 
-(ann length_2_33 [(Option (Seqable Any)) -> Int])
+(ann length_2_33 [(Seqable Any) -> Int])
 (defn length_2_33
   "Q. 2.33-3"
   {:test #(do (is (= (length_2_33 []) 0))
@@ -1649,30 +1647,22 @@ Skip...
         (accumulate-n op init (map_ rest colls))))))
 )
 
-(ann dot-product (Fn [(Option (Seqable Int)) (Option (Seqable Int)) -> Int]
-                     [(Option (Seqable Num)) (Option (Seqable Num)) -> Num]))
+(ann dot-product (Fn [(Seqable Int) (Seqable Int) -> Int]
+                     [(Seqable Num) (Seqable Num) -> Num]))
 (defn dot-product
   {:test #(do (is (= (dot-product [1 2] [3 4]) 11)))}
   [v w]
   (reduce_ +' 0 (map *' v w)))
 
-(ann matrix-*-vector [(Option (Seqable (Option (Seqable Num))))
-                      (Option (Seqable Num))
-                      -> (Option (Seqable Num))])
+(ann matrix-*-vector [(Seqable (Seqable Num)) (Seqable Num)
+                      -> (Seqable Num)])
 (defn matrix-*-vector
   "Q. 3.27"
   {:test #(do (is (= (matrix-*-vector [[1 2]
                                        [3 4]] [5 6])
-                     [17 39]))
-              (is (empty? (matrix-*-vector nil [5 6])))
-              (is (= (matrix-*-vector [nil
-                                       [3 4]] [5 6])
-                     [0 39]))
-              (is (= (matrix-*-vector [[1 2]
-                                       [3 4]] nil)
-                     [0 0])))}
+                     [17 39])))}
   [m v]
-  (map_ (fn> [row :- (Option (Seqable Num))] (dot-product row v))
+  (map_ (fn> [row :- (Seqable Num)] (dot-product row v))
         m))
 
 (ann transpose (All [a] [(Coll (Coll a)) -> (Coll (Coll a))]))
@@ -1721,38 +1711,34 @@ Skip...
 (assert (= (op a b) (op b a)))
 "
 
-(ann fold-left (All [a b] (Fn [[a b -> b] b (Option (Seqable a)) -> b]
-                              [[a (Option (Seqable (U a b)))
-                                -> (Option (Seqable (U a b)))]
-                               (Option (Seqable (U a b)))
-                               (Option (Seqable a))
-                               -> (Option (Seqable (U a b)))])))
+(ann fold-left (All [a b] (Fn [[a b -> b] b (Seqable a) -> b]
+                              [[a (Seqable (U a b))
+                                -> (Seqable (U a b))]
+                               (Seqable (U a b))
+                               (Seqable a)
+                               -> (Seqable (U a b))])))
 (defn fold-left [op initial coll]
   {:test #(do (is (= (fold-left / 1 [2 3]) 1/6)))}
   (if-let [s (seq coll)]
     (recur op (op (first s) initial) (rest s))
     initial))
 
-(ann reverse_2_39_1 (All [a]
-                         [(Option (Seqable a))
-                          -> (Option (Seqable a))]))
+(ann reverse_2_39_1 (All [a] [(Seqable a) -> (Seqable a)]))
 (defn reverse_2_39_1
   "Q. 2.39"
   {:test #(do (is (= (reverse_2_39_1 [1 2 3]) [3 2 1])))}
   [coll]
   (reduce_ (fn> [x :- a
-                 ret :- (Option (Seqable a))] (append_ ret [x]))
-           nil
+                 ret :- (Seqable a)] (append_ ret [x]))
+           []
            coll))
 
-(ann reverse_2_39_2 (All [a]
-                         [(Option (Seqable a))
-                          -> (Option (Seqable a))]))
+(ann reverse_2_39_2 (All [a] [(Seqable a) -> (Seqable a)]))
 (defn reverse_2_39_2
   "Q. 2.39"
   {:test #(do (is (= (reverse_2_39_2 [1 2 3]) [3 2 1])))}
   [coll]
-  (fold-left cons nil coll))
+  (fold-left cons [] coll))
 
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
