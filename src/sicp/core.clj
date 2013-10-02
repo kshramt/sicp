@@ -1132,12 +1132,18 @@ Skip...
     (cons (first coll1) (append (rest coll1) coll2))))
 
 (ann reduce_ (All [a b] (Fn [[a b -> b] b (Seqable a) -> b]
-                            ; core.typed does not infer`b` = `(Coll (U a b))`
+                            ; core.typed does not infer `b` = `(Coll (U a b))`
                             [[a (Seqable (U a b))
                               -> (Seqable (U a b))]
                              (Seqable (U a b))
                              (Seqable a)
-                             -> (Seqable (U a b))])))
+                             -> (Seqable (U a b))]
+                            ; core.typed does not infer `a` = `b` = `(Seqable a)`
+                            [[(Seqable a) (Seqable a)
+                              -> (Seqable a)] (Seqable a)
+                              (Seqable (Seqable a))
+                              -> (Seqable a)])))
+
 (defn reduce_
   {:test #(do (is (= (reduce_ +' 0 [1 2]) 3))
               (is (= (reduce_ / 1 [2 3]) 2/3)))}
@@ -1739,6 +1745,10 @@ Skip...
   {:test #(do (is (= (reverse_2_39_2 [1 2 3]) [3 2 1])))}
   [coll]
   (fold-left cons [] coll))
+
+(ann flat-map (All [a b] [[a -> (Seqable b)] (Seqable a) -> (Seqable b)]))
+(defn flat-map [f coll]
+  (reduce_ append_ [] (map_ f coll)))
 
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
