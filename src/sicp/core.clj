@@ -1131,14 +1131,6 @@ Skip...
     coll2
     (cons (first coll1) (append (rest coll1) coll2))))
 
-#_(ann append_ (All [a b] (Fn [(NonEmptySeqable a) (NonEmptySeqable b)
-                             -> (clojure.lang.ASeq (U a b))]
-                            [(Option (EmptySeqable a)) (Option (Seqable b))
-                             -> (Option (Seqable b))]
-                            [(Option (Seqable a)) (Option EmptySeqable)
-                             -> (Option (ASeq a))]
-                            [(Option (Seqable a)) (Option (Seqable b))
-                             -> (Option (ASeq (U a b)))])))
 (ann reduce_ (All [a b] (Fn [[a b -> b] b (Option (Seqable a)) -> b]
                             ; core.typed does not infer`b` = `(Coll (U a b))`
                             [[a (Option (Seqable (U a b)))
