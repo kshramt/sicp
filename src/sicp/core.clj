@@ -1274,7 +1274,7 @@ Skip...
   [f coll]
   (reduce_ (fn> [x :- a
                  y :- (Seqable b)]
-                (append_ [(f x)] y))
+                (cons (f x) y))
            []
            coll))
 
@@ -1762,14 +1762,14 @@ Skip...
 (ann prime-sum-pairs [Int -> (Seqable (Vector* Int Int Int))])
 (defn prime-sum-pairs
   {:test #(do (is (= (prime-sum-pairs 3)
-                       [[2 1 3] [3 2 5]])))}
+                       [[1 2 3] [2 3 5]])))}
   [n]
   (map make-pair-sum
        (filter prime-sum?
-               (flat-map (fn> [i :- Int]
-                              (map_ (fn> [j :- Int]
+               (flat-map (fn> [j :- Int]
+                              (map_ (fn> [i :- Int]
                                         [i j])
-                                   (range_ 1 (dec i))))
+                                   (range_ 1 (dec j))))
                          (range_ 1 n)))))
 
 (ann permutations (All [a] [(Seqable a) -> (Seqable (Seqable a))]))
@@ -1799,7 +1799,7 @@ Skip...
 (defn prime-sum-pairs'
   "Q. 2.40"
   {:test #(do (is (= (prime-sum-pairs' 3)
-                       [[2 1 3] [3 2 5]])))}
+                       [[1 2 3] [2 3 5]])))}
   [n]
   (map make-pair-sum
        (filter prime-sum? (unique-pairs n))))
