@@ -44,12 +44,11 @@
                                      :else (! (typed/Coll Any) 0)}])
 
 (ann ^:no-check clojure.test/run-tests [(U clojure.lang.Namespace clojure.lang.Symbol) *
-                                        ->
-                                        (HMap :mandatory {:type clojure.lang.Keyword
-                                                          :pass Int
-                                                          :test Int
-                                                          :error Int
-                                                          :fail Int})])
+                                        -> '{:type clojure.lang.Keyword
+                                             :pass Int
+                                             :test Int
+                                             :error Int
+                                             :fail Int}])
 (ann ^:no-check clojure.math.numeric-tower/ceil [Num -> Num])
 
 (ann p_ (All [a] [a -> a]))
@@ -829,10 +828,10 @@
               (average (y-point (start-segment l))
                        (y-point (end-segment l)))))
 
-(typed/def-alias Rectangle (HMap :mandatory {:origin Point2D
-                                             :width Num
-                                             :height Num
-                                             :angle Num}))
+(typed/def-alias Rectangle '{:origin Point2D
+                             :width Num
+                             :height Num
+                             :angle Num})
 
 (ann width-rectangle [Rectangle -> Num])
 (defn width-rectangle [r]
@@ -850,9 +849,9 @@
 (defn area-rectangle [r]
   (*' (width-rectangle r) (height-rectangle r)))
 
-(typed/def-alias Rectangle' (HMap :mandatory {:origin Point2D
-                                              :diag Point2D
-                                              :angle Num}))
+(typed/def-alias Rectangle' '{:origin Point2D
+                              :diag Point2D
+                              :angle Num})
 
 (ann width-rectangle' [Rectangle' -> Num])
 (defn width-rectangle' [r]
@@ -1349,12 +1348,10 @@ Skip...
                 [x])
               (fringe (rest coll))))))
 
-(typed/def-alias BinaryMobile (HMap :mandatory
-                                    {:left BinaryMobileBranch
-                                     :right BinaryMobileBranch}))
-(typed/def-alias BinaryMobileBranch (HMap :mandatory
-                                          {:length Num
-                                           :structure BinaryMobileStructure}))
+(typed/def-alias BinaryMobile '{:left BinaryMobileBranch
+                                :right BinaryMobileBranch})
+(typed/def-alias BinaryMobileBranch '{:length Num
+                                      :structure BinaryMobileStructure})
 (typed/def-alias BinaryMobileStructure (U Num BinaryMobile))
 
 (typed/ann-record BinaryMobile' [left :- BinaryMobileBranch'
