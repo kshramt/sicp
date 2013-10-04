@@ -721,7 +721,7 @@
                      f)
   first-guess)
 
-(typed/def-alias Rat (Vector* Int Int))
+(typed/def-alias Rat '[Int Int])
 
 (ann numer [Rat -> Int])
 (defn numer [x]
@@ -788,7 +788,7 @@
   (= (*' (numer x) (denom y))
      (*' (denom x) (numer y))))
 
-(typed/def-alias Point2D (Vector* Num Num))
+(typed/def-alias Point2D '[Num Num])
 
 (ann x-point [Point2D -> Num])
 (defn x-point [p]
@@ -806,7 +806,7 @@
 (defn make-point [x y]
   [x y])
 
-(typed/def-alias Line2D (Vector* Point2D Point2D))
+(typed/def-alias Line2D '[Point2D Point2D])
 
 (ann start-segment [Line2D -> Point2D])
 (defn start-segment [l]
@@ -950,7 +950,7 @@
 (ann four Church)
 (def four (add-church three one))
 
-(typed/def-alias Interval (Vector* Num Num))
+(typed/def-alias Interval '[Num Num])
 
 (ann lower-bound [Interval -> Num])
 (defn lower-bound
@@ -1750,16 +1750,16 @@ Skip...
 (defn flat-map [f coll]
   (reduce_ append_ [] (map_ f coll)))
 
-(ann prime-sum? [(Vector* Int Int) -> Boolean])
+(ann prime-sum? ['[Int Int] -> Boolean])
 (defn prime-sum? [[l r]]
   (prime? (+' l r)))
 
-(ann make-pair-sum (Fn [(Vector* Int Int) -> (Vector* Int Int Int)]
-                       [(Vector* Num Num) -> (Vector* Num Num Num)]))
+(ann make-pair-sum (Fn ['[Int Int] -> '[Int Int Int]]
+                       ['[Num Num] -> '[Num Num Num]]))
 (defn make-pair-sum [[l r]]
   [l r (+' l r)])
 
-(ann prime-sum-pairs [Int -> (Seqable (Vector* Int Int Int))])
+(ann prime-sum-pairs [Int -> (Seqable '[Int Int Int])])
 (defn prime-sum-pairs
   {:test #(do (is (= (prime-sum-pairs 3)
                        [[1 2 3] [2 3 5]])))}
@@ -1785,7 +1785,7 @@ Skip...
                 set)
       [coll]))
 
-(ann unique-pairs [Int -> (Seqable (Vector* Int Int))])
+(ann unique-pairs [Int -> (Seqable '[Int Int])])
 (defn unique-pairs
   "Q. 2.40"
   [n]
@@ -1795,7 +1795,7 @@ Skip...
                       (range 1 j)))
             (range 1 (inc n))))
 
-(ann prime-sum-pairs' [Int -> (Seqable (Vector* Int Int Int))])
+(ann prime-sum-pairs' [Int -> (Seqable '[Int Int Int])])
 (defn prime-sum-pairs'
   "Q. 2.40"
   {:test #(do (is (= (prime-sum-pairs' 3)
@@ -1804,11 +1804,11 @@ Skip...
   (map make-pair-sum
        (filter prime-sum? (unique-pairs n))))
 
-(ann unique-triples [Int -> (Seqable (Vector* Int Int Int))])
+(ann unique-triples [Int -> (Seqable '[Int Int Int])])
 (defn unique-triples
   [n]
   (flat-map (fn> [k :- Int]
-                 (map (fn> [[i j] :- (Vector* Int Int)]
+                 (map (fn> [[i j] :- '[Int Int]]
                            [i j k])
                       (unique-pairs (dec k))))
             (range 1 (inc n))))
@@ -1818,11 +1818,11 @@ Skip...
 (defn sum_ [coll]
   (reduce_ +' 0 coll))
 
-(ann filter-sum-triples [Int Int -> (Seqable (Vector* Int Int Int))])
+(ann filter-sum-triples [Int Int -> (Seqable '[Int Int Int])])
 (defn filter-sum-triples
   "Q. 2.41"
   [n, s]
-  (filter (fn> [triple :- (Vector* Int Int Int)]
+  (filter (fn> [triple :- '[Int Int Int]]
                (= (sum_ triple) s))
           (unique-triples n)))
 
