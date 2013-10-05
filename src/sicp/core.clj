@@ -203,11 +203,11 @@
                              n :- Int n]
                             (cond
                              (= n 0) b
-                             (odd? n) (fib-iter (+' (*' b q) (*' a (+' p q)))
-                                                (+' (*' b p) (*' a q))
-                                                p
-                                                q
-                                                (dec' n))
+                             (odd? n) (recur (+' (*' b q) (*' a (+' p q)))
+                                             (+' (*' b p) (*' a q))
+                                             p
+                                             q
+                                             (dec' n))
                              :else (recur a
                                           b
                                           (+' (*' p p) (*' q q))
