@@ -1818,6 +1818,9 @@ Skip...
 (ann filter-sum-triples [Int Int -> (Seqable '[Int Int Int])])
 (defn filter-sum-triples
   "Q. 2.41"
+  {:test #(do (is (= (filter-sum-triples 5 8)
+                       [[1 3 4]
+                        [1 2 5]])))}
   [n, s]
   (filter (fn> [triple :- '[Int Int Int]]
                (= (sum_ triple) s))
