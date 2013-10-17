@@ -1849,6 +1849,24 @@ Skip...
 (ann scale-vect [Num Vector -> Vector])
 (defn scale-vect [s [x y]]
   [(* s x) (* s y)])
+
+(typed/def-alias Frame '[Vector Vector Vector])
+
+(ann make-frame [Vector Vector Vector -> Frame])
+(defn make-frame [origin edge1 edge2]
+  [origin edge1 edge2])
+
+(ann origin-frame [Frame -> Vector])
+(defn origin-frame [[origin _ _]]
+  origin)
+
+(ann edge1-frame [Frame -> Vector])
+(defn edge1-frame [[_ edge1 _]]
+  edge1)
+
+(ann edge2-frame [Frame -> Vector])
+(defn edge2-frame [[_ _ edge2]]
+  edge2)
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
