@@ -1867,6 +1867,28 @@ Skip...
 (ann edge2-frame [Frame -> Vector])
 (defn edge2-frame [[_ _ edge2]]
   edge2)
+
+(typed/def-alias Frame' '{:origin Vector
+                          :edge1 Vector
+                          :edge2 Vector})
+
+(ann make-frame' [Vector Vector Vector -> Frame'])
+(defn make-frame' [origin edge1 edge2]
+  {:origin origin
+   :edge1 edge1
+   :edge2 edge2})
+
+(ann origin-frame' [Frame' -> Vector])
+(defn origin-frame' [frame]
+  (:origin frame))
+
+(ann edge1-frame' [Frame' -> Vector])
+(defn edge1-frame' [frame]
+  (:edge1 frame))
+
+(ann edge2-frame' [Frame' -> Vector])
+(defn edge2-frame' [frame]
+  (:edge2 frame))
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
