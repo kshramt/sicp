@@ -1823,6 +1823,32 @@ Skip...
                (= (sum_ triple) s))
           (unique-triples n)))
 
+
+(typed/def-alias Vector '[Num Num])
+
+(ann make-vect [Num Num -> Vector])
+(defn make-vect [x y]
+  [x y])
+
+(ann xcor-vect [Vector -> Num])
+(defn xcor-vect [[x y]]
+  x)
+
+(ann ycor-vect [Vector -> Num])
+(defn ycor-vect [[x y]]
+  y)
+
+(ann add-vect [Vector Vector -> Vector])
+(defn add-vect [[x1 y1] [x2 y2]]
+  [(+ x1 x2) (+ y1 y2)])
+
+(ann sub-vect [Vector Vector -> Vector])
+(defn sub-vect [[x1 y1] [x2 y2]]
+  [(- x1 x2) (- y1 y2)])
+
+(ann scale-vect [Num Vector -> Vector])
+(defn scale-vect [s [x y]]
+  [(* s x) (* s y)])
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
 (defn -main [& args]
