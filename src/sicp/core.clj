@@ -1886,8 +1886,8 @@ Skip...
   (:origin frame))
 
 (ann edge1-frame' [Frame' -> Vector])
-(defn edge1-frame' [frame]
-  (:edge1 frame))
+(defn edge1-frame' [{edge1 :edge1}]
+  edge1)
 
 (ann edge2-frame' [Frame' -> Vector])
 (defn edge2-frame' [frame]
