@@ -1830,27 +1830,39 @@ Skip...
 (typed/def-alias Vector '[Num Num])
 
 (ann make-vect [Num Num -> Vector])
-(defn make-vect [x y]
+(defn make-vect
+  "Q. 2.46"
+  [x y]
   [x y])
 
 (ann xcor-vect [Vector -> Num])
-(defn xcor-vect [[x y]]
+(defn xcor-vect
+  "Q. 2.46"
+  [[x y]]
   x)
 
 (ann ycor-vect [Vector -> Num])
-(defn ycor-vect [[x y]]
+(defn ycor-vect
+  "Q. 2.46"
+  [[x y]]
   y)
 
 (ann add-vect [Vector Vector -> Vector])
-(defn add-vect [[x1 y1] [x2 y2]]
+(defn add-vect
+  "Q. 2.46"
+  [[x1 y1] [x2 y2]]
   [(+ x1 x2) (+ y1 y2)])
 
 (ann sub-vect [Vector Vector -> Vector])
-(defn sub-vect [[x1 y1] [x2 y2]]
+(defn sub-vect
+  "Q. 2.46"
+  [[x1 y1] [x2 y2]]
   [(- x1 x2) (- y1 y2)])
 
 (ann scale-vect [Num Vector -> Vector])
-(defn scale-vect [s [x y]]
+(defn scale-vect
+  "Q. 2.46"
+  [s [x y]]
   [(* s x) (* s y)])
 
 (typed/def-alias Frame '[Vector Vector Vector])
