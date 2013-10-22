@@ -1872,15 +1872,21 @@ Skip...
   [origin edge1 edge2])
 
 (ann origin-frame [Frame -> Vector])
-(defn origin-frame [[origin _ _]]
+(defn origin-frame
+  "Q. 2.47"
+  [[origin _ _]]
   origin)
 
 (ann edge1-frame [Frame -> Vector])
-(defn edge1-frame [[_ edge1 _]]
+(defn edge1-frame
+  "Q. 2.47"
+  [[_ edge1 _]]
   edge1)
 
 (ann edge2-frame [Frame -> Vector])
-(defn edge2-frame [[_ _ edge2]]
+(defn edge2-frame
+  "Q. 2.47"
+  [[_ _ edge2]]
   edge2)
 
 (typed/def-alias Frame' '{:origin Vector
@@ -1894,15 +1900,21 @@ Skip...
    :edge2 edge2})
 
 (ann origin-frame' [Frame' -> Vector])
-(defn origin-frame' [frame]
+(defn origin-frame'
+  "Q. 2.47"
+  [frame]
   (:origin frame))
 
 (ann edge1-frame' [Frame' -> Vector])
-(defn edge1-frame' [{edge1 :edge1}]
+(defn edge1-frame'
+  "Q. 2.47"
+  [{edge1 :edge1}]
   edge1)
 
 (ann edge2-frame' [Frame' -> Vector])
-(defn edge2-frame' [frame]
+(defn edge2-frame'
+  "Q. 2.47"
+  [frame]
   (:edge2 frame))
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 (ann -main [String * -> nil])
