@@ -787,48 +787,48 @@
   (= (*' (numer x) (denom y))
      (*' (denom x) (numer y))))
 
-(typed/def-alias Point2D '[Num Num])
+(typed/def-alias Point '[Num Num])
 
-(ann x-point [Point2D -> Num])
+(ann x-point [Point -> Num])
 (defn x-point [p]
   (first p))
 
-(ann y-point [Point2D -> Num])
+(ann y-point [Point -> Num])
 (defn y-point [p]
   (second p))
 
-(ann print-point [Point2D -> nil])
+(ann print-point [Point -> nil])
 (defn print-point [p]
   (println "(" (x-point p) ", " (y-point p) ")"))
 
-(ann make-point [Num Num -> Point2D])
+(ann make-point [Num Num -> Point])
 (defn make-point [x y]
   [x y])
 
-(typed/def-alias Line2D '[Point2D Point2D])
+(typed/def-alias Line '[Point Point])
 
-(ann start-segment [Line2D -> Point2D])
-(defn start-segment [l]
+(ann start-line [Line -> Point])
+(defn start-line [l]
   (first l))
 
-(ann end-segment [Line2D -> Point2D])
-(defn end-segment [l]
+(ann end-line [Line -> Point])
+(defn end-line [l]
   (second l))
 
-(ann make-segment [Point2D Point2D -> Line2D])
-(defn make-segment [p q]
+(ann make-line [Point Point -> Line])
+(defn make-line [p q]
   [p q])
 
-(ann midpoint-segment [Line2D -> Point2D])
-(defn midpoint-segment
+(ann midpoint-line [Line -> Point])
+(defn midpoint-line
   "Q. 2.2"
   [l]
-  (make-point (average (x-point (start-segment l))
-                       (x-point (end-segment l)))
-              (average (y-point (start-segment l))
-                       (y-point (end-segment l)))))
+  (make-point (average (x-point (start-line l))
+                       (x-point (end-line l)))
+              (average (y-point (start-line l))
+                       (y-point (end-line l)))))
 
-(typed/def-alias Rectangle '{:origin Point2D
+(typed/def-alias Rectangle '{:origin Point
                              :width Num
                              :height Num
                              :angle Num})
@@ -849,8 +849,8 @@
 (defn area-rectangle [r]
   (*' (width-rectangle r) (height-rectangle r)))
 
-(typed/def-alias Rectangle' '{:origin Point2D
-                              :diag Point2D
+(typed/def-alias Rectangle' '{:origin Point
+                              :diag Point
                               :angle Num})
 
 (ann width-rectangle' [Rectangle' -> Num])
