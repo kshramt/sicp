@@ -88,17 +88,17 @@
 (defn third-root
   [x]
   (letfn>
-   [improved-guess :- [Num -> Num]
-    (improved-guess [guess]
-                    (/ (+' (/ x (square guess)) (twice guess)) 3))
-    enough-precision? :- [Num -> Boolean]
-    (enough-precision? [guess]
-                       (< (abs (-' x (cube guess))) 0.0001))]
-   (loop> [x :- Num x
-           guess :- Num 1.0]
-          (if (enough-precision? guess)
-            guess
-            (recur x (improved-guess guess))))))
+    [improved-guess :- [Num -> Num]
+     (improved-guess [guess]
+                     (/ (+' (/ x (square guess)) (twice guess)) 3))
+     enough-precision? :- [Num -> Boolean]
+     (enough-precision? [guess]
+                        (< (abs (-' x (cube guess))) 0.0001))]
+    (loop> [x :- Num x
+            guess :- Num 1.0]
+      (if (enough-precision? guess)
+        guess
+        (recur x (improved-guess guess))))))
 
 (ann my-expt (Fn [Int Int -> Int]
                  [Int Int Int -> Int]
@@ -155,10 +155,10 @@
               (square-with-my-* [n]
                                 (my-* n n))]
 
-             (cond
-              (zero? n) 1
-              (odd? n) (my-* b (my-expt-with-my-* b (dec' n)))
-              :else (recur (square-with-my-* b) (half n)))))
+       (cond
+        (zero? n) 1
+        (odd? n) (my-* b (my-expt-with-my-* b (dec' n)))
+        :else (recur (square-with-my-* b) (half n)))))
 
   {:test #(do (are [b n result] (= (my-expt-with-my-* b n) result)
                    0 0 1
@@ -201,19 +201,19 @@
                              p :- Int p
                              q :- Int q
                              n :- Int n]
-                            (cond
-                             (= n 0) b
-                             (odd? n) (recur (+' (*' b q) (*' a (+' p q)))
-                                             (+' (*' b p) (*' a q))
-                                             p
-                                             q
-                                             (dec' n))
-                             :else (recur a
-                                          b
-                                          (+' (*' p p) (*' q q))
-                                          (+' (*' 2 p q) (*' q q))
-                                          (long (/ n 2))))))]
-          (fib-iter 1 0 0 1 n)))
+                       (cond
+                        (= n 0) b
+                        (odd? n) (recur (+' (*' b q) (*' a (+' p q)))
+                                        (+' (*' b p) (*' a q))
+                                        p
+                                        q
+                                        (dec' n))
+                        :else (recur a
+                                     b
+                                     (+' (*' p p) (*' q q))
+                                     (+' (*' 2 p q) (*' q q))
+                                     (long (/ n 2))))))]
+    (fib-iter 1 0 0 1 n)))
 
 (ann gcd [Int Int -> Int])
 (defn gcd
@@ -255,7 +255,7 @@
                           (divides? test-divisor n) test-divisor
                           :else (find-divisor n (inc' test-divisor))))]
 
-          (find-divisor n 2)))
+    (find-divisor n 2)))
 
 (ann prime? [Int -> Boolean])
 (defn prime?
@@ -334,7 +334,7 @@
            pi-next :- [Int -> Int]
            (pi-next [x]
                     (+' x 4))]
-          (sum' pi-term a pi-next b)))
+    (sum' pi-term a pi-next b)))
 
 (ann product' (Fn [[Num -> Num]
                    Num
@@ -407,7 +407,7 @@
            (pos-and-coprime?
             [i]
             (and (pos? i) (= 1 (gcd i b))))]
-          (filtered-accumulate' pos-and-coprime? *' 1 num-identity a inc' b)))
+    (filtered-accumulate' pos-and-coprime? *' 1 num-identity a inc' b)))
 
 (ann close-enough? (Fn [Num Num -> Boolean]
                        [Num Num Num -> Boolean]))
@@ -466,7 +466,7 @@
                    (if (close-enough? guess next tolerance)
                      next
                      (try_ next))))]
-          (try_ first-guess)))
+    (try_ first-guess)))
 
 (ann fixed-point' [[Num -> Num] Num -> Num])
 (defn fixed-point' [f first-guess]
@@ -477,7 +477,7 @@
                    (if (close-enough? guess next tolerance)
                      next
                      (recur next))))]
-          (try_ first-guess)))
+    (try_ first-guess)))
 
 (ann sqrt' [Num -> Num])
 (defn sqrt' [x]
@@ -529,7 +529,7 @@
                             (recur_ n d (inc' i) k)))
                      (/ (n i)
                         (d i))))]
-          (recur_ n d 1 k)))
+    (recur_ n d 1 k)))
 
 (ann cont-frac' [[Int -> Num]
                  [Int -> Num]
@@ -547,11 +547,11 @@
           i :- Int k
           k :- Int k
           ret :- Num 0]
-         (if (= i 0)
-           ret
-           (recur n d (dec' i) k (/ (n i)
-                                    (+' (d i)
-                                        ret))))))
+    (if (= i 0)
+      ret
+      (recur n d (dec' i) k (/ (n i)
+                               (+' (d i)
+                                   ret))))))
 
 (ann approx-e [Int -> Num])
 (defn approx-e
@@ -560,12 +560,12 @@
   {:pre [(>= k 1)]}
   (+' (cont-frac' (fn [_] 1)
                   (fn> [x :- Num]
-                       (if (= (mod x 3) 2)
-                         (*' 2
-                             (+' (/ (-' x 2)
-                                    3)
-                                 1))
-                         1))
+                    (if (= (mod x 3) 2)
+                      (*' 2
+                          (+' (/ (-' x 2)
+                                 3)
+                              1))
+                      1))
                   k)
       2))
 
@@ -691,7 +691,7 @@
            (basic [guess]
                   (/ x
                      (Math/pow (double guess) (double (dec' n)))))]
-          (fixed-point ((damp n) basic) 1)))
+    (fixed-point ((damp n) basic) 1)))
 
 (ann iterative-improve [[Num -> Boolean] [Num -> Num] -> [Num -> Num]])
 (defn iterative-improve
@@ -699,9 +699,9 @@
   [is-good? update]
   (fn [x]
     (loop> [guess :- Num 1]
-           (if (is-good? guess)
-             guess
-             (recur (update guess))))))
+      (if (is-good? guess)
+        guess
+        (recur (update guess))))))
 
 (ann sqrt'''''' [Num -> Num])
 (defn sqrt''''''
@@ -895,10 +895,10 @@
   (loop> [n :- Int (abs n)
           div :- Int (abs div)
           ret :- Int 0]
-         (cond
-          (zero? n) ret
-          (zero? (rem n div)) (recur (bigint (/ n div)) div (inc' ret))
-          :else ret)))
+    (cond
+     (zero? n) ret
+     (zero? (rem n div)) (recur (bigint (/ n div)) div (inc' ret))
+     :else ret)))
 
 (ann car-n [Int -> Int])
 (defn car-n [n]
@@ -1273,7 +1273,7 @@ Skip...
   [f coll]
   (reduce_ (fn> [x :- a
                  y :- (Seqable b)]
-                (cons (f x) y))
+             (cons (f x) y))
            []
            coll))
 
@@ -1513,13 +1513,13 @@ Skip...
                      #{[] [1] [2] [3] [1 2] [2 3] [1 3] [1 2 3]})))}
   [coll]
   (if-let [s (seq coll)]
-     (let [s1 (first s)
-           subs (subsets (rest s))]
-       (append_ subs
-                (map_ (fn> [sub :- (Seqable a)] ; XXX: anaphoric?
-                           (cons s1 sub))
-                      subs)))
-     [coll]))
+    (let [s1 (first s)
+          subs (subsets (rest s))]
+      (append_ subs
+               (map_ (fn> [sub :- (Seqable a)] ; XXX: anaphoric?
+                       (cons s1 sub))
+                     subs)))
+    [coll]))
 
 (ann accumulate (All [a b] (Fn [[a b -> b] b (Coll a) -> b]
                                [[a (Coll (U a b)) -> (Coll (U a b))] (Coll (U a b)) (Coll a) ; core.typed does not infer`b` = `(Coll (U a b))`
@@ -1588,7 +1588,7 @@ Skip...
   [f coll]
   (reduce_ (fn> [x :- a
                  y :- (Seqable b)]
-                (append_2_33 [(f x)] y))
+             (append_2_33 [(f x)] y))
            []
            coll))
 
@@ -1610,9 +1610,9 @@ Skip...
   [x coefficient-seqence]
   (accumulate (fn> [this-term :- Num
                     higher-terms :- Num]
-                   (+' this-term
-                       (*' x
-                           higher-terms)))
+                (+' this-term
+                    (*' x
+                        higher-terms)))
               0
               coefficient-seqence))
 
@@ -1623,10 +1623,10 @@ Skip...
   [tree]
   (accumulate (fn> [x :- Any
                     sum :- Int]
-                   (if (coll? x)
-                     (+' sum
-                         (count-leaves' x))
-                     (inc' sum)))
+                (if (coll? x)
+                  (+' sum
+                      (count-leaves' x))
+                  (inc' sum)))
               0
               tree))
 
@@ -1683,11 +1683,11 @@ Skip...
     m
     (accumulate (fn> [column :- (Coll a)
                       rows :- (Coll (Coll a))]
-                     (map (fn> [x :- a
-                                row :- (Coll a)]
-                               (cons x row))
-                          column
-                          rows))
+                  (map (fn> [x :- a
+                             row :- (Coll a)]
+                         (cons x row))
+                       column
+                       rows))
                 (repeat (count (first m)) [])
                 m))
   )
@@ -1704,9 +1704,9 @@ Skip...
   [m n]
   (let [cols (transpose n)]
     (map (fn> [row :- (Coll Num)]
-              (map (fn> [column :- (Coll Num)]
-                        (dot-product row column))
-                   cols))
+           (map (fn> [column :- (Coll Num)]
+                  (dot-product row column))
+                cols))
          m)))
 
 "
@@ -1759,44 +1759,44 @@ Skip...
 (ann prime-sum-pairs [Int -> (Seqable '[Int Int Int])])
 (defn prime-sum-pairs
   {:test #(do (is (= (prime-sum-pairs 3)
-                       [[1 2 3] [2 3 5]])))}
+                     [[1 2 3] [2 3 5]])))}
   [n]
   (map make-pair-sum
        (filter prime-sum?
                (flat-map (fn> [j :- Int]
-                              (map_ (fn> [i :- Int]
-                                        [i j])
-                                   (range_ 1 (dec j))))
+                           (map_ (fn> [i :- Int]
+                                   [i j])
+                                 (range_ 1 (dec j))))
                          (range_ 1 n)))))
 
 (ann permutations (All [a] [(Seqable a) -> (Seqable (Seqable a))]))
 (defn permutations
   {:test #(do (is (= (permutations [1 2])
-                       [[1 2] [2 1]])))}
+                     [[1 2] [2 1]])))}
   [coll]
   (if-let [set (seq coll)]
-      (flat-map (fn> [s1 :- a]
-                     (map (fn> [set-1 :- (Seqable a)] (cons s1 set-1))
-                          (permutations (remove (fn> [x :- a] (= x s1))
-                                                set))))
-                set)
-      [coll]))
+    (flat-map (fn> [s1 :- a]
+                (map (fn> [set-1 :- (Seqable a)] (cons s1 set-1))
+                     (permutations (remove (fn> [x :- a] (= x s1))
+                                           set))))
+              set)
+    [coll]))
 
 (ann unique-pairs [Int -> (Seqable '[Int Int])])
 (defn unique-pairs
   "Q. 2.40"
   [n]
   (flat-map (fn> [j :- Int]
-                 (map (fn> [i :- Int]
-                           [i j])
-                      (range 1 j)))
+              (map (fn> [i :- Int]
+                     [i j])
+                   (range 1 j)))
             (range 1 (inc n))))
 
 (ann prime-sum-pairs' [Int -> (Seqable '[Int Int Int])])
 (defn prime-sum-pairs'
   "Q. 2.40"
   {:test #(do (is (= (prime-sum-pairs' 3)
-                       [[1 2 3] [2 3 5]])))}
+                     [[1 2 3] [2 3 5]])))}
   [n]
   (map make-pair-sum
        (filter prime-sum? (unique-pairs n))))
@@ -1805,9 +1805,9 @@ Skip...
 (defn unique-triples
   [n]
   (flat-map (fn> [k :- Int]
-                 (map (fn> [[i j] :- '[Int Int]]
-                           [i j k])
-                      (unique-pairs (dec k))))
+              (map (fn> [[i j] :- '[Int Int]]
+                     [i j k])
+                   (unique-pairs (dec k))))
             (range 1 (inc n))))
 
 (ann sum_ (Fn [(Seqable Int) -> Int]
@@ -1819,11 +1819,11 @@ Skip...
 (defn filter-sum-triples
   "Q. 2.41"
   {:test #(do (is (= (filter-sum-triples 5 8)
-                       [[1 3 4]
-                        [1 2 5]])))}
+                     [[1 3 4]
+                      [1 2 5]])))}
   [n, s]
   (filter (fn> [triple :- '[Int Int Int]]
-               (= (sum_ triple) s))
+            (= (sum_ triple) s))
           (unique-triples n)))
 
 
