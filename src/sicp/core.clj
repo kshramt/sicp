@@ -2114,6 +2114,27 @@ n^n
                       (make-segment (make-vect 0.2 0.3) (make-vect 0.8 0.9))
                       (make-segment (make-vect 0.1 0.1) (make-vect 0.5 0.9))
                       (make-segment (make-vect 0.1 0.1) (make-vect 0.1 0.5))]))
+
+(ann flip-horiz [Painter -> Painter])
+(defn flip-horiz
+  "Q. 2.50"
+  [painter]
+  (transform-painter painter
+                     (make-vect 1.0 0.0)
+                     (make-vect 0.0 0.0)
+                     (make-vect 1.0 1.0)))
+
+(ann rotate180 [Painter -> Painter])
+(defn rotate180
+  "Q. 2.50"
+  [painter]
+  ((double_ rotate90) painter))
+
+(ann rotate270 [Painter -> Painter])
+(defn rotate270
+  "Q. 2.50"
+  [painter]
+  (rotate180 (rotate90 painter)))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
