@@ -2153,8 +2153,8 @@ n^n
         (b frame)
         (t frame)))))
 
-(ann below' [Painter -> Painter])
-(defn below' HERO
+(ann below' [Painter Painter -> Painter])
+(defn below'
     "Q. 2.51"
     [bottom top]
     (rotate90 (beside (rotate270 bottom)
