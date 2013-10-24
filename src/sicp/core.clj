@@ -2189,6 +2189,54 @@ n^n
     painter
     (let [smaller (up-split painter (dec n))]
       (below painter (beside smaller smaller)))))
+
+(ann corner-split [Painter Int -> Painter])
+(defn corner-split [painter n]
+  (if (zero? n)
+    painter
+    (let [up (up-split painter (dec n))
+          right (right-split painter (dec n))]
+      (let [top-left (beside up up)
+            bottom-right (below right right)
+            corner (corner-split painter (dec n))]
+        (beside (below painter top-left)
+                (below bottom-right corner))))))
+
+(ann square-of-four [[Painter -> Painter]
+                     [Painter -> Painter]
+                     [Painter -> Painter]
+                     [Painter -> Painter]
+                     -> [Painter -> Painter]])
+(defn square-of-four [tl tr bl br]
+  (fn> [painter :- Painter]
+    (let [top (beside (tl painter) (tr painter))
+          bottom (beside (bl painter) (br painter))]
+      (below bottom top))))
+
+(ann flipped-pairs' [Painter -> Painter])
+(defn flipped-pairs' [painter]
+  (let [combine4 (square-of-four identity flip-vert
+                                 identity flip-vert)]
+    (combine4 painter)))
+
+(ann square-limit' [Painter Int -> Painter])
+(defn square-limit' [painter n]
+  (let [combine4 (square-of-four flip-horiz identity
+                                 rotate180 flip-vert)]
+    (combine4 (corner-split painter n))))
+
+(ann split [[Painter Painter -> Painter] [Painter Painter -> Painter]
+            -> [Painter Int -> Painter]])
+(defn split
+  "Q. 2.45"
+  [p1 p2]
+  (letfn> [ret :- [Painter Int -> Painter]
+           (ret [painter n]
+                (if (zero? n)
+                  painter
+                  (let [smaller (ret painter (dec n))]
+                    (p1 painter (p2 smaller smaller)))))]
+    ret))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
