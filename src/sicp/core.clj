@@ -1839,6 +1839,60 @@ Skip...
                    coll2))
             coll1))
 
+(typed/def-alias QueenPosition '[Int Int])
+
+(ann queens [Int -> (Seqable (Seqable QueenPosition))])
+(defn queens
+  "Q. 2.42"
+  {:test #(do (is (= (queens 4)
+                     [[[3 4] [1 3] [4 2] [2 1]]
+                      [[2 4] [4 3] [1 2] [3 1]]])))}
+  [board-size]
+  (let [empty-board []]
+    (letfn> [safe? :- [(Seqable QueenPosition) -> Boolean]
+             (safe? [positions]
+                    (if-let [s (seq positions)]
+                      (let [[i1 j1] (first s)]
+                        (every? (fn> [[i2 j2] :- QueenPosition]
+                                  (not
+                                   (or
+                                    (= i1 i2)
+                                    (= j1 j2)
+                                    (= (abs (- i1 i2))
+                                       (abs (- j1 j2))))))
+                                (rest s)))
+                      true))
+
+             adjoin-position :- [Int Int (Seqable QueenPosition)
+                                 -> (Seqable QueenPosition)]
+             (adjoin-position [i j qs]
+                              (cons [i j] qs))
+
+             queen-cols :- [Int -> (Seqable (Seqable QueenPosition))]
+             (queen-cols [k]
+                         (if (zero? k)
+                           [empty-board]
+                           (filter
+                            safe?
+                            (flat-map
+                             (fn> [rest-of-queens :- (Seqable QueenPosition)]
+                               (map (fn> [new-row :- Int]
+                                      (adjoin-position new-row k rest-of-queens))
+                                    (range 1 (inc board-size))))
+                             (queen-cols (dec k))))))]
+      (queen-cols board-size))))
+
+"
+# Q. 2.43
+P_{k} = T_{k} + P_{k - 1}
+P_{n} = Σ_{k = 1}^{n} T_{k}
+
+Q_{k} = T_{k} + n*Q_{k - 1}
+Q_{n} = Σ_{k = 1}^{n} n^{n - k}*T_{k}
+
+n^n
+"
+
 (typed/def-alias Vector '[Num Num])
 
 (ann make-vect [Num Num -> Vector])
