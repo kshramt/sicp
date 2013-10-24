@@ -2159,6 +2159,36 @@ n^n
     [bottom top]
     (rotate90 (beside (rotate270 bottom)
                       (rotate270 top))))
+
+(ann wave2 Painter)
+(def wave2 (beside wave (flip-vert wave)))
+
+(ann wave4 Painter)
+(def wave4 (below wave2 wave2))
+
+(ann flipped-pairs [Painter -> Painter])
+(defn flipped-pairs [painter]
+  (let [painter2 (beside painter (flip-vert painter))]
+    (below painter2 painter2)))
+
+(ann wave4' Painter)
+(def wave4' (flipped-pairs wave))
+
+(ann right-split [Painter Int -> Painter])
+(defn right-split [painter n]
+  (if (zero? n)
+    painter
+    (let [smaller (right-split painter (dec n))]
+      (beside painter (below smaller smaller)))))
+
+(ann up-split [Painter Int -> Painter])
+(defn up-split
+  "Q. 2.44"
+  [painter n]
+  (if (zero? n)
+    painter
+    (let [smaller (up-split painter (dec n))]
+      (below painter (beside smaller smaller)))))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
