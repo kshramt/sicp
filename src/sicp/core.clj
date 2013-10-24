@@ -25,23 +25,7 @@
                                      [Num Num -> Num]))
 (ann ^:no-check clojure.core/mod (Fn [Int Int -> Int]
                                      [Num Num -> Num]))
-(ann ^:no-check clojure.core/+' (All [[a :< Num]]
-                                     (Fn [-> Long]
-                                         [a -> a]
-                                         [Int Int * -> Int]
-                                         [Num Num * -> Num])))
 ; `(All [[a :< Num]] [a -> a])` is not true since `(type (-' Long/MIN_VALUE))` is BigInt.
-(ann ^:no-check clojure.core/-' (Fn [Int * -> Int]
-                                    [Num * -> Num]))
-(ann ^:no-check clojure.core/*' (All [[a :< Num]]
-                                     (Fn [-> Long]
-                                         [a -> a]
-                                         [Int Int * -> Int]
-                                         [Num Num * -> Num])))
-(ann ^:no-check clojure.core/coll? [Any -> Boolean
-                                    :filters
-                                    {:then (is (typed/Coll Any) 0),
-                                     :else (! (typed/Coll Any) 0)}])
 
 (ann ^:no-check clojure.test/run-tests [(U clojure.lang.Namespace clojure.lang.Symbol) *
                                         -> '{:type clojure.lang.Keyword
