@@ -1983,6 +1983,35 @@ n^n
   [frame]
   (:edge2 frame))
 ; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
+
+(ann frame-coord-map [Frame -> [Vector -> Vector]])
+(defn frame-coord-map [frame]
+  (fn [v]
+    (add-vect (origin-frame frame)
+              (add-vect (scale-vect (xcor-vect v)
+                                    (edge1-frame frame))
+                        (scale-vect (ycor-vect v)
+                                    (edge2-frame frame))))))
+
+(typed/def-alias Segment '[Vector Vector])
+
+(ann make-segment [Vector Vector -> Segment])
+(defn make-segment
+  "Q. 2.48"
+  [start end]
+  [start end])
+
+(ann start-segment [Segment -> Vector])
+(defn start-segment
+  "Q. 2.48"
+  [[start _]]
+  start)
+
+(ann end-segment [Segment -> Vector])
+(defn end-segment
+  "Q. 2.48"
+  [[_ end]]
+  end)
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
