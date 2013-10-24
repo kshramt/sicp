@@ -3,7 +3,7 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec Coll NonEmptyColl Option Seqable NonEmptySeqable EmptySeqable] :as typed])
+            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec Coll NonEmptySeq NonEmptyColl Option Seqable NonEmptySeqable EmptySeqable] :as typed])
   (:import (clojure.lang ASeq LazySeq))
   (:gen-class))
 (set! *warn-on-reflection* false)
@@ -1087,35 +1087,34 @@ Skip...
 ```
 "
 
-(ann last-pair (All [a] [(NonEmptyColl a) -> (NonEmptyColl a)]))
+(ann last-pair (All [a] [(NonEmptySeqable a) -> (NonEmptySeqable a)]))
 (defn last-pair
   "Q. 2.17"
   [coll]
-  {:pre [(not (empty? coll))]}
-  (let [next_ (next coll)]
-    (if (empty? next_)
-      coll
-      (recur next_))))
+  {:pre [(seq coll)]}
+  (if-let [next_ (next coll)]
+    (recur next_)
+    coll))
 
-(ann last_ (All [a] [(NonEmptyColl a) -> a]))
+(ann last_ (All [a] [(NonEmptySeqable a) -> a]))
 (defn last_
   {:test #(do (is (= (last_ [1 2 3]) 3)))}
   [coll]
-  (let [rest_ (rest coll)]
-    (if (empty? rest_)
-      (first coll)
-      (recur rest_))))
+  (if-let [rest_ (seq (rest coll))]
+    (recur rest_)
+    (first coll)))
 
-(ann append (All [a b] [(Coll a) (Coll b) -> (Coll (U a b))]))
+(ann append (All [a b] [(Seqable a) (Seqable b) -> (LazySeq (U a b))]))
 (defn append
   {:test #(do (is (= (append [1 2] [3 4]) [1 2 3 4])))}
   [coll1 coll2]
-  (if (empty? coll1)
-    coll2
-    (cons (first coll1) (append (rest coll1) coll2))))
+  (lazy-seq
+   (if-let [s (seq coll1)]
+     (cons (first s) (append (rest s) coll2))
+     coll2)))
 
 (ann reduce_ (All [a b] (Fn [[a b -> b] b (Seqable a) -> b]
-                            ; core.typed does not infer `b` = `(Coll (U a b))`
+                            ; core.typed does not infer `b` = `(Seqable (U a b))`
                             [[a (Seqable (U a b))
                               -> (Seqable (U a b))]
                              (Seqable (U a b))
@@ -1137,7 +1136,7 @@ Skip...
     zero))
 
 (ann append_ (All [a b] [(Seqable a) (Seqable b)
-                         -> (Seqable (U a b))]))
+                         -> (LazySeq (U a b))]))
 
 (defn append_
   {:test #(do (is (= (append_ [1 2] [3 4]) [1 2 3 4]))
@@ -1145,27 +1144,28 @@ Skip...
               (is (= (append_ [1 2] []) [1 2]))
               (is (= (append_ [1 2] [[[3]]]) [1 2 [[3]]])))}
   [coll1 coll2]
-  (reduce_ cons coll2 coll1))
+  (lazy-seq
+   (reduce_ cons coll2 coll1)))
 
 (ann append_' (All [a b] [(Seqable a) (Seqable b)
-                          -> (U (ASeq (U a b))
-                                (Seqable b))]))
+                          -> (LazySeq (U a b))]))
 (defn append_'
   {:test #(do (is (= (append_' [1 2] [3 4]) [1 2 3 4])))}
   [coll1 coll2]
-  (if-let [s (seq coll1)]
-    (cons (first s)
-          (append_' (rest s) coll2))
-    coll2))
+  (lazy-seq
+   (if-let [s (seq coll1)]
+     (cons (first s)
+           (append_' (rest s) coll2))
+     coll2)))
 
-(ann reverse_ (All [a] [(Seqable a) -> (Seqable a)]))
+(ann reverse_ (All [a] [(Seqable a) -> (LazySeq a)]))
 (defn reverse_
   "Q. 2.18"
   {:test #(do (is (= (reverse_ [1 2 3]) [3 2 1])))}
   [coll]
   (if-let [s (seq coll)]
-    (append_ (reverse_ (rest s)) [(first s)])
-    coll))
+              (append_ (reverse_ (rest s)) [(first s)])
+              (lazy-seq coll)))
 
 (ann first-denomination [Int -> Int])
 (defn first-denomination [kinds-of-coins]
@@ -1198,19 +1198,20 @@ Skip...
 (ann uk-coins (NonEmptyColl Int))
 (def uk-coins [10000 5000 2000 1000 500 200 100 50])
 
-(ann first-denomination' [(Coll Int) -> Int])
+(ann first-denomination' [(Seqable Int) -> Int])
 (defn first-denomination' [coin-values]
   (bigint (first coin-values)))
 
-(ann except-first-denomination [(Coll Int) -> (Coll Int)])
+(ann except-first-denomination [(Seqable Int) -> (LazySeq Int)])
 (defn except-first-denomination [coin-values]
-  (rest coin-values))
+  (lazy-seq
+   (rest coin-values)))
 
-(ann no-more? [(Coll Int) -> Boolean])
+(ann no-more? [(Seqable Int) -> Boolean])
 (defn no-more? [coin-values]
   (empty? coin-values))
 
-(ann cc' [Int (Coll Int) -> Int])
+(ann cc' [Int (Seqable Int) -> Int])
 (defn cc'
   "Q. 2.19"
   {:test #(do (is (= (cc' 100 us-coins) 292)))}
@@ -1225,60 +1226,65 @@ Skip...
                  coin-values))))
 
 (ann filter_ (All [a] [[a -> Boolean] (Seqable a)
-                       -> (Seqable a)]))
+                       -> (LazySeq a)]))
 (defn filter_ [f coll]
-  (if-let [s (seq coll)]
-    (let [x (first s)
-          xs (rest s)]
-      (if (f x)
-        (cons x (filter_ f xs))
-        (recur f xs)))
-    coll))
+  (lazy-seq
+   (if-let [s (seq coll)]
+     (let [x (first s)
+           xs (rest s)]
+       (if (f x)
+         (cons x (filter_ f xs))
+         (filter_ f xs)))
+     coll)))
 
-(ann same-parity [Int Int * -> (Coll Int)])
+(ann same-parity [Int Int * -> (LazySeq Int)])
 (defn same-parity
   "2.20"
   {:test #(do (is (= (same-parity 1 2 3 4 5 6 7) [1 3 5 7]))
               (is (= (same-parity 2 3 4 5 6 7) [2 4 6])))}
   [n & more]
-  (if more
-    (cons n
-          (filter_ (if (even? n)
-                     even?
-                     odd?)
-                   more))
-    [n]))
+  (lazy-seq
+   (if more
+     (cons n
+           (filter_ (if (even? n)
+                      even?
+                      odd?)
+                    more))
+     [n])))
 
 
-(ann map_ (All [a b] [[a -> b] (Seqable a) -> (Seqable b)]))
+(ann map_ (All [a b] [[a -> b] (Seqable a) -> (LazySeq b)]))
 (defn map_
   "Q. 2.33-1"
   {:test #(do (is (= (map_ square [1 2 3]) [1 4 9])))}
   [f coll]
-  (reduce_ (fn> [x :- a
-                 y :- (Seqable b)]
-             (cons (f x) y))
-           []
-           coll))
+  (lazy-seq
+   (reduce_ (fn> [x :- a
+                  y :- (Seqable b)]
+              (cons (f x) y))
+            []
+            coll)))
 
-(ann map_' (All [a b] [[a -> b] (Option (Seqable a))
-                       -> (Option (Seqable b))]))
+(ann map_' (All [a b] [[a -> b] (Seqable a)
+                       -> (LazySeq b)]))
 (defn map_' [f coll]
-  (if-let [s (seq coll)]
-    (cons (f (first s))
-          (map_' f (rest s)))))
+  (lazy-seq
+   (if-let [s (seq coll)]
+     (cons (f (first s))
+           (map_' f (rest s))))))
 
-(ann square-list (Fn [(Coll Int) -> (Coll Int)]
-                     [(Coll Num) -> (Coll Num)]))
+(ann square-list (Fn [(Seqable Int) -> (LazySeq Int)]
+                     [(Seqable Num) -> (LazySeq Num)]))
 (defn square-list
   "Q. 2.21-1"
   [coll]
-  (if (empty? coll)
-    ()
-    (cons (square (first coll)) (square-list (rest coll)))))
+  (lazy-seq
+   (if-let [s (seq coll)]
+     (cons (square (first s)) (square-list (rest s)))
+     [])))
 
-(ann square-list' (Fn [(Coll Int) -> (Coll Int)]
-                      [(Coll Num) -> (Coll Num)]))
+(ann square-list' (Fn [(Seqable Int) -> (LazySeq Int)]
+                      [(Seqable Num) -> (LazySeq Num)]))
 (defn square-list'
   "Q. 2.21-2"
   [coll]
@@ -1302,18 +1308,19 @@ Skip...
 ((1 2 3) (4 5 6))
 "
 
-(ann deep-reverse [(Coll Any) -> (Coll Any)])
+(ann deep-reverse [(Seqable Any) -> (LazySeq Any)])
 (defn deep-reverse
   "Q. 2.27"
   {:test #(do (is (= (deep-reverse [[1 2] [3 4]]) [[4 3] [2 1]])))}
   [coll]
-  (if (empty? coll)
-    coll
-    (append (deep-reverse (rest coll))
-            [(let [x (first coll)]
-               (if (coll? x)
-                 (deep-reverse x)
-                 x))])))
+  (lazy-seq
+   (if-let [s (seq coll)]
+     (append (deep-reverse (rest coll))
+             [(let [x (first coll)]
+                (if (coll? x)
+                  (deep-reverse x)
+                  x))])
+     coll)))
 
 (typed/def-alias Tree (TFn [[a :variance :covariant]] (Rec [this] (typed/Coll (U a this)))))
 
@@ -1490,38 +1497,43 @@ Skip...
   a)
 
 (ann subsets (All [a] [(Seqable a)
-                       -> (Seqable (Seqable a))]))
+                       -> (LazySeq (LazySeq a))]))
 (defn subsets
   "Q. 2.32"
   {:test #(do (is (= (set (subsets [1 2 3]))
                      #{[] [1] [2] [3] [1 2] [2 3] [1 3] [1 2 3]})))}
   [coll]
-  (if-let [s (seq coll)]
-    (let [s1 (first s)
-          subs (subsets (rest s))]
-      (append_ subs
-               (map_ (fn> [sub :- (Seqable a)] ; XXX: anaphoric?
-                       (cons s1 sub))
-                     subs)))
-    [coll]))
+  (lazy-seq
+   (if-let [s (seq coll)]
+     (let [s1 (first s)
+           subs (subsets (rest s))]
+       (append_ subs
+                (map_ (fn> [sub :- (Seqable a)] ; XXX: anaphoric?
+                        (lazy-seq (cons s1 sub)))
+                      subs)))
+     [(lazy-seq coll)])))
 
-(ann accumulate (All [a b] (Fn [[a b -> b] b (Coll a) -> b]
-                               [[a (Coll (U a b)) -> (Coll (U a b))] (Coll (U a b)) (Coll a) ; core.typed does not infer`b` = `(Coll (U a b))`
-                                -> (Coll (U a b))])))
+(ann accumulate (All [a b] (Fn [[a b -> b] b (Seqable a) -> b]
+                               [[a (Seqable (U a b)) -> (LazySeq (U a b))] (LazySeq (U a b)) (Seqable a) ; core.typed does not infer`b` = `(Seqable (U a b))`
+                                -> (LazySeq (U a b))]
+                               [[a (LazySeq (U a b)) -> (LazySeq (U a b))] (LazySeq (U a b)) (Seqable a) ; core.typed does not infer`b` = `(LazySeq (U a b))`
+                                -> (LazySeq (U a b))])))
+
 (defn accumulate
   {:test #(do (is (= (accumulate +' 0 [1 2]) 3)))}
   [f zero coll]
-  (if (empty? coll)
-    zero
-    (f (first coll)
-       (accumulate f zero (rest coll)))))
+  (if-let [s (seq coll)]
+    (f (first s)
+       (accumulate f zero (rest s)))
+    zero))
 
-(ann enumerate-interval [Int Int -> (Coll Int)])
+(ann enumerate-interval [Int Int -> (LazySeq Int)])
 (defn enumerate-interval [low high]
-  (if (> low high)
-    []
-    (cons low (enumerate-interval (inc low)
-                                  high))))
+  (lazy-seq
+   (if (> low high)
+     []
+     (cons low (enumerate-interval (inc low)
+                                   high)))))
 
 (ann range_ [Int Int -> (LazySeq Int)])
 (defn range_ [low high]
@@ -1548,13 +1560,13 @@ Skip...
   (fn> [y :- b
         x :- a] (f x y)))
 
-(ann even-fib [Int -> (Seqable Int)])
+(ann even-fib [Int -> (LazySeq Int)])
 (defn even-fib [n]
-  (filter_ even?
-           (map_ fib
-                 (range_ 0 n))))
+  (->> (range_ 0 n)
+       (map_ fib)
+       (filter_ even?)))
 
-(ann append_2_33 (All [a b] [(Seqable a) (Seqable b) -> (Seqable (U a b))]))
+(ann append_2_33 (All [a b] [(Seqable a) (Seqable b) -> (LazySeq (U a b))]))
 
 (defn append_2_33
   "Q. 2.33-2"
@@ -1563,18 +1575,20 @@ Skip...
               (is (= (append_2_33 [1 2] []) [1 2]))
               (is (= (append_2_33 [1 2] [[[3]]]) [1 2 [[3]]])))}
   [coll1 coll2]
-  (reduce_ cons coll2 coll1))
+  (lazy-seq
+   (reduce_ cons coll2 coll1)))
 
-(ann map_2_33 (All [a b] [[a -> b] (Seqable a) -> (Seqable b)]))
+(ann map_2_33 (All [a b] [[a -> b] (Seqable a) -> (LazySeq b)]))
 (defn map_2_33
   "Q. 2.33-1"
   {:test #(do (is (= (map_2_33 square [1 2 3]) [1 4 9])))}
   [f coll]
-  (reduce_ (fn> [x :- a
-                 y :- (Seqable b)]
-             (append_2_33 [(f x)] y))
-           []
-           coll))
+  (lazy-seq
+   (reduce_ (fn> [x :- a
+                  y :- (Seqable b)]
+              (append_2_33 [(f x)] y))
+            []
+            coll)))
 
 (ann length_2_33 [(Seqable Any) -> Int])
 (defn length_2_33
@@ -1642,7 +1656,7 @@ Skip...
   (reduce_ +' 0 (map *' v w)))
 
 (ann matrix-*-vector [(Seqable (Seqable Num)) (Seqable Num)
-                      -> (Seqable Num)])
+                      -> (LazySeq Num)])
 (defn matrix-*-vector
   "Q. 3.27"
   {:test #(do (is (= (matrix-*-vector [[1 2]
@@ -1652,7 +1666,7 @@ Skip...
   (map_ (fn> [row :- (Seqable Num)] (dot-product row v))
         m))
 
-(ann transpose (All [a] [(Coll (Coll a)) -> (Coll (Coll a))]))
+(ann transpose (All [a] [(NonEmptySeqable (Seqable a)) -> (LazySeq (LazySeq a))]))
 (defn transpose
   "Q. 3.27"
   {:test #(do (is (= (transpose [[1 2]
@@ -1663,21 +1677,22 @@ Skip...
                      [[3]
                       [4]])))}
   [m]
-  (if (empty? m)
-    m
-    (accumulate (fn> [column :- (Coll a)
-                      rows :- (Coll (Coll a))]
-                  (map (fn> [x :- a
-                             row :- (Coll a)]
-                         (cons x row))
-                       column
-                       rows))
-                (repeat (count (first m)) [])
-                m))
-  )
+  (lazy-seq
+   (accumulate (fn> [column :- (Seqable a)
+                       rows :- (LazySeq (LazySeq a))]
+                   (lazy-seq
+                    (map (fn> [x :- a
+                               row :- (LazySeq a)]
+                           (lazy-seq (cons x row)))
+                         column
+                         rows)))
+                 (lazy-seq (repeat (count (first m))
+                                   (ann-form (lazy-seq [])
+                                             (LazySeq a))))
+                 m)))
 
-(ann matrix-*-matrix [(Coll (Coll Num)) (Coll (Coll Num))
-                      -> (Coll (Coll Num))])
+(ann matrix-*-matrix [(NonEmptySeqable (Seqable Num)) (NonEmptySeqable (Seqable Num))
+                      -> (LazySeq (LazySeq Num))])
 (defn matrix-*-matrix
   "Q. 3.27"
   {:test #(do (is (= (matrix-*-matrix [[1]
@@ -1687,8 +1702,8 @@ Skip...
                       [6 8]])))}
   [m n]
   (let [cols (transpose n)]
-    (map (fn> [row :- (Coll Num)]
-           (map (fn> [column :- (Coll Num)]
+    (map (fn> [row :- (Seqable Num)]
+           (map (fn> [column :- (Seqable Num)]
                   (dot-product row column))
                 cols))
          m)))
