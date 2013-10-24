@@ -1825,6 +1825,19 @@ Skip...
             (= (sum_ triple) s))
           (unique-triples n)))
 
+(ann combination2 (All [a b] [(Seqable a) (Seqable b) -> (Seqable '[a b])]))
+(defn combination2
+  {:test #(do (is (= (combination2 [1 2] [3 4])
+                     [[1 3]
+                      [1 4]
+                      [2 3]
+                      [2 4]])))}
+  [coll1 coll2]
+  (flat-map (fn> [x :- a]
+              (map (fn> [y :- b]
+                     [x y])
+                   coll2))
+            coll1))
 
 (typed/def-alias Vector '[Num Num])
 
