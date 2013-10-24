@@ -2012,6 +2012,108 @@ n^n
   "Q. 2.48"
   [[_ end]]
   end)
+
+(ann draw-line [Vector Vector -> nil])
+(defn draw-line [start end]
+  (println (xcor-vect start) (ycor-vect start))
+  (println (xcor-vect end) (ycor-vect end))
+  (println ">"))
+
+(typed/def-alias Painter [Frame -> nil])
+
+(ann segments->painter [(Seqable Segment) -> Painter])
+(defn segments->painter [segment-list]
+  (fn> [frame :- Frame]
+    (dorun
+     (map
+      (fn> [segment :- Segment]
+        (draw-line
+         ((frame-coord-map frame) (start-segment segment))
+         ((frame-coord-map frame) (end-segment segment))))
+      segment-list))))
+
+(ann transform-painter [Painter Vector Vector Vector -> Painter])
+(defn transform-painter [painter origin corner1 corner2]
+  (fn> [frame :- Frame]
+    (let [m (frame-coord-map frame)]
+      (let [new-origin (m origin)]
+        (painter
+         (make-frame new-origin
+                     (sub-vect (m corner1) new-origin)
+                     (sub-vect (m corner2) new-origin)))))))
+
+(ann flip-vert [Painter -> Painter])
+(defn flip-vert [painter]
+  (transform-painter painter
+                     (make-vect 0.0 1.0)
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 0.0)))
+
+(ann shrink-to-upper-right [Painter -> Painter])
+(defn shrink-to-upper-right [painter]
+  (transform-painter painter
+                     (make-vect 0.5 0.5)
+                     (make-vect 1.0 0.5)
+                     (make-vect 0.5 1.0)))
+
+(ann rotate90 [Painter -> Painter])
+(defn rotate90 [painter]
+  (transform-painter painter
+                     (make-vect 1.0 0.0)
+                     (make-vect 1.0 1.0)
+                     (make-vect 0.0 0.0)))
+
+(ann squash-inwards [Painter -> Painter])
+(defn squash-inwards [painter]
+  (transform-painter painter
+                     (make-vect 0.0 0.0)
+                     (make-vect 0.65 0.35)
+                     (make-vect 0.35 0.65)))
+
+(ann beside [Painter Painter -> Painter])
+(defn beside [left right]
+  (let [split-point (make-vect 0.5 0.0)]
+    (let [l (transform-painter left
+                               (make-vect 0.0 0.0)
+                               split-point
+                               (make-vect 0.0 1.0))
+          r (transform-painter right
+                               split-point
+                               (make-vect 1.0 0.0)
+                               (make-vect 0.5 1.0))]
+      (fn> [frame :- Frame]
+        (l frame)
+        (r frame)))))
+
+(ann outer-frame-painter Painter)
+(def outer-frame-painter
+  "Q. 2.49-a"
+  (segments->painter [(make-segment (make-vect 0.0 0.0) (make-vect 1.0 0.0))
+                      (make-segment (make-vect 1.0 0.0) (make-vect 1.0 1.0))
+                      (make-segment (make-vect 1.0 1.0) (make-vect 0.0 1.0))
+                      (make-segment (make-vect 0.0 0.0) (make-vect 0.0 0.0))]))
+
+(ann x-painter Painter)
+(def x-painter
+  "Q. 2.49-b"
+  (segments->painter [(make-segment (make-vect 0.0 0.0) (make-vect 1.0 1.0))
+                      (make-segment (make-vect 1.0 0.0) (make-vect 0.0 1.0))]))
+
+(ann diamond-painter Painter)
+(def diamond-painter
+  "Q. 2.49-c"
+  (segments->painter [(make-segment (make-vect 0.5 0.0) (make-vect 1.0 0.5))
+                      (make-segment (make-vect 1.0 0.5) (make-vect 0.5 1.0))
+                      (make-segment (make-vect 0.5 1.0) (make-vect 0.0 0.5))
+                      (make-segment (make-vect 0.0 0.5) (make-vect 0.0 0.0))]))
+
+(ann wave Painter)
+(def wave
+  "Q. 2.49-d"
+  (segments->painter [(make-segment (make-vect 0.1 0.1) (make-vect 0.2 0.3))
+                      (make-segment (make-vect 0.2 0.3) (make-vect 0.8 0.9))
+                      (make-segment (make-vect 0.1 0.1) (make-vect 0.5 0.9))
+                      (make-segment (make-vect 0.1 0.1) (make-vect 0.1 0.5))]))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
