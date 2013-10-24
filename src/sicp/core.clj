@@ -1680,12 +1680,11 @@ Skip...
   (lazy-seq
    (accumulate (fn> [column :- (Seqable a)
                        rows :- (LazySeq (LazySeq a))]
-                   (lazy-seq
-                    (map (fn> [x :- a
+                   (map (fn> [x :- a
                                row :- (LazySeq a)]
                            (lazy-seq (cons x row)))
                          column
-                         rows)))
+                         rows))
                  (lazy-seq (repeat (count (first m))
                                    (ann-form (lazy-seq [])
                                              (LazySeq a))))
