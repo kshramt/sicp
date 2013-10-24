@@ -2135,6 +2135,30 @@ n^n
   "Q. 2.50"
   [painter]
   (rotate180 (rotate90 painter)))
+
+(ann below [Painter Painter -> Painter])
+(defn below
+  "Q. 2.51"
+  [bottom top]
+  (let [split-point (make-vect 0.0 0.5)]
+    (let [b (transform-painter bottom
+                               (make-vect 0.0 0.0)
+                               (make-vect 1.0 0.0)
+                               split-point)
+          t (transform-painter top
+                               split-point
+                               (make-vect 1.0 0.5)
+                               (make-vect 0.0 1.0))]
+      (fn> [frame :- Frame]
+        (b frame)
+        (t frame)))))
+
+(ann below' [Painter -> Painter])
+(defn below' HERO
+    "Q. 2.51"
+    [bottom top]
+    (rotate90 (beside (rotate270 bottom)
+                      (rotate270 top))))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
