@@ -2095,13 +2095,23 @@ n^n
      (if (= (count head) n)
        (cons head (each-cons n (rest coll)))
        (rest [])))))
+
+(ann vects->segments [(Seqable Vector) -> (LazySeq Segment)])
+(defn vects->segments [vects]
+  (map (fn> [[start end] :- (LazySeq Vector)] ; dirty...
+         (make-segment (never-nil start) (never-nil end)))
+       (each-cons 2 vects)))
+
 (ann outer-frame-painter Painter)
 (def outer-frame-painter
   "Q. 2.49-a"
-  (segments->painter [(make-segment (make-vect 0.0 0.0) (make-vect 1.0 0.0))
-                      (make-segment (make-vect 1.0 0.0) (make-vect 1.0 1.0))
-                      (make-segment (make-vect 1.0 1.0) (make-vect 0.0 1.0))
-                      (make-segment (make-vect 0.0 0.0) (make-vect 0.0 0.0))]))
+  (-> [(make-vect 0.0 0.0)
+       (make-vect 1.0 0.0)
+       (make-vect 1.0 1.0)
+       (make-vect 0.0 1.0)
+       (make-vect 0.0 0.0)]
+      vects->segments
+      segments->painter))
 
 (ann x-painter Painter)
 (def x-painter
@@ -2112,10 +2122,13 @@ n^n
 (ann diamond-painter Painter)
 (def diamond-painter
   "Q. 2.49-c"
-  (segments->painter [(make-segment (make-vect 0.5 0.0) (make-vect 1.0 0.5))
-                      (make-segment (make-vect 1.0 0.5) (make-vect 0.5 1.0))
-                      (make-segment (make-vect 0.5 1.0) (make-vect 0.0 0.5))
-                      (make-segment (make-vect 0.0 0.5) (make-vect 0.0 0.0))]))
+  (-> [(make-vect 0.5 0.0)
+       (make-vect 1.0 0.5)
+       (make-vect 0.5 1.0)
+       (make-vect 0.0 0.5)
+       (make-vect 0.0 0.0)]
+      vects->segments
+      segments->painter))
 
 (ann wave Painter)
 (def wave
