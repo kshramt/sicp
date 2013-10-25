@@ -2085,6 +2085,16 @@ n^n
         (l frame)
         (r frame)))))
 
+(ann each-cons (All [a] [Int (Seqable a) -> (LazySeq (LazySeq a))]))
+(defn each-cons
+  {:test #(do (is (= (each-cons 2 [0 1 2 3]) [[0 1] [1 2] [2 3]])))}
+  [n coll]
+  {:pre [(>= n 0)]}
+  (lazy-seq
+   (let [head (take n coll)]
+     (if (= (count head) n)
+       (cons head (each-cons n (rest coll)))
+       (rest [])))))
 (ann outer-frame-painter Painter)
 (def outer-frame-painter
   "Q. 2.49-a"
