@@ -2090,11 +2090,14 @@ n^n
   {:test #(do (is (= (each-cons 2 [0 1 2 3]) [[0 1] [1 2] [2 3]])))}
   [n coll]
   {:pre [(>= n 0)]}
-  (lazy-seq
-   (let [head (take n coll)]
-     (if (= (count head) n)
-       (cons head (each-cons n (rest coll)))
-       (rest [])))))
+  (letfn> [this :- [(Seqable a) -> (LazySeq (LazySeq a))]
+           (this [coll]
+                 (lazy-seq
+                  (let [head (take n coll)]
+                    (if (= (count head) n)
+                      (cons head (this (rest coll)))
+                      (rest [])))))]
+    (this coll)))
 
 (ann vects->segments [(Seqable Vector) -> (LazySeq Segment)])
 (defn vects->segments [vects]
