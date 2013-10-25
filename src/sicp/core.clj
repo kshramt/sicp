@@ -3,7 +3,7 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec Coll NonEmptySeq NonEmptyColl Option Seqable NonEmptySeqable EmptySeqable] :as typed])
+            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec Coll NonEmptySeq NonEmptyColl Option Seqable NonEmptySeqable EmptySeqable NonEmptyLazySeq] :as typed])
   (:import (clojure.lang ASeq LazySeq))
   (:gen-class))
 (set! *warn-on-reflection* false)
@@ -1492,9 +1492,9 @@ Skip...
 )
 
 (ann never-nil (All [a] [(Option a) -> a]))
-(defn never-nil [a]
-  (assert (not (nil? a)))
-  a)
+(defn never-nil [x]
+  (assert (not (nil? x)))
+  x)
 
 (ann subsets (All [a] [(Seqable a)
                        -> (LazySeq (LazySeq a))]))
@@ -1981,7 +1981,6 @@ n^n
   "Q. 2.47"
   [frame]
   (:edge2 frame))
-; (clojure.core.typed/check-ns 'sicp.core)(clojure.test/run-tests 'sicp.core)
 
 (ann frame-coord-map [Frame -> [Vector -> Vector]])
 (defn frame-coord-map [frame]
