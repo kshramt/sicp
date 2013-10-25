@@ -2013,7 +2013,9 @@ n^n
   end)
 
 (ann draw-line [Vector Vector -> nil])
-(defn draw-line [start end]
+(defn draw-line
+  "GMT psxy -JX15c -R0/1/0/1 -m -P < output_of_draw_line.xy >| fig.ps"
+  [start end]
   (println (xcor-vect start) (ycor-vect start))
   (println (xcor-vect end) (ycor-vect end))
   (println ">"))
