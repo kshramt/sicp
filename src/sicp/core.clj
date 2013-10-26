@@ -2101,8 +2101,9 @@ n^n
 
 (ann vects->segments [(Seqable Vector) -> (LazySeq Segment)])
 (defn vects->segments [vects]
-  (map (fn> [[start end] :- (LazySeq Vector)] ; dirty...
-         (make-segment (never-nil start) (never-nil end)))
+  (map (fn> [[start end] :- (LazySeq Vector)]
+         {:pre [(not (nil? start)) (not (nil? end))]}
+         (make-segment start end))
        (each-cons 2 vects)))
 
 (ann outer-frame-painter Painter)
