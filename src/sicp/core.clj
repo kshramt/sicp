@@ -2096,7 +2096,7 @@ n^n
                   (let [head (take n coll)]
                     (if (= (count head) n)
                       (cons head (this (rest coll)))
-                      (rest [])))))]
+                      (lazy-seq [])))))]
     (this coll)))
 
 (ann vects->segments [(Seqable Vector) -> (LazySeq Segment)])
