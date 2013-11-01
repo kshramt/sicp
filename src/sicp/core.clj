@@ -2130,7 +2130,7 @@ n^n
        (make-vect 1.0 0.5)
        (make-vect 0.5 1.0)
        (make-vect 0.0 0.5)
-       (make-vect 0.0 0.0)]
+       (make-vect 0.5 0.0)]
       vects->segments
       segments->painter))
 
