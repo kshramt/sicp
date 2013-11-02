@@ -2431,6 +2431,44 @@ n^n
    :else (throw (Exception. (str "Unknown expression type: " exp)))))
 
 )
+
+(ann element-of-set? [Any (Seqable Any) -> Boolean])
+(defn element-of-set? [x set]
+  (cond
+   (empty? set) false
+   (= x (first set)) true
+   :eles (element-of-set? x (rest set))))
+
+(ann adjoin-set (All [a b] [a (Seqable b) -> (LazySeq (U a b))]))
+(defn adjoin-set [x set]
+  (lazy-seq
+   (if (element-of-set? x set)
+     set
+     (cons x set))))
+
+(ann intersection-set (All [a] [(Seqable a) (Seqable a) -> (LazySeq a)]))
+(defn intersection-set [set1 set2]
+  (lazy-seq
+   (if-let [set1' (seq set1)] ; tweak for a type inference
+     (cond
+      (empty? set2) []
+      (element-of-set? (first set1') set2) (cons (first set1')
+                                                 (intersection-set (rest set1') set2))
+      :else (intersection-set (rest set1') set2))
+     [])))
+
+(ann union-set (All [a b] [(Seqable a) (Seqable b) -> (LazySeq (U a b))]))
+(defn union-set
+  "Q. 2.59"
+  {:test #(do (is (= (union-set [1 2 3] [3 4 5]) [1 2 3 4 5])))}
+  [set1 set2]
+  (lazy-seq
+   (if-let [set1' (seq set1)]
+     (let [head1 (first set1')]
+       (if (element-of-set? head1 set2)
+         (union-set (rest set1') set2)
+         (adjoin-set head1 (union-set (rest set1') set2))))
+     set2)))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
