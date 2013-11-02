@@ -2342,6 +2342,95 @@ n^n
 )
 
 "Q. 2.55 (car ''abracadabra) = (car (quote (quote abracadabra))) = quote"
+
+(ann variable? [Any -> boolean :filters {:then (is Symbol 0)
+                                         :else (! Symbol 0)}])
+(def variable? symbol?)
+
+(ann same-variable? [Any Any -> Boolean])
+(defn same-variable? [x y]
+  (and (variable? x) (variable? y) (= x y)))
+
+(ann =number? [Any Any -> Boolean])
+(defn =number? [exp num]
+  (and (number? exp) (= exp num)))
+
+(typed/tc-ignore
+
+(defn make-sum
+  "Q. 2.57"
+  {:test #(do (is (make-sum 'x 'y 'z) '[+ [+ x y] z]))}
+  ([x y]
+     (cond
+      (=number? x 0) y
+      (=number? y 0) x
+      (and (number? x) (number? y)) (+ x y)
+      :else ['+ x y]))
+  ([x y & more]
+     (reduce make-sum (make-sum x y) more)))
+
+(defn sum? [x]
+  (and (sequential? x) (>= (count x) 1) (= (first x) '+)))
+
+(def addend second)
+
+(defn augend [x]
+  (nth x 2))
+
+(defn make-product
+  "Q. 2.57"
+  {:test #(do (is (make-product 'x 'y 'z) '[* [* x y] z]))}
+  ([x y]
+     (cond
+      (or (=number? x 0) (=number? y 0)) 0
+      (=number? x 1) y
+      (=number? y 1) x
+      (and (number? x) (number? y)) (* x y)
+      :else ['* x y]))
+  ([x y & more]
+     (reduce make-product (make-product x y) more)))
+
+(defn product? [x]
+  (and (sequential? x) (= (first x) '*)))
+
+(def multiplier second)
+
+(defn multiplicand [x]
+  (nth x 2))
+
+(defn make-exponentiation [base exponent]
+  (cond
+   (=number? exponent 0) 1
+   (=number? exponent 1) base
+   (and (number? base) (number? exponent)) (clojure.math.numeric-tower/expt base exponent)
+   :else ['** base exponent]))
+
+(defn exponentiation? [x]
+  (and (sequential? x) (= (first x) '**)))
+
+(def base second)
+
+(defn exponent [x]
+  (nth x 2))
+
+(defn deriv
+  "Q. 2.56"
+  {:test #(do (is (deriv '[** x y] 'x) '[* y [** x [+ y -1]]]))}
+  [exp var]
+  (cond
+   (number? exp) 0
+   (variable? exp) (if (same-variable? exp var) 1 0)
+   (sum? exp) (make-sum (deriv (addend exp) var) (deriv (augend exp) var))
+   (product? exp) (make-sum
+                   (make-product (multiplier exp) (deriv (multiplicand exp) var))
+                   (make-product (deriv (multiplier exp) var) (multiplicand exp)))
+   (exponentiation? exp) (make-product (exponent exp)
+                                       (make-exponentiation (base exp)
+                                                            (make-sum (exponent exp) -1))
+                                       (deriv (base exp) var))
+   :else (throw (Exception. (str "Unknown expression type: " exp)))))
+
+)
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
