@@ -2319,6 +2319,27 @@ n^n
        (memq item (rest s))))))
 
 "Q. 2.53 skip"
+
+(typed/tc-ignore
+(ann equal? (All [a b] [a b -> Boolean]))
+(defn equal?
+  "Q. 2.54"
+  {:test #(do (is (equal? [1 [2 [3] 4]] [1 [2 [3] 4]]))
+              (is (not (equal? [1 [2 [3] 4]] [1 [2 [5] 4]]))))}
+  [x y]
+  (let [is-x-seq (sequential? x)
+        is-y-seq (sequential? y)]
+    (cond
+     (and is-x-seq is-y-seq) (let [has-x-item (seq x)
+                                   has-y-item (seq y)]
+                               (cond
+                                (and has-x-item has-y-item) (and (= (first x) (first y))
+                                                                 (equal? (rest x) (rest y)))
+                                (and (not has-x-item) (not has-y-item)) true
+                                :else false))
+     (and (not is-x-seq) (not is-y-seq)) (= x y)
+     :else false)))
+)
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
