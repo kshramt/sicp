@@ -568,8 +568,8 @@
 (ann dx double)
 (def dx 0.00001)
 
-(ann deriv [[Num -> Num] -> [Num -> Num]])
-(defn deriv [f]
+(ann deriv' [[Num -> Num] -> [Num -> Num]])
+(defn deriv' [f]
   (fn [x] (/ (-' (f (+' x dx)) (f (-' x dx)))
              (twice dx))))
 
@@ -577,7 +577,7 @@
 (defn newton-transform [f]
   (fn [x] (-' x
               (/ (f x)
-                 ((deriv f) x)))))
+                 ((deriv' f) x)))))
 
 (ann newton-method [[Num -> Num] Num -> Num])
 (defn newton-method [f guess]
