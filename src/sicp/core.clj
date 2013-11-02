@@ -33,6 +33,9 @@
                                      [Num Num -> Num]))
 (ann ^:no-check clojure.core/mod (Fn [Int Int -> Int]
                                      [Num Num -> Num]))
+(ann ^:no-check clojure.core/sequential? [Any -> Boolean
+                                          :filters {:then (is (Seqable Any) 0)
+                                                    :else (! (Seqable Any) 0)}])
 
 (ann ^:no-check clojure.test/run-tests [(U clojure.lang.Namespace Symbol) *
                                         -> '{:type clojure.lang.Keyword
