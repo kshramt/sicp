@@ -2469,6 +2469,17 @@ n^n
          (union-set (rest set1') set2)
          (adjoin-set head1 (union-set (rest set1') set2))))
      set2)))
+
+(ann fizzbuzz (LazySeq (U String Int)))
+(def fizzbuzz
+  (map (fn> [n :- Int] (let [is-fizz (zero? (mod n 3))
+                             is-buzz (zero? (mod n 5))]
+                         (cond
+                          (and is-fizz is-buzz) "FizzBuzz"
+                          is-fizz "Fizz"
+                          is-buzz "Buzz"
+                          :else n)))
+       (range 1 (Float/POSITIVE_INFINITY))))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
