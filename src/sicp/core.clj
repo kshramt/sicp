@@ -2139,6 +2139,18 @@ n^n
                       (make-segment (make-vect 0.1 0.1) (make-vect 0.5 0.9))
                       (make-segment (make-vect 0.1 0.1) (make-vect 0.1 0.5))]))
 
+(ann merge-painter [Painter Painter -> Painter])
+(defn merge-painter [p1 p2]
+  (fn> [frame :- Frame]
+    (p1 frame)
+    (p2 frame)))
+
+(ann wave' Painter)
+(def wave'
+  "Q. 2.52-a"
+  (merge-painter wave
+                 (segments->painter [(make-segment (make-vect 0.1 0.5) (make-vect 0.9 0.5))])))
+
 (ann flip-horiz [Painter -> Painter])
 (defn flip-horiz
   "Q. 2.50"
@@ -2226,6 +2238,18 @@ n^n
         (beside (below painter top-left)
                 (below bottom-right corner))))))
 
+(ann corner-split' [Painter Int -> Painter])
+(defn corner-split'
+  "Q. 2.52-b"
+  [painter n]
+  (if (zero? n)
+    painter
+    (let [top-left (up-split painter (dec n))
+          bottom-right (right-split painter (dec n))
+          corner (corner-split' painter (dec n))]
+      (beside (below painter top-left)
+              (below bottom-right corner)))))
+
 (ann square-of-four [[Painter -> Painter]
                      [Painter -> Painter]
                      [Painter -> Painter]
@@ -2247,6 +2271,14 @@ n^n
 (defn square-limit [painter n]
   (let [combine4 (square-of-four flip-horiz identity
                                  rotate180 flip-vert)]
+    (combine4 (corner-split painter n))))
+
+(ann square-limit' [Painter Int -> Painter])
+(defn square-limit'
+  "Q. 2.52-c"
+  [painter n]
+  (let [combine4 (square-of-four identity flip-horiz
+                                 flip-vert rotate180)]
     (combine4 (corner-split painter n))))
 
 (ann split [[Painter Painter -> Painter] [Painter Painter -> Painter]
