@@ -2355,6 +2355,19 @@ n^n
 (defn =number? [exp num]
   (and (number? exp) (= exp num)))
 
+(ann index [Any (Seqable Any) -> (Option Int)])
+(defn index
+  {:test #(do (is (= (index 1 [2 3]) nil))
+              (is (= (index 3 [1 2 3]) 2)))}
+  [x coll]
+  (loop> [x :- Any x
+            s :- (Seqable Any) coll
+            i :- Int 0]
+      (if-let [s (seq s)]
+        (if (= (first s) x)
+          i
+          (recur x (rest s) (inc i))))))
+
 (typed/tc-ignore
 
 (defn make-sum
@@ -2369,13 +2382,60 @@ n^n
   ([x y & more]
      (reduce make-sum (make-sum x y) more)))
 
+(defn make-sum'
+  "Q. 2.58-a"
+  [x y]
+  (cond
+   (=number? x 0) y
+   (=number? y 0) x
+   (and (number? x) (number? y)) (+ x y)
+   :else [x '+ y]))
+
 (defn sum? [x]
-  (and (sequential? x) (>= (count x) 1) (= (first x) '+)))
+  (and (sequential? x) (>= (count x) 3) (= (first x) '+)))
+
+(defn sum?'
+  "Q. 2.58-a"
+  [x]
+  (and (sequential? x) (>= (count x) 3) (= (second x) '+)))
+
+(defn sum?''
+  "Q. 2.58-b"
+  [x]
+  (if (sequential? x)
+    (let [n-x (count x)]
+      (cond
+       (>= n-x 3) (index '+ x)
+       (= n-x 1) true
+       :else false))
+    false))
 
 (def addend second)
 
+; Q. 2.58-a
+(def addend' first)
+
+(defn addend''
+  "Q. 2.58-b"
+  [x]
+  (if (>= (count x) 3)
+    (take (index '+ x) x)
+    (first x)))
+
 (defn augend [x]
   (nth x 2))
+
+(defn augend'
+  "Q. 2.58-a"
+  [x]
+  (nth x 2))
+
+(defn augend''
+  "Q. 2.58-b"
+  [x]
+  (if (>= (count x) 3)
+    (drop (inc (index '+ x)) x)
+    0))
 
 (defn make-product
   "Q. 2.57"
@@ -2390,13 +2450,41 @@ n^n
   ([x y & more]
      (reduce make-product (make-product x y) more)))
 
+(defn make-product'
+  "Q. 2.58-a"
+  [x y]
+  (cond
+   (or (=number? x 0) (=number? y 0)) 0
+   (=number? x 1) y
+   (=number? y 1) x
+   (and (number? x) (number? y)) (* x y)
+   :else [x '* y]))
+
 (defn product? [x]
-  (and (sequential? x) (= (first x) '*)))
+  (and (sequential? x) (>= (count x) 3) (= (first x) '*)))
+
+(defn product?'
+  "Q. 2.58-a"
+  [x]
+  (and (sequential? x) (>= (count x) 3) (= (second x) '*)))
 
 (def multiplier second)
 
+; Q. 2.58-a
+(def multiplier' first)
+
 (defn multiplicand [x]
   (nth x 2))
+
+(defn multiplicand'
+  "Q. 2.58-a"
+  [x]
+  (nth x 2))
+
+(defn multiplicand''
+  "Q. 2.58-b"
+  [x]
+  (drop 2 x))
 
 (defn make-exponentiation [base exponent]
   (cond
@@ -2428,6 +2516,33 @@ n^n
                                        (make-exponentiation (base exp)
                                                             (make-sum (exponent exp) -1))
                                        (deriv (base exp) var))
+   :else (throw (Exception. (str "Unknown expression type: " exp)))))
+
+(defn deriv'
+  "Q. 2.58-a"
+  {:test #(do (is (deriv' '[x * [y + x]] 'x) '[[y + x] + x]))}
+  [exp var]
+  (cond
+   (number? exp) 0
+   (variable? exp) (if (same-variable? exp var) 1 0)
+   (sum?' exp) (make-sum' (deriv' (addend' exp) var) (deriv' (augend' exp) var))
+   (product?' exp) (make-sum'
+                    (make-product' (multiplier' exp) (deriv' (multiplicand' exp) var))
+                    (make-product' (deriv' (multiplier' exp) var) (multiplicand' exp)))
+   :else (throw (Exception. (str "Unknown expression type: " exp)))))
+
+(defn deriv''
+  "Q. 2.58-b"
+  {:test #(do (is (= (deriv'' '[x * [y + x]] 'x) '[x + [[y + x]]]))
+              (is (= (deriv'' '[x * y + x], 'x) '[[y] + 1])))}
+  [exp var]
+  (cond
+   (number? exp) 0
+   (variable? exp) (if (same-variable? exp var) 1 0)
+   (sum?'' exp) (make-sum' (deriv'' (addend'' exp) var) (deriv'' (augend'' exp) var))
+   (product?' exp) (make-sum'
+                    (make-product' (multiplier' exp) (deriv'' (multiplicand'' exp) var))
+                    (make-product' (deriv'' (multiplier' exp) var) (multiplicand'' exp)))
    :else (throw (Exception. (str "Unknown expression type: " exp)))))
 
 ) ; tc-ignore
