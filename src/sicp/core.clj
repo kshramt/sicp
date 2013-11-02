@@ -1499,7 +1499,7 @@ Skip...
                  (tree-map f x)
                  (f x)))
        coll))
-)
+) ; tc-ignore
 
 (ann never-nil (All [a] [(Option a) -> a]))
 (defn never-nil [x]
@@ -1562,7 +1562,7 @@ Skip...
               (map_ square
                     (filter_ odd?
                              (fringe tree)))))
-)
+) ; tc-ignore
 
 (ann flip (All [a b c] [[a b -> c]
                         -> [b a -> c]]))
@@ -1656,7 +1656,7 @@ Skip...
       []
       (cons (accumulate op init (map_ first colls))
         (accumulate-n op init (map_ rest colls))))))
-)
+) ; tc-ignore
 
 (ann dot-product (Fn [(Seqable Int) (Seqable Int) -> Int]
                      [(Seqable Num) (Seqable Num) -> Num]))
@@ -2339,7 +2339,7 @@ n^n
                                 :else false))
      (and (not is-x-seq) (not is-y-seq)) (= x y)
      :else false)))
-)
+) ; tc-ignore
 
 "Q. 2.55 (car ''abracadabra) = (car (quote (quote abracadabra))) = quote"
 
@@ -2430,7 +2430,7 @@ n^n
                                        (deriv (base exp) var))
    :else (throw (Exception. (str "Unknown expression type: " exp)))))
 
-)
+) ; tc-ignore
 
 (ann element-of-set? [Any (Seqable Any) -> Boolean])
 (defn element-of-set? [x set]
@@ -2480,6 +2480,7 @@ n^n
                           is-buzz "Buzz"
                           :else n)))
        (range 1 (Float/POSITIVE_INFINITY))))
+
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
