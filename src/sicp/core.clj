@@ -2309,6 +2309,16 @@ n^n
 
 (ann up-split' [Painter Int -> Painter])
 (def up-split' (split below beside))
+
+(ann memq (All [a b] [a (Seqable b) -> (LazySeq b)]))
+(defn memq [item coll]
+  (lazy-seq
+   (if-let [s (seq coll)]
+     (if (= item (first s))
+       s
+       (memq item (rest s))))))
+
+"Q. 2.53 skip"
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
