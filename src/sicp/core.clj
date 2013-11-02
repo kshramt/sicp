@@ -2293,6 +2293,12 @@ n^n
                   (let [smaller (ret painter (dec n))]
                     (p1 painter (p2 smaller smaller)))))]
     ret))
+
+(ann right-split' [Painter Int -> Painter])
+(def right-split' (split beside below))
+
+(ann up-split' [Painter Int -> Painter])
+(def up-split' (split below beside))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
