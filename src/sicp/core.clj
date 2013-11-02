@@ -2340,6 +2340,8 @@ n^n
      (and (not is-x-seq) (not is-y-seq)) (= x y)
      :else false)))
 )
+
+"Q. 2.55 (car ''abracadabra) = (car (quote (quote abracadabra))) = quote"
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
