@@ -3,7 +3,7 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> Vec Coll NonEmptySeq NonEmptyColl Option Seqable NonEmptySeqable EmptySeqable NonEmptyLazySeq] :as typed])
+            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> doseq> Vec Coll NonEmptySeq NonEmptyColl Option Seqable NonEmptySeqable EmptySeqable NonEmptyLazySeq] :as typed])
   (:import (clojure.lang ASeq LazySeq))
   (:gen-class))
 (set! *warn-on-reflection* false)
@@ -2024,13 +2024,10 @@ n^n
 (ann segments->painter [(Seqable Segment) -> Painter])
 (defn segments->painter [segment-list]
   (fn> [frame :- Frame]
-    (dorun
-     (map
-      (fn> [segment :- Segment]
-        (draw-line
+    (doseq> [segment :- Segment segment-list]
+      (draw-line
          ((frame-coord-map frame) (start-segment segment))
-         ((frame-coord-map frame) (end-segment segment))))
-      segment-list))))
+         ((frame-coord-map frame) (end-segment segment))))))
 
 (ann transform-painter [Painter Vector Vector Vector -> Painter])
 (defn transform-painter [painter origin corner1 corner2]
