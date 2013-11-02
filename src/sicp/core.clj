@@ -3,7 +3,15 @@
             [clojure.pprint]
             [clojure.math.numeric-tower]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann Int Num letfn> loop> fn> doseq> Vec Coll NonEmptySeq NonEmptyColl Option Seqable NonEmptySeqable EmptySeqable NonEmptyLazySeq] :as typed])
+            [clojure.core.typed :refer [ann-form ann letfn> loop> fn> doseq>
+                                        Int Num
+                                        Symbol
+                                        Option
+                                        Vec
+                                        Coll NonEmptyColl
+                                        NonEmptySeq
+                                        Seqable EmptySeqable NonEmptySeqable
+                                        NonEmptyLazySeq] :as typed])
   (:import (clojure.lang ASeq LazySeq))
   (:gen-class))
 (set! *warn-on-reflection* false)
@@ -25,9 +33,8 @@
                                      [Num Num -> Num]))
 (ann ^:no-check clojure.core/mod (Fn [Int Int -> Int]
                                      [Num Num -> Num]))
-; `(All [[a :< Num]] [a -> a])` is not true since `(type (-' Long/MIN_VALUE))` is BigInt.
 
-(ann ^:no-check clojure.test/run-tests [(U clojure.lang.Namespace clojure.lang.Symbol) *
+(ann ^:no-check clojure.test/run-tests [(U clojure.lang.Namespace Symbol) *
                                         -> '{:type clojure.lang.Keyword
                                              :pass Int
                                              :test Int
