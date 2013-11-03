@@ -1691,14 +1691,14 @@ Skip...
    (accumulate (fn> [column :- (Seqable a)
                        rows :- (LazySeq (LazySeq a))]
                    (map (fn> [x :- a
-                               row :- (LazySeq a)]
-                           (lazy-seq (cons x row)))
-                         column
-                         rows))
-                 (lazy-seq (repeat (count (first m))
-                                   (ann-form (lazy-seq [])
-                                             (LazySeq a))))
-                 m)))
+                              row :- (LazySeq a)]
+                          (lazy-seq (cons x row)))
+                        column
+                        rows))
+               (lazy-seq (repeat (count (first m))
+                                 (ann-form (lazy-seq [])
+                                           (LazySeq a))))
+               m)))
 
 (ann matrix-*-matrix [(NonEmptySeqable (Seqable Num)) (NonEmptySeqable (Seqable Num))
                       -> (LazySeq (LazySeq Num))])
