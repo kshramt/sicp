@@ -2361,12 +2361,12 @@ n^n
               (is (= (index 3 [1 2 3]) 2)))}
   [x coll]
   (loop> [x :- Any x
-            s :- (Seqable Any) coll
-            i :- Int 0]
-      (if-let [s (seq s)]
-        (if (= (first s) x)
-          i
-          (recur x (rest s) (inc i))))))
+          s :- (Seqable Any) coll
+          i :- Int 0]
+    (if-let [s (seq s)]
+      (if (= (first s) x)
+        i
+        (recur x (rest s) (inc i))))))
 
 (typed/tc-ignore
 
