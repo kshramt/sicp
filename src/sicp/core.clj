@@ -2621,11 +2621,12 @@ n^n
 
 (ann element-of-ordered-set? [Num (Seqable Num) -> Boolean])
 (defn element-of-ordered-set? [x set]
-  (cond
-   (empty? set) false
-   (= x (first set)) true
-   (< x (first set)) false
-   :eles (element-of-ordered-set? x (rest set))))
+  (if-let [set (seq set)]
+    (cond
+     (= x (first set)) true
+     (< x (first set)) false
+     :eles (element-of-ordered-set? x (rest set)))
+    false))
 
 (defmacro pef
   "print-env-form"
@@ -2660,13 +2661,14 @@ n^n
   {:test #(do (is (= (adjoin-ordered-set 2 [1 3]) [1 2 3])))}
   [x set]
   (lazy-seq
-   (cond
-    (empty? set) [x]
-    (< x (first set)) (cons x set)
-    (> x (first set)) (cons (first set)
-                            (adjoin-ordered-set x
-                                                (rest set)))
-    :eles set)))
+   (if-let [set (seq set)]
+     (cond
+      (< x (first set)) (cons x set)
+      (> x (first set)) (cons (first set)
+                              (adjoin-ordered-set x
+                                                  (rest set)))
+      :eles set)
+     [x])))
 
 #_(ann union-ordered-set (All [[a :< Num] [b :< Num]] [(Seqable a) (Seqable b) -> (LazySeq (U a b))]))
 (ann union-ordered-set [(Seqable Num) (Seqable Num) -> (LazySeq Num)])
