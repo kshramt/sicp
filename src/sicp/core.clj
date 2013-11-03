@@ -2585,6 +2585,29 @@ n^n
          (adjoin-set head1 (union-set (rest set1') set2))))
      set2)))
 
+; Q. 2.60
+; slower
+(ann element-of-set?' [Any (Seqable Any) -> Boolean])
+(def element-of-set?' element-of-set?)
+
+(ann adjoin-set' (All [a b] [a (Seqable b) -> (LazySeq (U a b))]))
+(defn adjoin-set'
+  "Q. 2.60
+  faster"
+  [x set]
+  (lazy-seq
+   (cons x set)))
+
+; Q. 2.60
+; slower
+(ann intersection-set' (All [a] [(Seqable a) (Seqable a) -> (LazySeq a)]))
+(def intersection-set' intersection-set)
+
+; Q. 2.60
+; faster
+(ann union-set' (All [a b] [(Seqable a) (Seqable b) -> (LazySeq (U a b))]))
+(def union-set' append) ; concat
+
 (ann fizzbuzz (LazySeq (U String Int)))
 (def fizzbuzz
   (map (fn> [n :- Int] (let [is-fizz (zero? (mod n 3))
