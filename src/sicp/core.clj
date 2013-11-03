@@ -1687,6 +1687,7 @@ Skip...
                      [[3]
                       [4]])))}
   [m]
+  ; (accumulate-n cons [] m)
   (lazy-seq
    (accumulate (fn> [column :- (Seqable a)
                        rows :- (LazySeq (LazySeq a))]
@@ -1710,12 +1711,9 @@ Skip...
                      [[3 4]
                       [6 8]])))}
   [m n]
-  (let [cols (transpose n)]
-    (map (fn> [row :- (Seqable Num)]
-           (map (fn> [column :- (Seqable Num)]
-                  (dot-product row column))
-                cols))
-         m)))
+  (map (fn> [v :- (Seqable Num)]
+         (matrix-*-vector (transpose n) v))
+       m))
 
 "
 # Q. 2.38
