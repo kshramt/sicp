@@ -2667,6 +2667,25 @@ n^n
                             (adjoin-ordered-set x
                                                 (rest set)))
     :eles set)))
+
+#_(ann union-ordered-set (All [[a :< Num] [b :< Num]] [(Seqable a) (Seqable b) -> (LazySeq (U a b))]))
+(ann union-ordered-set [(Seqable Num) (Seqable Num) -> (LazySeq Num)])
+(defn union-ordered-set
+  "Q. 2.62"
+  {:test #(do (is (= (union-ordered-set [1 2 3] [3 4 5]) [1 2 3 4 5])))}
+  [set1 set2]
+  (lazy-seq
+   (if-let [set1 (seq set1)]
+     (if-let [set2 (seq set2)]
+       (let [x1 (first set1)
+             x2 (first set2)]
+         (cond
+          (= x1 x2) (cons x1 (union-ordered-set (rest set1) (rest set2)))
+          (< x1 x2) (cons x1 (union-ordered-set (rest set1) set2))
+          (> x1 x2) (cons x2 (union-ordered-set set1 (rest set2)))))
+       [])
+     set2)))
+
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
