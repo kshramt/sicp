@@ -2619,6 +2619,54 @@ n^n
                           :else n)))
        (range 1 (Float/POSITIVE_INFINITY))))
 
+(ann element-of-ordered-set? [Num (Seqable Num) -> Boolean])
+(defn element-of-ordered-set? [x set]
+  (cond
+   (empty? set) false
+   (= x (first set)) true
+   (< x (first set)) false
+   :eles (element-of-ordered-set? x (rest set))))
+
+(defmacro pef
+  "print-env-form"
+  [form]
+  `(let [ret# ~form
+         _# (typed/print-env ~(str form))]
+     ret#))
+
+#_(ann intersection-ordered-set (All [[a :< Num]] [(Seqable a) (Seqable a) -> (LazySeq a)]))
+(ann intersection-ordered-set [(Seqable Num) (Seqable Num) -> (LazySeq Num)])
+(defn intersection-ordered-set
+  {:test #(do (is (= (intersection-ordered-set [1 2] [2 3]) [2])))}
+  [set1 set2]
+  (lazy-seq
+   (if-let [set1 (seq set1)]
+     (if-let [set2 (seq set2)]
+       (let [x1 (first set1)
+             x2 (first set2)]
+         (cond
+          (= x1 x2) (cons x1
+                          (intersection-ordered-set (rest set1)
+                                                    (rest set2)))
+          (< x1 x2) (intersection-ordered-set (rest set1) set2)
+          (> x1 x2) (intersection-ordered-set set1 (rest set2))))
+       [])
+     [])))
+
+#_(ann adjoin-ordered-set (All [[a :< Num] [b :< Num]] [a (Seqable b) -> (LazySeq (U a b))]))
+(ann adjoin-ordered-set [Num (Seqable Num) -> (LazySeq Num)])
+(defn adjoin-ordered-set
+  "Q. 2.61"
+  {:test #(do (is (= (adjoin-ordered-set 2 [1 3]) [1 2 3])))}
+  [x set]
+  (lazy-seq
+   (cond
+    (empty? set) [x]
+    (< x (first set)) (cons x set)
+    (> x (first set)) (cons (first set)
+                            (adjoin-ordered-set x
+                                                (rest set)))
+    :eles set)))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
