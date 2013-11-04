@@ -2853,6 +2853,23 @@ O(n)"
   [set1 set2]
   (list->tree (intersection-ordered-set (tree->list-2 set1)
                                         (tree->list-2 set2))))
+
+(defn key_ [[key _]]
+  key)
+
+(defn value_ [[_ value]]
+  value)
+
+(defn lookup
+  "Q. 2.66"
+  [key records]
+  (if-let [records (seq records)]
+    (cond
+     (= key (key_ (entry''' records))) (value_ (entry''' records))
+     (< key (entry''' records)) (lookup key (left-branch''' records))
+     (> key (entry''' records)) (lookup key (right-branch''' records)))
+    false))
+
 ) ; typed/tc-ignore
 
 (ann -main [String * -> nil])
