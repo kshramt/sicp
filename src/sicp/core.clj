@@ -2842,6 +2842,17 @@ O(n)"
   [elements]
   (first (partial-tree elements (count elements))))
 
+(defn union-set''
+  "Q. 2.65"
+  [set1 set2]
+  (list->tree (union-ordered-set (tree->list-2 set1)
+                                 (tree->list-2 set2))))
+
+(defn intersection-set''
+  "Q. 2.65"
+  [set1 set2]
+  (list->tree (intersection-ordered-set (tree->list-2 set1)
+                                        (tree->list-2 set2))))
 ) ; typed/tc-ignore
 
 (ann -main [String * -> nil])
