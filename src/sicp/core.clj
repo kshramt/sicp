@@ -2786,6 +2786,61 @@ Both have same functionalities, returning `[1 3 5 7 9 11]`."
 - `tree->list-1`: O(n^2) due to `concat` (`append`)
 - `tree->list-2`: O(n)"
 
+(defn partial-tree
+  [elts n]
+  (if (zero? n)
+    [[] elts]
+    (let [left-size (floor (half n))
+          [left-tree non-left-elts] (partial-tree elts left-size)
+          right-size (- n (inc left-size))
+          this-entry (first non-left-elts)
+          [right-tree remaining-elts] (partial-tree (rest non-left-elts) right-size)]
+      [(make-tree''' this-entry left-tree right-tree)
+       remaining-elts])))
+"Q. 2.64-a
+[1 2 3 4 5] 5
+2
+  [1 2 3 4 5] 2
+  1
+    [1 2 3 4 5] 1
+    0
+      [1 2 3 4 5] 0
+    [] [1 2 3 4 5]
+    0
+    1
+      [2 3 4 5] 0
+    [] [2 3 4 5]
+  [1 [] []] [2 3 4 5]
+  0
+  2
+    [3 4 5] 0
+  [] [3 4 5]
+[2 [1 [] []] []] [3 4 5]
+2
+3
+right branch...
+
+[1 3 5 7 9]
+->
+[7
+ [3
+  [1 [] []]
+  [5 [] []]]
+ [11
+  [9 [] []]
+  []]]
+"
+
+"Q. 2.64-b
+O(n)"
+
+(defn list->tree
+  {:test #(do (is (= (list->tree [1 2 3 4 5])
+                     [3
+                      [2 [1 [] []] []]
+                      [5 [4 [] []] []]])))}
+  [elements]
+  (first (partial-tree elements (count elements))))
 
 ) ; typed/tc-ignore
 
