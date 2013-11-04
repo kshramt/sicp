@@ -1,7 +1,7 @@
 (ns sicp.core
   (:require [clojure.test :refer [is are]]
             [clojure.pprint]
-            [clojure.math.numeric-tower]
+            [clojure.math.numeric-tower :refer [floor]]
             [clojure.repl]
             [clojure.core.typed :refer [ann-form ann letfn> loop> fn> doseq>
                                         Int Num
@@ -2685,6 +2685,109 @@ n^n
           (> x1 x2) (cons x2 (union-ordered-set set1 (rest set2)))))
        [])
      set2)))
+(typed/tc-ignore
+
+(def entry''' first)
+
+(def left-branch''' second)
+
+(def right-branch''' #(nth % 2))
+
+(defn make-tree''' [entry left right]
+  [entry left right])
+
+(defn element-of-tree? [x set]
+  (if-let [set (seq set)]
+    (cond
+     (= x (entry''' set)) true
+     (< x (entry''' set)) (element-of-tree? x (left-branch''' set))
+     (> x (entry''' set)) (element-of-tree? x (right-branch''' set)))
+    false))
+
+(defn adjoin-tree [x set]
+  (if-let [set (seq set)]
+    (cond
+     (= x (entry''' set)) set
+     (< x (entry''' set)) (make-tree''' (entry''' set)
+                                        (adjoin-tree x (left-branch''' set))
+                                        (right-branch''' set))
+     (> x (entry''' set)) (make-tree''' (entry''' set)
+                                        (left-branch''' set)
+                                        (adjoin-tree x (right-branch''' set))))
+    (make-tree''' x [] [])))
+
+(defn tree->list-1
+  {:test #(do (are [tree] (= (tree->list-1 tree) [1 3 5 7 9 11])
+                   [7
+                    [3
+                     [1 [] []]
+                     [5 [] []]]
+                    [9
+                     []
+                     [11 [] []]]]
+                   [3
+                    [1 [] []]
+                    [7
+                     [5 [] []]
+                     [9
+                      []
+                      [11 [] []]]]]
+                   [5
+                    [3
+                     [1 [] []]
+                     []]
+                    [9
+                     [7 [] []]
+                     [11 [] []]]]))}
+  [tree]
+  (if-let [tree (seq tree)]
+    (concat (tree->list-1 (left-branch''' tree))
+            (cons (entry''' tree)
+                  (tree->list-1 (right-branch''' tree))))
+    []))
+
+(defn tree->list-2
+  {:test #(do (are [tree] (= (tree->list-2 tree) [1 3 5 7 9 11])
+                   [7
+                    [3
+                     [1 [] []]
+                     [5 [] []]]
+                    [9
+                     []
+                     [11 [] []]]]
+                   [3
+                    [1 [] []]
+                    [7
+                     [5 [] []]
+                     [9
+                      []
+                      [11 [] []]]]]
+                   [5
+                    [3
+                     [1 [] []]
+                     []]
+                    [9
+                     [7 [] []]
+                     [11 [] []]]]))}
+  [tree]
+  (letfn [(copy-to-list [tree result-list]
+            (if-let [tree (seq tree)]
+              (recur (left-branch''' tree)
+                     (cons (entry''' tree)
+                           (copy-to-list (right-branch''' tree)
+                                         result-list)))
+              result-list))]
+    (copy-to-list tree [])))
+
+"Q. 2.63-a
+Both have same functionalities, returning `[1 3 5 7 9 11]`."
+
+"Q. 2.63-b
+- `tree->list-1`: O(n^2) due to `concat` (`append`)
+- `tree->list-2`: O(n)"
+
+
+) ; typed/tc-ignore
 
 (ann -main [String * -> nil])
 (defn -main [& args]
