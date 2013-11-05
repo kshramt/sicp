@@ -3005,6 +3005,26 @@ O(n)"
   "Q. 2.69"
   [pairs]
   (successive-merge (make-leaf-set pairs)))
+
+(def get-a-job-tree (generate-huffman-tree [[:a 2]
+                                            [:boom 1]
+                                            [:get 2]
+                                            [:job 2]
+                                            [:na 16]
+                                            [:sha 3]
+                                            [:yip 9]
+                                            [:wah 1]]))
+
+(def get-a-job [:get :a :job
+                :sha :na :na :na :na :na :na :na :na
+                :get :a :job
+                :sha :na :na :na :na :na :na :na :na
+                :wah :yip :yip :yip :yip :yip :yip :yip :yip :yip
+                :sha :boom])
+
+; Q. 2.70
+(count (encode get-a-job get-a-job-tree)) ; = 87
+(* 3 (count get-a-job)) ; = 108
 ) ; typed/tc-ignore
 
 (ann -main [String * -> nil])
