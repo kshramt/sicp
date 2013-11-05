@@ -2938,6 +2938,41 @@ O(n)"
     (append (encode-symbol (first message) tree)
             (encode (rest message) tree))
     []))
+
+(def sample-tree (make-code-tree
+                  (make-leaf :A 4)
+                  (make-code-tree
+                   (make-leaf :B 2)
+                   (make-code-tree
+                    (make-leaf :D 1)
+                    (make-leaf :C 1)))))
+(def sample-message [0 1 1 0 0 1 0 1 0 1 1 1 0])
+
+(defn decode
+  {:test #(do (is (= (encode (decode sample-message
+                                     sample-tree)
+                             sample-tree)
+                     sample-message)))}
+  [bits tree]
+  (letfn [(decode-1 [bits current-branch]
+            (if-let [bits (seq bits)]
+              (let [next-branch (choose-branch (first bits) current-branch)]
+                (if (leaf? next-branch)
+                  (cons (symbol-leaf next-branch)
+                        (decode-1 (rest bits) tree))
+                  (recur (rest bits) next-branch)))
+              []))]
+    (decode-1 bits tree)))
+
+(defn adjoin-tree'''' [x set]
+  (if-let [set (seq set)]
+    (if (< (weight x) (weight (first set)))
+      (cons x set)
+      (cons (first set)
+            (adjoin-tree'''' x (rest set))))
+    [x]))
+
+"Q. 2.67 (:A :D :A :B :B :C :A)"
 ) ; typed/tc-ignore
 
 (ann -main [String * -> nil])
