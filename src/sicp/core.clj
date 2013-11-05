@@ -2685,6 +2685,14 @@ n^n
           (> x1 x2) (cons x2 (union-ordered-set set1 (rest set2)))))
        [])
      set2)))
+
+(ann include? (All [a b] [a (Seqable b) -> Boolean]))
+(defn include? [x coll]
+  (if-let [s (seq coll)]
+    (or (= x (first s))
+        (recur x (rest s)))
+    false))
+
 (typed/tc-ignore
 
 (def entry''' first)
@@ -2870,6 +2878,66 @@ O(n)"
      (> key (entry''' records)) (lookup key (right-branch''' records)))
     false))
 
+(defn make-leaf [symbol weight]
+  [:leaf symbol weight])
+
+(defn leaf? [[key]]
+  (= key :leaf))
+
+(defn symbol-leaf [[_ symbol]]
+  symbol)
+
+(defn weight-leaf [[_ _ weight]]
+  weight)
+
+(defn left-branch'''' [[tree]]
+  tree)
+
+(defn right-branch'''' [[_ tree]]
+  tree)
+
+(defn symbols [tree]
+  (if (leaf? tree)
+    [(symbol-leaf tree)]
+    (nth tree 2)))
+
+(defn weight [tree]
+  (if (leaf? tree)
+    (weight-leaf tree)
+    (nth tree 3)))
+
+(defn make-code-tree [left right]
+  [left
+   right
+   (concat (symbols left) (symbols right))
+   (+ (weight left) (weight right))])
+
+(defn choose-branch [bit branch]
+  (cond
+   (zero? bit) (left-branch'''' branch)
+   (= bit 1) (right-branch'''' branch)
+   :else (throw (Exception. (str "bad bit: " bit)))))
+
+(defn encode-symbol
+  "Q. 2.68"
+  [symbol tree]
+  (loop [symbol symbol
+         tree tree
+         bits []]
+    (if (leaf? tree)
+      (if (= (symbol-leaf tree) symbol)
+        bits
+        (throw (Exception. (str "symbol mismatch: " symbol " " (symbol-leaf tree)))))
+      (cond
+       (include? symbol (symbols (left-branch'''' tree))) (recur symbol (left-branch'''' tree) (concat bits [0]))
+       (include? symbol (symbols (right-branch'''' tree))) (recur symbol (right-branch'''' tree) (concat bits [1]))
+       :else (throw (Exception. (str "symbol is not in tree" symbol " " tree)))))))
+
+(defn encode [message tree]
+  (if-let [message (seq message)]
+    (append (encode-symbol (first message) tree)
+            (encode (rest message) tree))
+    []))
 ) ; typed/tc-ignore
 
 (ann -main [String * -> nil])
