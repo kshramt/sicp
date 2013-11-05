@@ -1,7 +1,7 @@
 (ns sicp.core
   (:require [clojure.test :refer [is are]]
             [clojure.pprint]
-            [clojure.math.numeric-tower :refer [floor]]
+            [clojure.math.numeric-tower :refer [floor expt]]
             [clojure.repl]
             [clojure.core.typed :refer [ann-form ann letfn> loop> fn> doseq>
                                         Int Num
@@ -3025,6 +3025,28 @@ O(n)"
 ; Q. 2.70
 (count (encode get-a-job get-a-job-tree)) ; = 87
 (* 3 (count get-a-job)) ; = 108
+
+; Q. 2.71
+; max frequency: 1 bit
+; min frequency: n - 1 bits
+(generate-huffman-tree (map (fn [i] [i (expt 2 i)]) (range 5)))
+[[[[[:leaf 0 1]
+    [:leaf 1 2]]
+   [:leaf 2 4]]
+  [:leaf 3 8]]
+ [:leaf 4 16]]
+
+(generate-huffman-tree (map (fn [i] [i (expt 2 i)]) (range 10)))
+[[[[[[[[[[:leaf 0 1]
+         [:leaf 1 2]]
+        [:leaf 2 4]]
+       [:leaf 3 8]]
+      [:leaf 4 16]]
+     [:leaf 5 32]]
+    [:leaf 6 64]]
+   [:leaf 7 128]]
+  [:leaf 8 256]]
+ [:leaf 9 512]]
 ) ; typed/tc-ignore
 
 (ann -main [String * -> nil])
