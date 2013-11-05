@@ -2973,6 +2973,38 @@ O(n)"
     [x]))
 
 "Q. 2.67 (:A :D :A :B :B :C :A)"
+
+(defn adjoin-set'' [x set]
+  (if-let [set (seq set)]
+    (if (< (weight x) (weight (first set)))
+      (cons x set)
+      (cons (first set)
+            (adjoin-set'' x (rest set))))
+    [x]))
+
+(defn make-leaf-set
+  {:test #(do (is (= (make-leaf-set [[:a 3] [:b 1]]) [[:leaf :b 1] [:leaf :a 3]])))}
+  [pairs]
+  (if-let [pairs (seq pairs)]
+    (let [pair (first pairs)]
+      (adjoin-set'' (make-leaf (first pair)
+                               (second pair))
+                    (make-leaf-set (rest pairs))))
+    []))
+
+(defn successive-merge [leafs]
+  (if-let [leafs (seq leafs)]
+    (if (= 1 (count leafs))
+      (first leafs)
+      (recur (adjoin-set (make-code-tree (first leafs)
+                                         (second leafs))
+                         (rest (rest leafs)))))
+    []))
+
+(defn generate-huffman-tree
+  "Q. 2.69"
+  [pairs]
+  (successive-merge (make-leaf-set pairs)))
 ) ; typed/tc-ignore
 
 (ann -main [String * -> nil])
