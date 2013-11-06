@@ -2629,9 +2629,9 @@ n^n
 (defmacro pef
   "print-env-form"
   [form]
-  `(let [ret# ~form
+  `(let [RETURN# ~form
          _# (typed/print-env ~(str form))]
-     ret#))
+     RETURN#))
 
 #_(ann intersection-ordered-set (All [[a :< Num]] [(Seqable a) (Seqable a) -> (LazySeq a)]))
 (ann intersection-ordered-set [(Seqable Num) (Seqable Num) -> (LazySeq Num)])
