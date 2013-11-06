@@ -2996,8 +2996,8 @@ O(n)"
   (if-let [leafs (seq leafs)]
     (if (= 1 (count leafs))
       (first leafs)
-      (recur (adjoin-set (make-code-tree (first leafs)
-                                         (second leafs))
+      (recur (adjoin-set'' (make-code-tree (first leafs)
+                                           (second leafs))
                          (rest (rest leafs)))))
     []))
 
@@ -3023,7 +3023,7 @@ O(n)"
                 :sha :boom])
 
 ; Q. 2.70
-(count (encode get-a-job get-a-job-tree)) ; = 87
+(count (encode get-a-job get-a-job-tree)) ; = 84
 (* 3 (count get-a-job)) ; = 108
 
 ; Q. 2.71
