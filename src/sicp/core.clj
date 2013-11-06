@@ -2868,14 +2868,14 @@ O(n)"
 (defn value_ [[_ value]]
   value)
 
-(defn lookup
+(defn lookup_
   "Q. 2.66"
   [key records]
   (if-let [records (seq records)]
     (cond
      (= key (key_ (entry''' records))) (value_ (entry''' records))
-     (< key (entry''' records)) (lookup key (left-branch''' records))
-     (> key (entry''' records)) (lookup key (right-branch''' records)))
+     (< key (entry''' records)) (lookup_ key (left-branch''' records))
+     (> key (entry''' records)) (lookup_ key (right-branch''' records)))
     false))
 
 (defn make-leaf [symbol weight]
