@@ -3053,9 +3053,44 @@ O(n)"
 Most frequent:  O(n)
 Least frequent:  O(n^2)"
 
-
 ) ; typed/tc-ignore
 
+(ann empty-table '[])
+(def empty-table [])
+
+(ann lookup (All [a b c
+                  d e f g h]
+                 (Fn [a (Seqable '[b c]) -> (Option c)]
+                     [d e (Seqable '[f (Seqable '[g h])]) -> (Option h)])))
+(defn lookup
+  ([key table]
+     (if-let [[k v] (first table)]
+       (if (= k key)
+         v
+         (recur key (rest table)))))
+  ([key-1 key-2 table]
+     (if-let [inner-table (lookup key-1 table)]
+       (lookup key-2 inner-table))))
+
+(ann insert (All [a b c d
+                  e f g h i j]
+                 (Fn [a b (Seqable '[c d])
+                      -> (LazySeq '[(U a c) (U b d)])]
+                     [e f g (Seqable '[h (Seqable '[i j])])
+                      -> (LazySeq '[(U e h) (U (Seqable '[i j])
+                                               (LazySeq '[(U f i) (U g j)]))])])))
+(defn insert
+  ([key value table]
+     (lazy-seq
+      (if-let [[k v :as kv] (first table)]
+        (if (= k key)
+          (cons [k value] (rest table))
+          (cons kv (insert key value (rest table))))
+        [[key value]])))
+  ([key-1 key-2 value table]
+     (if-let [inner-table (lookup key-1 table)]
+        (insert key-1 (insert key-2 value inner-table) table)
+        (insert key-1 (insert key-2 value empty-table) table))))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
