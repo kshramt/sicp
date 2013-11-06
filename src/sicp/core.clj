@@ -1,5 +1,5 @@
 (ns sicp.core
-  (:require [clojure.test :refer [is are]]
+  (:require [clojure.test :refer [is are deftest]]
             [clojure.pprint]
             [clojure.math.numeric-tower :refer [floor expt]]
             [clojure.repl]
@@ -3023,8 +3023,9 @@ O(n)"
                 :sha :boom])
 
 ; Q. 2.70
-(count (encode get-a-job get-a-job-tree)) ; = 84
-(* 3 (count get-a-job)) ; = 108
+(deftest q-2-70
+  (is (= (count (encode get-a-job get-a-job-tree))) 84)
+  (is (= (* 3 (count get-a-job)) 108)))
 
 ; Q. 2.71
 ; max frequency: 1 bit
