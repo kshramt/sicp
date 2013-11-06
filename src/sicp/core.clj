@@ -3047,6 +3047,12 @@ O(n)"
    [:leaf 7 128]]
   [:leaf 8 256]]
  [:leaf 9 512]]
+
+"Q. 2.72
+Most frequent:  O(n)
+Least frequent:  O(n^2)"
+
+
 ) ; typed/tc-ignore
 
 (ann -main [String * -> nil])
