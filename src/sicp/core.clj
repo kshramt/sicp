@@ -1576,8 +1576,8 @@ Skip...
        (map_ fib)
        (filter_ even?)))
 
-(ann append_2_33 (All [a b] [(Seqable a) (Seqable b) -> (LazySeq (U a b))]))
 
+(ann append_2_33 (All [a b] [(Seqable a) (Seqable b) -> (Seqable (U a b))]))
 (defn append_2_33
   "Q. 2.33-2"
   {:test #(do (is (= (append_2_33 [1 2] [3 4]) [1 2 3 4]))
@@ -1585,20 +1585,18 @@ Skip...
               (is (= (append_2_33 [1 2] []) [1 2]))
               (is (= (append_2_33 [1 2] [[[3]]]) [1 2 [[3]]])))}
   [coll1 coll2]
-  (lazy-seq
-   (reduce_ cons coll2 coll1)))
+  (reduce_ cons coll2 coll1))
 
-(ann map_2_33 (All [a b] [[a -> b] (Seqable a) -> (LazySeq b)]))
+(ann map_2_33 (All [a b] [[a -> b] (Seqable a) -> (Seqable b)]))
 (defn map_2_33
   "Q. 2.33-1"
   {:test #(do (is (= (map_2_33 square [1 2 3]) [1 4 9])))}
   [f coll]
-  (lazy-seq
-   (reduce_ (fn> [x :- a
-                  y :- (Seqable b)]
-              (append_2_33 [(f x)] y))
-            []
-            coll)))
+  (reduce_ (fn> [x :- a
+                 y :- (Seqable b)]
+             (append_2_33 [(f x)] y))
+           []
+           coll))
 
 (ann length_2_33 [(Seqable Any) -> Int])
 (defn length_2_33
