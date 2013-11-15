@@ -12,7 +12,7 @@
                                         NonEmptySeq
                                         Seqable EmptySeqable NonEmptySeqable
                                         NonEmptyLazySeq] :as typed])
-  (:import (clojure.lang ASeq LazySeq))
+  (:import [clojure.lang LazySeq])
   (:gen-class))
 (set! *warn-on-reflection* false)
 
@@ -51,6 +51,13 @@
   [x]
   (clojure.pprint/pprint x)
   x)
+
+(defmacro pef
+  "print-env-form"
+  [form]
+  `(let [RETURN# ~form
+         _# (typed/print-env ~(str form))]
+     RETURN#))
 
 (ann twice (Fn [Int -> Int]
                [Num -> Num]))
@@ -1135,7 +1142,6 @@ Skip...
                               -> (Seqable a)] (Seqable a)
                               (Seqable (Seqable a))
                               -> (Seqable a)])))
-
 (defn reduce_
   {:test #(do (is (= (reduce_ +' 0 [1 2]) 3))
               (is (= (reduce_ / 1 [2 3]) 2/3)))}
@@ -1147,7 +1153,6 @@ Skip...
 
 (ann append_ (All [a b] [(Seqable a) (Seqable b)
                          -> (LazySeq (U a b))]))
-
 (defn append_
   {:test #(do (is (= (append_ [1 2] [3 4]) [1 2 3 4]))
               (is (= (append_ [] [3 4]) [3 4]))
@@ -1261,7 +1266,6 @@ Skip...
                       odd?)
                     more))
      [n])))
-
 
 (ann map_ (All [a b] [[a -> b] (Seqable a) -> (LazySeq b)]))
 (defn map_
@@ -1575,7 +1579,6 @@ Skip...
   (->> (range_ 0 n)
        (map_ fib)
        (filter_ even?)))
-
 
 (ann append_2_33 (All [a b] [(Seqable a) (Seqable b) -> (Seqable (U a b))]))
 (defn append_2_33
@@ -2623,13 +2626,6 @@ n^n
      (< x (first set)) false
      :eles (element-of-ordered-set? x (rest set)))
     false))
-
-(defmacro pef
-  "print-env-form"
-  [form]
-  `(let [RETURN# ~form
-         _# (typed/print-env ~(str form))]
-     RETURN#))
 
 #_(ann intersection-ordered-set (All [[a :< Num]] [(Seqable a) (Seqable a) -> (LazySeq a)]))
 (ann intersection-ordered-set [(Seqable Num) (Seqable Num) -> (LazySeq Num)])
