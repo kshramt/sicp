@@ -203,7 +203,7 @@
                              q :- Int q
                              n :- Int n]
                        (cond
-                        (= n 0) b
+                        (zero? n) b
                         (odd? n) (recur (+' (*' b q) (*' a (+' p q)))
                                         (+' (*' b p) (*' a q))
                                         p
@@ -231,7 +231,7 @@
         abs-n (abs n)
         small (if (< abs-m abs-n) abs-m abs-n)
         large (if (> abs-m abs-n) abs-m abs-n)]
-    (if (= small 0)
+    (if (zero? small)
       large
       (recur (rem large small) small))))
 
@@ -548,7 +548,7 @@
           i :- Int k
           k :- Int k
           ret :- Num 0]
-    (if (= i 0)
+    (if (zero? i)
       ret
       (recur n d (dec' i) k (/ (n i)
                                (+' (d i)
@@ -1025,13 +1025,13 @@
         uy (upper-bound y)]
     (cond
      (and (>= lx 0) (>= ly 0)) (make-interval (*' lx ly) (*' ux uy))
-     (and (< ux 0) (< uy 0)) (make-interval (*' ux uy) (*' lx ly))
-     (and (< ux 0) (>= ly 0)) (make-interval (*' lx uy) (max (*' lx ux) (*' ly uy)))
-     (and (>= lx 0) (< uy 0)) (make-interval (*' ux ly) (max (*' lx ux) (*' ly uy)))
+     (and (neg? ux) (neg? uy)) (make-interval (*' ux uy) (*' lx ly))
+     (and (neg? ux) (>= ly 0)) (make-interval (*' lx uy) (max (*' lx ux) (*' ly uy)))
+     (and (>= lx 0) (neg? uy)) (make-interval (*' ux ly) (max (*' lx ux) (*' ly uy)))
      (>= ly 0) (make-interval (*' lx uy) (*' ux uy))
-     (< uy 0) (make-interval (*' ux ly) (*' lx ly))
+     (neg? uy) (make-interval (*' ux ly) (*' lx ly))
      (>= lx 0) (make-interval (*' ux ly) (*' ux uy))
-     (< ux 0) (make-interval (*' lx uy) (*' lx ly))
+     (neg? ux) (make-interval (*' lx uy) (*' lx ly))
      :else (make-interval (min (*' lx uy) (*' ux ly)) (max (*' lx ly) (*' ux uy))))))
 
 (ann inv-interval [Interval -> Interval])
@@ -1196,7 +1196,7 @@ Skip...
 (defn cc [amount kinds-of-coins]
   (cond
    (zero? amount) 1
-   (or (< amount 0) (zero? kinds-of-coins)) 0
+   (or (neg? amount) (zero? kinds-of-coins)) 0
    :else (+' (cc amount
                  (dec' kinds-of-coins))
              (cc (-' amount
@@ -1233,7 +1233,7 @@ Skip...
   [amount coin-values]
   (cond
    (zero? amount) 1
-   (or (< amount 0) (no-more? coin-values)) 0
+   (or (neg? amount) (no-more? coin-values)) 0
    :else (+ (cc' amount
                  (rest coin-values))
             (cc' (-' amount
