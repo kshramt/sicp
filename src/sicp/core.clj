@@ -1583,10 +1583,10 @@ Skip...
 (ann append_2_33 (All [a b] [(Seqable a) (Seqable b) -> (Seqable (U a b))]))
 (defn append_2_33
   "Q. 2.33-2"
-  {:test #(do (is (= (append_2_33 [1 2] [3 4]) [1 2 3 4]))
-              (is (= (append_2_33 [] [3 4]) [3 4]))
-              (is (= (append_2_33 [1 2] []) [1 2]))
-              (is (= (append_2_33 [1 2] [[[3]]]) [1 2 [[3]]])))}
+  {:test #(do (are [a b ret] (= (append_2_33 a b) ret)
+                   [] [3 4] [3 4]
+                   [1 2] [] [1 2]
+                   [1 2] [[[3]]] [1 2 [[3]]]))}
   [coll1 coll2]
   (reduce_ cons coll2 coll1))
 
