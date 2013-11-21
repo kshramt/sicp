@@ -3085,6 +3085,10 @@ Least frequent:  O(n^2)"
      (if-let [inner-table (lookup key-1 table)]
         (insert key-1 (insert key-2 value inner-table) table)
         (insert key-1 (insert key-2 value empty-table) table))))
+
+(ann attach-tag (All [a b] [a b -> '[a b]]))
+(defn attach-tag [tag x]
+  [tag x])
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
