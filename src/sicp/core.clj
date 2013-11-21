@@ -3130,6 +3130,12 @@ Least frequent:  O(n^2)"
                       [(Value :insert!) -> [Keyword Keyword Any ->
                                             (LazySeq '[Keyword (Seqable '[Keyword Any])])]]))
 (def operation-table (make-table))
+
+(ann get_ [Keyword Keyword -> Any])
+(def get_ (operation-table :lookup))
+
+(ann put [Keyword Keyword Any -> (LazySeq '[Keyword (Seqable '[Keyword Any])])])
+(def put (operation-table :insert!))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
