@@ -3,9 +3,10 @@
             [clojure.pprint]
             [clojure.math.numeric-tower :refer [floor expt]]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann letfn> loop> fn> doseq>
+            [clojure.core.typed :refer [ann-form ann letfn> loop> fn> doseq> atom>
                                         Int Num
                                         Symbol
+                                        Keyword
                                         Option
                                         Vec
                                         Coll NonEmptyColl
@@ -3089,6 +3090,40 @@ Least frequent:  O(n^2)"
 (ann attach-tag (All [a b] [a b -> '[a b]]))
 (defn attach-tag [tag x]
   [tag x])
+
+(ann make-table [-> (Fn
+                     [(Value :lookup) -> [Keyword Keyword -> Any]]
+                     [(Value :insert!) -> [Keyword Keyword Any ->
+                                           (LazySeq '[Keyword (Seqable '[Keyword Any])])]])])
+(defn make-table
+  {:test #(do (is (let [t (make-table)]
+                    ((t :insert!) :a :b 1)
+                    (= ((t :lookup) :a :b) 1)))
+              (is (let [t (make-table)]
+                    ((t :insert!) :a :b 1)
+                    (nil? ((t :lookup) :b :a))))
+              (is (let [t (make-table)]
+                    ((t :insert!) :a :b 1)
+                    ((t :insert!) :b :a 2)
+                    (= ((t :lookup) :b :a) 2))))}
+  []
+  (let [local-table (atom> (LazySeq '[Keyword (Seqable '[Keyword Any])])
+                           (lazy-seq empty-table))]
+    (letfn> [dispatch :- (Fn
+                          [(Value :lookup) -> [Keyword Keyword -> Any]]
+                          [(Value :insert!) -> [Keyword Keyword Any
+                                                -> (LazySeq '[Keyword (Seqable '[Keyword Any])])]])
+             (dispatch [method]
+                       (cond
+                        (= method :lookup) (fn> [key-1 :- Keyword
+                                                 key-2 :- Keyword]
+                                             (lookup key-1 key-2 @local-table))
+                        (= method :insert!) (fn> [key-1 :- Keyword
+                                                  key-2 :- Keyword
+                                                  value :- Any]
+                                              (reset! local-table (insert key-1 key-2 value @local-table)))
+                        :else (throw (Exception. (str "unknown method:  " method)))))]
+      dispatch)))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
