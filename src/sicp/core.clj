@@ -3124,6 +3124,12 @@ Least frequent:  O(n^2)"
                                               (reset! local-table (insert key-1 key-2 value @local-table)))
                         :else (throw (Exception. (str "unknown method:  " method)))))]
       dispatch)))
+
+(ann operation-table (Fn
+                      [(Value :lookup) -> [Keyword Keyword -> Any]]
+                      [(Value :insert!) -> [Keyword Keyword Any ->
+                                            (LazySeq '[Keyword (Seqable '[Keyword Any])])]]))
+(def operation-table (make-table))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
