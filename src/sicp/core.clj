@@ -3278,6 +3278,17 @@ Least frequent:  O(n^2)"
      (= op :angle) a
      :else (throw (Exception. (str "unknown operator:  " op))))))
 
+"Q. 2.76
+To improve concurrency of development:
+  A lot of new data types:  message passing style
+  A lot of new operations:  data directed style"
+
+; 2.4 multiple representations for abstract data
+
+; 2.5 systems with generic operations
+
+; 3.1 assignment and local state
+
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
