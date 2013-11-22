@@ -3093,7 +3093,7 @@ Least frequent:  O(n^2)"
   [tag x])
 
 (typed/def-alias Key1 (U Keyword))
-(typed/def-alias Key2 (U (Seqable Keyword)))
+(typed/def-alias Key2 (U Keyword (Seqable Keyword)))
 
 (ann make-table [-> (Fn
                      [(Value :lookup) -> [Key1 Key2 -> Any]]
@@ -3140,6 +3140,52 @@ Least frequent:  O(n^2)"
 
 (ann put [Key1 Key2 Any -> (LazySeq '[Key1 (Seqable '[Key2 Any])])])
 (def put (operation-table :insert!))
+
+(ann install-rectangular-package [-> (Value :done)])
+(defn install-rectangular-package []
+  (let [real-part (fn> [[r _] :- '[Double Double]] r)
+        imag-part (fn> [[_ i] :- '[Double Double]] i)]
+    (put :real-part [:rectangular] real-part)
+    (put :imag-part [:rectangular] imag-part)
+    (put :magnitude [:rectangular] (fn> [z :- '[Double Double]]
+                                     (sqrt (+ (square (real-part z))
+                                              (square (imag-part z))))))
+    (put :angle [:rectangular] (fn> [z :- '[Double Double]]
+                                 (Math/atan2 (imag-part z)
+                                             (real-part z))))
+    (put :make-from-real-imag :rectangular (fn> [r :- Double
+                                                 i :- Double]
+                                             (attach-tag :rectangular
+                                                         [r i])))
+    (put :make-from-mag-ang :rectangular (fn> [r :- Double
+                                               a :- Double]
+                                           (attach-tag :rectangular
+                                                       [(* r (Math/cos a))
+                                                        (* r (Math/sin a))])))
+    :done))
+
+(ann install-polar-package [-> (Value :done)])
+(defn install-polar-package []
+  (let [magnitude (fn> [[r _] :- '[Double Double]] r)
+        angle (fn> [[_ a] :- '[Double Double]] a)]
+    (put :real-part [:polar] (fn> [z :- '[Double Double]]
+                               (* (magnitude z)
+                                  (Math/cos (angle z)))))
+    (put :imag-part [:polar] (fn> [z :- '[Double Double]]
+                               (* (magnitude z)
+                                  (Math/sin (angle z)))))
+    (put :magnitude [:polar] magnitude)
+    (put :angle [:polar] angle)
+    (put :make-from-real-imag :polar (fn> [r :- Double
+                                           i :- Double]
+                                       (attach-tag :polar
+                                                   [(sqrt (+ (square r)
+                                                             (square i)))
+                                                    (Math/atan2 i r)])))
+    (put :make-from-mag-ang :polar (fn> [r :- Double
+                                         a :- Double]
+                                     (attach-tag :polar [r a])))
+    :done))
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
