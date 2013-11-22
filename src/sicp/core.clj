@@ -1,7 +1,7 @@
 (ns sicp.core
   (:require [clojure.test :refer [is are deftest]]
             [clojure.pprint]
-            [clojure.math.numeric-tower :refer [floor expt]]
+            [clojure.math.numeric-tower :refer [floor expt sqrt]]
             [clojure.repl]
             [clojure.core.typed :refer [ann-form ann letfn> loop> fn> doseq> atom>
                                         Int Num
@@ -45,6 +45,7 @@
                                              :error Int
                                              :fail Int}])
 (ann ^:no-check clojure.math.numeric-tower/ceil [Num -> Num])
+(ann ^:no-check clojure.math.numeric-tower/sqrt [Num -> Num])
 
 (ann p_ (All [a] [a -> a]))
 (defn p_
