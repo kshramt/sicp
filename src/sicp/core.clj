@@ -3266,6 +3266,18 @@ Least frequent:  O(n^2)"
 
          "d:  Add new procedures for the new company")
 
+(defn make-from-mag-ang-2-75
+  "Q. 2.75"
+  {:test #(do (is (= ((make-from-mag-ang-2-75 2 3) :angle) 3)))}
+  [r a]
+  (fn [op]
+    (cond
+     (= op :real-part) (* r (Math/cos a))
+     (= op :imag-part) (* r (Math/sin a))
+     (= op :magnitude) r
+     (= op :angle) a
+     :else (throw (Exception. (str "unknown operator:  " op))))))
+
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
