@@ -3247,6 +3247,25 @@ Least frequent:  O(n^2)"
 
 ) ; typed/tc-ignore
 
+(comment "Q. 2.74"
+
+         (defn get-record
+           "a"
+           [file person]
+           ((get_ :person (division file)) file person))
+
+         (defn get-salary
+           "b"
+           [record]
+           ((get_ :salary (division record)) record))
+
+         (defn find-employee-record
+           "c"
+           [files person]
+           (map #(get-record % person) files))
+
+         "d:  Add new procedures for the new company")
+
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
