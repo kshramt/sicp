@@ -3092,6 +3092,12 @@ Least frequent:  O(n^2)"
 (defn attach-tag [tag x]
   [tag x])
 
+(ann type-tag (All [a b] ['[a b] -> a]))
+(defn type-tag [[tag _]] tag)
+
+(ann contents (All [a b] ['[a b] -> b]))
+(defn contents [[_ x]] x)
+
 (typed/def-alias Key1 (U Keyword))
 (typed/def-alias Key2 (U Keyword (Seqable Keyword)))
 
@@ -3186,6 +3192,61 @@ Least frequent:  O(n^2)"
                                          a :- Double]
                                      (attach-tag :polar [r a])))
     :done))
+
+(typed/tc-ignore
+
+(defn apply-generic [op args]
+  (let [type-tags (map type-tag args)
+        proc (get_ op type-tags)]
+    (if proc
+      (apply proc (map contents args))
+      (throw (Exception. (str "No method for these types:  " [op type-tags]))))))
+
+(defn real-part [z] (apply-generic :real-part z))
+(defn imag-part [z] (apply-generic :imag-part z))
+(defn magnitude [z] (apply-generic :magnitude z))
+(defn angle [z] (apply-generic :angle z))
+
+(defn make-from-real-imag [x y]
+  ((get_ :make-from-real-imag :rectangular) x y))
+(defn make-from-mag-ang [x y]
+  ((get_ :make-from-mag-ang :polar) x y))
+
+(defn operator [[o _ _]] o)
+(defn operands [[_ l r]] [l r])
+
+(def variable?-2-73 keyword?)
+(def same-variable?-2-73 =)
+
+(defn deriv-2-73
+  [exp var]
+  (cond
+   (number? exp) 0
+   (variable?-2-73 exp) (if (same-variable?-2-73 exp var) 1 0)
+   :else ((get_ :deriv (operator exp)) (operands exp) var)))
+
+(defn install-derivatives
+  "Q. 2.73"
+  []
+  (put :deriv :+ (fn [[l r] var] [:+ (deriv-2-73 l var) (deriv-2-73 r var)]))
+  (put :deriv :* (fn [[l r] var] [:+ [:* (deriv-2-73 l var) r] [:* l (deriv-2-73 r var)]]))
+  (put :deriv (symbol "/") (fn [[l r] var] [(symbol "/")
+                                            [:+
+                                             [:* (deriv-2-73 l var) r]
+                                             [:* -1 [:* l (deriv-2-73 r var)]]]
+                                            [:* r r]]))
+  :done)
+(install-derivatives)
+
+(deftest q-2-73
+  (is (= (deriv-2-73 [:+ :x :x] :x) [:+ 1 1]))
+  (is (= (deriv-2-73 [:* :x :x] :x) [:+ [:* 1 :x] [:* :x 1]]))
+  (is (= (deriv-2-73 [(symbol "/") :x :x] :x) [(symbol "/")
+                                               [:+ [:* 1 :x] [:* -1 [:* :x 1]]]
+                                               [:* :x :x]])))
+
+) ; typed/tc-ignore
+
 (ann -main [String * -> nil])
 (defn -main [& args]
   (clojure.test/run-tests 'sicp.core)
