@@ -1186,13 +1186,13 @@ Skip...
 
 (ann first-denomination [Int -> Int])
 (defn first-denomination [kinds-of-coins]
-  (cond
-   (= kinds-of-coins 1) 1
-   (= kinds-of-coins 2) 5
-   (= kinds-of-coins 3) 10
-   (= kinds-of-coins 4) 25
-   (= kinds-of-coins 5) 50
-   :else (throw (Exception. (str "kinds-of-coins are out of range: " kinds-of-coins)))))
+  (case kinds-of-coins
+   1 1
+   2 5
+   3 10
+   4 25
+   5 50
+   (throw (Exception. (str "kinds-of-coins are out of range: " kinds-of-coins)))))
 
 (ann cc [Int Int -> Int])
 (defn cc [amount kinds-of-coins]
@@ -2909,10 +2909,10 @@ O(n)"
    (+ (weight left) (weight right))])
 
 (defn choose-branch [bit branch]
-  (cond
-   (zero? bit) (left-branch'''' branch)
-   (= bit 1) (right-branch'''' branch)
-   :else (throw (Exception. (str "bad bit: " bit)))))
+  (case bit
+      0 (left-branch'''' branch)
+      1 (right-branch'''' branch)
+      (throw (Exception. (str "bad bit: " bit)))))
 
 (defn encode-symbol
   "Q. 2.68"
@@ -3124,7 +3124,7 @@ Least frequent:  O(n^2)"
                           [(Value :insert!) -> [Key1 Key2 Any
                                                 -> (LazySeq '[Key1 (Seqable '[Key2 Any])])]])
              (dispatch [method]
-                       (cond
+                       (cond ; `case` here causes type error
                         (= method :lookup) (fn> [key-1 :- Key1
                                                  key-2 :- Key2]
                                              (lookup key-1 key-2 @local-table))
@@ -3285,12 +3285,12 @@ Least frequent:  O(n^2)"
   {:test #(do (is (= ((make-from-mag-ang-2-75 2 3) :angle) 3)))}
   [r a]
   (fn [op]
-    (cond
-     (= op :real-part) (* r (Math/cos a))
-     (= op :imag-part) (* r (Math/sin a))
-     (= op :magnitude) r
-     (= op :angle) a
-     :else (throw (Exception. (str "unknown operator:  " op))))))
+    (case op
+     :real-part (* r (Math/cos a))
+     :imag-part (* r (Math/sin a))
+     :magnitude r
+     :angle a
+     (throw (Exception. (str "unknown operator:  " op))))))
 
 "Q. 2.76
 To improve concurrency of development:
