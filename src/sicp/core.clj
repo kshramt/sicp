@@ -3195,7 +3195,7 @@ Least frequent:  O(n^2)"
 
 (typed/tc-ignore
 
-(defn apply-generic [op args]
+(defn apply-generic [op & args]
   (let [type-tags (map type-tag args)
         proc (get_ op type-tags)]
     (if proc
@@ -3211,6 +3211,22 @@ Least frequent:  O(n^2)"
   ((get_ :make-from-real-imag :rectangular) x y))
 (defn make-from-mag-ang [x y]
   ((get_ :make-from-mag-ang :polar) x y))
+
+(defn add-complex [x y]
+  (make-from-real-imag (+ (real-part x) (real-part y))
+                       (+ (imag-part x) (imag-part y))))
+
+(defn sub-complex [x y]
+  (make-from-real-imag (- (real-part x) (real-part y))
+                       (- (imag-part x) (imag-part y))))
+
+(defn mul-complex [x y]
+  (make-from-mag-ang (* (magnitude x) (magnitude y))
+                     (+ (angle x) (angle y))))
+
+(defn div-complex [x y]
+  (make-from-mag-ang (* (magnitude x) (magnitude y))
+                     (- (angle x) (angle y))))
 
 (defn operator [[o _ _]] o)
 (defn operands [[_ l r]] [l r])
@@ -3244,8 +3260,6 @@ Least frequent:  O(n^2)"
   (is (= (deriv-2-73 [(symbol "/") :x :x] :x) [(symbol "/")
                                                [:+ [:* 1 :x] [:* -1 [:* :x 1]]]
                                                [:* :x :x]])))
-
-) ; typed/tc-ignore
 
 (comment "Q. 2.74"
 
@@ -3286,6 +3300,52 @@ To improve concurrency of development:
 ; 2.4 multiple representations for abstract data
 
 ; 2.5 systems with generic operations
+
+(defn install-clojure-number-package []
+  (letfn [(tag [x] (attach-tag :clojure-number x))]
+    (doseq [[key f] {:add +
+                     :sub -
+                     :mul *
+                     :div /}]
+      (put key [:clojure-number :clojure-number] #(tag (f %1 %2))))
+    (put :make :clojure-number tag)
+    :done))
+(defn make-clojure-number [x]
+  ((get_ :make :clojure-number) x))
+
+(defn install-rational-package []
+  (letfn [(tag [x] (attach-tag :rational x))]
+    (doseq [[key f] {:add add-rat
+                     :sub sub-rat
+                     :mul mul-rat
+                     :div div-rat}]
+      (put key [:rational :rational] #(tag (f %1 %2))))
+    (put :make :rational #(tag (make-rat %1 %2)))
+    :done))
+(defn make-rational [n d]
+  ((get_ :make :rational) n d))
+
+(defn install-complex-package []
+  (letfn [(tag [x] (attach-tag :complex x))]
+    (doseq [[key f] {:add #(tag (add-complex %1 %2))
+                     :sub #(tag (sub-complex %1 %2))
+                     :mul #(tag (mul-complex %1 %2))
+                     :div #(tag (div-complex %1 %2))}]
+      (put key [:complex :complex] f))
+    (put :make-from-real-imag :complex #(tag (make-from-real-imag %1 %2)))
+    (put :make-from-mag-ang :complex #(tag (make-from-mag-ang %1 %2)))
+    :done))
+(defn make-complex-from-real-imag [x y]
+  ((get_ :make-from-real-imag :complex) x y))
+(defn make-complex-from-mag-ang [x y]
+  ((get_ :make-from-mag-ang :complex) x y))
+
+(defn add [x y] (apply-generic :add x y))
+(defn sub [x y] (apply-generic :sub x y))
+(defn mul [x y] (apply-generic :mul x y))
+(defn div [x y] (apply-generic :div x y))
+
+) ; typed/tc-ignore
 
 ; 3.1 assignment and local state
 
