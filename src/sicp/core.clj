@@ -3309,7 +3309,7 @@ To improve concurrency of development:
                      :div /
                      :equ? =}]
       (put key [:clojure-number :clojure-number] #(tag (f %1 %2))))
-    (put :=zero? :clojure-number zero?)
+    (put :=zero? [:clojure-number] zero?)
     (put :make :clojure-number tag)
     :done))
 (defn make-clojure-number [x]
