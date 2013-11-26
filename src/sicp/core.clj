@@ -3297,8 +3297,6 @@ To improve concurrency of development:
   A lot of new data types:  message passing style
   A lot of new operations:  data directed style"
 
-; 2.4 multiple representations for abstract data
-
 ; 2.5 systems with generic operations
 
 (defn install-clojure-number-package []
