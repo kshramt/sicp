@@ -3358,6 +3358,28 @@ To improve concurrency of development:
       (apply-generic :magnitude [:rectangular [1 2]])
         ((get :magnitude [:rectangular]) [1 2])
           1.732..."
+
+(defn attach-tag'
+  "Q. 2.78"
+  [tag x]
+  (if (number? x)
+    x
+    [tag x]))
+
+(defn type-tag'
+  "Q. 2.78"
+  [x]
+  (if (number? x)
+    :clojure-number
+    (first x)))
+
+(defn contents'
+  "Q. 2.78"
+  [x]
+  (if (number? x)
+    x
+    (second x)) x)
+
 ) ; typed/tc-ignore
 
 ; 3.1 assignment and local state
