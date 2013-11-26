@@ -3309,6 +3309,7 @@ To improve concurrency of development:
                      :div /
                      :equ? =}]
       (put key [:clojure-number :clojure-number] #(tag (f %1 %2))))
+    (put :=zero? :clojure-number zero?)
     (put :make :clojure-number tag)
     :done))
 (defn make-clojure-number [x]
@@ -3323,6 +3324,8 @@ To improve concurrency of development:
                      :equ? #(and (= (numer %1) (numer %2))
                                  (= (denom %1) (denom %2)))}]
       (put key [:rational :rational] #(tag (f %1 %2))))
+    (put :=zero? [:rational] #(and (zero? (numer %))
+                                   (zero? (denom %))))
     (put :make :rational #(tag (make-rat %1 %2)))
     :done))
 (defn make-rational [n d]
@@ -3342,7 +3345,8 @@ To improve concurrency of development:
     (doseq [[key f] {:real-part real-part
                      :imag-part imag-part
                      :magnitude magnitude
-                     :angle angle}]
+                     :angle angle
+                     :=zero? #(zero? (magnitude %))}]
       (put key [:complex] f))
     (put :make-from-real-imag :complex #(tag (make-from-real-imag %1 %2)))
     (put :make-from-mag-ang :complex #(tag (make-from-mag-ang %1 %2)))
@@ -3360,6 +3364,10 @@ To improve concurrency of development:
   "Q. 2.79"
   [x y]
   (apply-generic :equ? x y))
+(defn =zero?
+  "Q. 2.80"
+  [x]
+  (apply-generic :=zero? x))
 
 "Q. 2.77
 (magnitude [:complex [:rectangular [1 2]]])
