@@ -3306,7 +3306,8 @@ To improve concurrency of development:
     (doseq [[key f] {:add +
                      :sub -
                      :mul *
-                     :div /}]
+                     :div /
+                     :equ? =}]
       (put key [:clojure-number :clojure-number] #(tag (f %1 %2))))
     (put :make :clojure-number tag)
     :done))
@@ -3318,7 +3319,9 @@ To improve concurrency of development:
     (doseq [[key f] {:add add-rat
                      :sub sub-rat
                      :mul mul-rat
-                     :div div-rat}]
+                     :div div-rat
+                     :equ? #(and (= (numer %1) (numer %2))
+                                 (= (denom %1) (denom %2)))}]
       (put key [:rational :rational] #(tag (f %1 %2))))
     (put :make :rational #(tag (make-rat %1 %2)))
     :done))
@@ -3326,11 +3329,15 @@ To improve concurrency of development:
   ((get_ :make :rational) n d))
 
 (defn install-complex-package []
+  (install-rectangular-package)
+  (install-polar-package)
   (letfn [(tag [x] (attach-tag :complex x))]
     (doseq [[key f] {:add #(tag (add-complex %1 %2))
                      :sub #(tag (sub-complex %1 %2))
                      :mul #(tag (mul-complex %1 %2))
-                     :div #(tag (div-complex %1 %2))}]
+                     :div #(tag (div-complex %1 %2))
+                     :equ? #(and (= (real-part %1) (real-part %2))
+                                 (= (imag-part %1) (imag-part %2)))}]
       (put key [:complex :complex] f))
     (doseq [[key f] {:real-part real-part
                      :imag-part imag-part
@@ -3349,6 +3356,10 @@ To improve concurrency of development:
 (defn sub [x y] (apply-generic :sub x y))
 (defn mul [x y] (apply-generic :mul x y))
 (defn div [x y] (apply-generic :div x y))
+(defn equ?
+  "Q. 2.79"
+  [x y]
+  (apply-generic :equ? x y))
 
 "Q. 2.77
 (magnitude [:complex [:rectangular [1 2]]])
