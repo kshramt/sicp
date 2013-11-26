@@ -3332,6 +3332,11 @@ To improve concurrency of development:
                      :mul #(tag (mul-complex %1 %2))
                      :div #(tag (div-complex %1 %2))}]
       (put key [:complex :complex] f))
+    (doseq [[key f] {:real-part real-part
+                     :imag-part imag-part
+                     :magnitude magnitude
+                     :angle angle}]
+      (put key [:complex] f))
     (put :make-from-real-imag :complex #(tag (make-from-real-imag %1 %2)))
     (put :make-from-mag-ang :complex #(tag (make-from-mag-ang %1 %2)))
     :done))
@@ -3345,6 +3350,14 @@ To improve concurrency of development:
 (defn mul [x y] (apply-generic :mul x y))
 (defn div [x y] (apply-generic :div x y))
 
+"Q. 2.77
+(magnitude [:complex [:rectangular [1 2]]])
+  (apply-generic :magnitude [:complex [:rectangular [1 2]]])
+    ((get_ :magnitude [:complex]) [:rectangular [1 2]])
+    (magnitude [:rectangular [1 2]])
+      (apply-generic :magnitude [:rectangular [1 2]])
+        ((get :magnitude [:rectangular]) [1 2])
+          1.732..."
 ) ; typed/tc-ignore
 
 ; 3.1 assignment and local state
