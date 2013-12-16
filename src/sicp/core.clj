@@ -3195,12 +3195,25 @@ Least frequent:  O(n^2)"
 
 (typed/tc-ignore
 
+(def coercion-table (make-table))
+(def get-coercion (coercion-table :lookup))
+(def put-coercion (coercion-table :insert!))
+
 (defn apply-generic [op & args]
   (let [type-tags (map type-tag args)
         proc (get_ op type-tags)]
     (if proc
       (apply proc (map contents args))
-      (throw (Exception. (str "No method for these types:  " [op type-tags]))))))
+      (if (= (count args) 2)
+        (let [[t1 t2] type-tags
+              [v1 v2] args
+              t1->t2 (get-coercion t1 t2)
+              t2->t1 (get-coercion t2 t1)]
+          (cond
+           t1->t2 (apply-generic op (t1->t2 v1) v2) ; can't use `recur` here
+           t2->t1 (apply-generic op v1 (t2->t1 v2))
+           :else (throw (Exception. (str "No method for these types:  " [op type-tags])))))
+        (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
 
 (defn real-part [z] (apply-generic :real-part z))
 (defn imag-part [z] (apply-generic :imag-part z))
@@ -3397,6 +3410,14 @@ To improve concurrency of development:
     x
     (second x)) x)
 
+(defn clojure-number->complex [x]
+  (make-complex-from-real-imag (contents x) 0))
+(put-coercion :clojure-number :complex clojure-number->complex)
+
+(deftest coercions
+  (is (= (add (make-complex-from-real-imag 1 2)
+              (make-clojure-number 3))
+         [:complex [4 2]])))
 ) ; typed/tc-ignore
 
 ; 3.1 assignment and local state
