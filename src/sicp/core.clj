@@ -3405,7 +3405,7 @@ To improve concurrency of development:
 
 (defn install-real-package []
   (letfn [(tag [x] (attach-tag :real x))]
-    (put :make :real #(tag (float %)))
+    (put :make :real #(tag (bigdec %)))
     (put :raise [:real] #(make-complex-from-real-imag % 0))
     :done))
 (install-real-package)
@@ -3433,7 +3433,7 @@ To improve concurrency of development:
 
 (defn install-integer-package []
   (letfn [(tag [x] (attach-tag :integer x))]
-    (put :make :integer #(tag (int %)))
+    (put :make :integer #(tag (bigint %)))
     (put :raise [:integer] #(make-rational % 1))
     :done))
 (install-integer-package)
