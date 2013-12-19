@@ -3199,7 +3199,7 @@ Least frequent:  O(n^2)"
 (def get-coercion (coercion-table :lookup))
 (def put-coercion (coercion-table :insert!))
 
-(defn apply-generic [op & args]
+(defn apply-generic-2-81 [op & args]
   (let [type-tags (map type-tag args)
         proc (get_ op type-tags)]
     (if proc
@@ -3212,10 +3212,12 @@ Least frequent:  O(n^2)"
                   t1->t2 (get-coercion t1 t2)
                   t2->t1 (get-coercion t2 t1)]
               (cond
-               t1->t2 (apply-generic op (t1->t2 v1) v2) ; can't use `recur` here
-               t2->t1 (apply-generic op v1 (t2->t1 v2))
+               t1->t2 (apply-generic-2-81 op (t1->t2 v1) v2) ; can't use `recur` here
+               t2->t1 (apply-generic-2-81 op v1 (t2->t1 v2))
                :else (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
         (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
+
+(def apply-generic apply-generic-2-81)
 
 (defn real-part [z] (apply-generic :real-part z))
 (defn imag-part [z] (apply-generic :imag-part z))
