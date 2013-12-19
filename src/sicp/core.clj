@@ -3378,23 +3378,6 @@ To improve concurrency of development:
 (defn make-clojure-number [x]
   ((get_ :make :clojure-number) x))
 
-(defn install-rational-package []
-  (letfn [(tag [x] (attach-tag :rational x))]
-    (doseq [[key f] {:add add-rat
-                     :sub sub-rat
-                     :mul mul-rat
-                     :div div-rat
-                     :equ? #(and (= (numer %1) (numer %2))
-                                 (= (denom %1) (denom %2)))}]
-      (put key [:rational :rational] #(tag (f %1 %2))))
-    (put :=zero? [:rational] #(and (zero? (numer %))
-                                   (zero? (denom %))))
-    (put :make :rational #(tag (make-rat %1 %2)))
-    :done))
-(install-rational-package)
-(defn make-rational [n d]
-  ((get_ :make :rational) n d))
-
 (defn install-complex-package []
   (install-rectangular-package)
   (install-polar-package)
@@ -3421,6 +3404,43 @@ To improve concurrency of development:
 (defn make-complex-from-mag-ang [x y]
   ((get_ :make-from-mag-ang :complex) x y))
 
+(defn install-real-package []
+  (letfn [(tag [x] (attach-tag :real x))]
+    (put :make :real #(tag (float %)))
+    (put :raise [:real] #(make-complex-from-real-imag % 0))
+    :done))
+(install-real-package)
+(defn make-real [x]
+  ((get_ :make :real) x))
+
+(defn install-rational-package []
+  (letfn [(tag [x] (attach-tag :rational x))]
+    (doseq [[key f] {:add add-rat
+                     :sub sub-rat
+                     :mul mul-rat
+                     :div div-rat
+                     :equ? #(and (= (numer %1) (numer %2))
+                                 (= (denom %1) (denom %2)))}]
+      (put key [:rational :rational] #(tag (f %1 %2))))
+    (put :=zero? [:rational] #(and (zero? (numer %))
+                                   (zero? (denom %))))
+    (put :make :rational #(tag (make-rat %1 %2)))
+    (put :raise [:rational] #(make-real (/ (numer %)
+                                           (denom %))))
+    :done))
+(install-rational-package)
+(defn make-rational [n d]
+  ((get_ :make :rational) n d))
+
+(defn install-integer-package []
+  (letfn [(tag [x] (attach-tag :integer x))]
+    (put :make :integer #(tag (int %)))
+    (put :raise [:integer] #(make-rational % 1))
+    :done))
+(install-integer-package)
+(defn make-integer [x]
+  ((get_ :make :integer) x))
+
 (defn add [x y] (apply-generic :add x y))
 (defn sub [x y] (apply-generic :sub x y))
 (defn mul [x y] (apply-generic :mul x y))
@@ -3433,6 +3453,14 @@ To improve concurrency of development:
   "Q. 2.80"
   [x]
   (apply-generic :=zero? x))
+(defn raise
+  "Q. 2.83"
+  {:test #(do (are [from to] (= (raise from) to)
+                   (make-integer 2) (make-rational 2 1)
+                   (make-rational 3 5) (make-real 0.6)
+                   (make-real 1) (make-complex-from-real-imag 1 0)))}
+  [x]
+  (apply-generic :raise x))
 
 "Q. 2.77
 (magnitude [:complex [:rectangular [1 2]]])
