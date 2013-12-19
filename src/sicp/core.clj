@@ -3325,6 +3325,7 @@ To improve concurrency of development:
     (put :=zero? [:clojure-number] zero?)
     (put :make :clojure-number tag)
     :done))
+(install-clojure-number-package)
 (defn make-clojure-number [x]
   ((get_ :make :clojure-number) x))
 
@@ -3341,6 +3342,7 @@ To improve concurrency of development:
                                    (zero? (denom %))))
     (put :make :rational #(tag (make-rat %1 %2)))
     :done))
+(install-rational-package)
 (defn make-rational [n d]
   ((get_ :make :rational) n d))
 
@@ -3364,6 +3366,7 @@ To improve concurrency of development:
     (put :make-from-real-imag :complex #(tag (make-from-real-imag %1 %2)))
     (put :make-from-mag-ang :complex #(tag (make-from-mag-ang %1 %2)))
     :done))
+(install-complex-package)
 (defn make-complex-from-real-imag [x y]
   ((get_ :make-from-real-imag :complex) x y))
 (defn make-complex-from-mag-ang [x y]
