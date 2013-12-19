@@ -3193,11 +3193,38 @@ Least frequent:  O(n^2)"
                                      (attach-tag :polar [r a])))
     :done))
 
+(ann all [(Seqable Any) -> Boolean])
+(defn all [xs]
+  (if-let [s (seq xs)]
+    (if (first s)
+      (recur (rest s))
+      false)
+    true))
+
+(ann any [(Seqable Any) -> Boolean])
+(defn any [xs]
+  (if-let [s (seq xs)]
+    (if (first s)
+      true
+      (recur (rest xs)))
+    true))
+
 (typed/tc-ignore
 
 (def coercion-table (make-table))
 (def get-coercion (coercion-table :lookup))
 (def put-coercion (coercion-table :insert!))
+
+(defn coercion [x t]
+  (let [tx (type-tag x)]
+    (if (= tx t)
+      x
+      (when-let [tx->t (get-coercion tx t)]
+        (tx->t x)))))
+
+(defn coerciable? [t-from t-to]
+  (or (= t-from t-to)
+      (get-coercion t-from t-to)))
 
 (defn apply-generic-2-81 [op & args]
   (let [type-tags (map type-tag args)
@@ -3217,7 +3244,27 @@ Least frequent:  O(n^2)"
                :else (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
         (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
 
-(def apply-generic apply-generic-2-81)
+(defn apply-generic-2-82
+  "Q. 2.82"
+  [op & args]
+  (letfn [(this [op args] ; allow recursion
+            (let [type-tags (map type-tag args)]
+              (if-let [proc (get_ op type-tags)]
+                (apply proc (map contents args))
+                (if (apply = type-tags)
+                  (throw (Exception. (str "No method for these types:  " [op type-tags])))
+                  (let [n-args (count args)]
+                    (loop [i-arg 0]
+                      (if (>= i-arg n-args)
+                        (throw (Exception. (str "No method for these types:  " [op type-tags])))
+                        (let [t-i (type-tag (nth args i-arg))]
+                          (if (all (map #(coerciable? % t-i)
+                                        type-tags))
+                            (this op (map #(coercion % t-i) args))
+                            (recur (inc i-arg)))))))))))]
+    (this op args)))
+
+(def apply-generic apply-generic-2-82)
 
 (defn real-part [z] (apply-generic :real-part z))
 (defn imag-part [z] (apply-generic :imag-part z))
