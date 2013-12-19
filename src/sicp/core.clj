@@ -3422,7 +3422,7 @@ To improve concurrency of development:
 (deftest coercions
   (is (= (add (make-complex-from-real-imag 1 2)
               (make-clojure-number 3))
-         [:complex [4 2]])))
+         [:complex [:rectangular [4 2]]])))
 
 "Q. 2.81
 a: Infinite loop.
