@@ -48,11 +48,10 @@
 (ann ^:no-check clojure.math.numeric-tower/sqrt [Num -> Num])
 
 (defmacro p_ [x]
-  `(do
+  `(let [x# ~x]
      (println ~(str &form))
-     (let [x# ~x]
-       (clojure.pprint/pprint ~x)
-       ~x)))
+     (clojure.pprint/pprint x#)
+     x#))
 
 (defmacro pef
   "print-env-form"
