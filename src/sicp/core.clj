@@ -47,12 +47,12 @@
 (ann ^:no-check clojure.math.numeric-tower/ceil [Num -> Num])
 (ann ^:no-check clojure.math.numeric-tower/sqrt [Num -> Num])
 
-(ann p_ (All [a] [a -> a]))
-(defn p_
-  "Pretty print and return a value"
-  [x]
-  (clojure.pprint/pprint x)
-  x)
+(defmacro p_ [x]
+  `(do
+     (println ~(str &form))
+     (let [x# ~x]
+       (clojure.pprint/pprint ~x)
+       ~x)))
 
 (defmacro pef
   "print-env-form"
