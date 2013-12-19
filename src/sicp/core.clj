@@ -12,7 +12,8 @@
                                         Coll NonEmptyColl
                                         NonEmptySeq
                                         Seqable EmptySeqable NonEmptySeqable
-                                        NonEmptyLazySeq] :as typed])
+                                        NonEmptyLazySeq] :as typed]
+            :verbose)
   (:import [clojure.lang LazySeq])
   (:gen-class))
 (set! *warn-on-reflection* false)
