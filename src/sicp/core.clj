@@ -3457,7 +3457,7 @@ To improve concurrency of development:
   {:test #(do (are [from to] (= (raise from) to)
                    (make-integer 2) (make-rational 2 1)
                    (make-rational 3 5) (make-real 0.6)
-                   (make-real 1) (make-complex-from-real-imag 1 0)))}
+                   (make-real 1) (make-complex-from-real-imag (bigdec 1) 0)))}
   [x]
   (apply-generic :raise x))
 
