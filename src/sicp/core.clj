@@ -3423,6 +3423,7 @@ To improve concurrency of development:
 
 (defn install-real-package []
   (letfn [(tag [x] (attach-tag :real x))]
+    (put :equ? [:real :real] #(== %1 %2))
     (put :make :real #(tag (bigdec %)))
     (put :raise [:real] #(make-complex-from-real-imag % 0))
     :done))
@@ -3472,10 +3473,10 @@ To improve concurrency of development:
   (apply-generic :=zero? x))
 (defn raise
   "Q. 2.83"
-  {:test #(do (are [from to] (= (raise from) to)
+  {:test #(do (are [from to] (equ? (raise from) to)
                    (make-integer 2) (make-rational 2 1)
                    (make-rational 3 5) (make-real 0.6)
-                   (make-real 1) (make-complex-from-real-imag (bigdec 1) 0)))}
+                   (make-real 1) (make-complex-from-real-imag 1 0)))}
   [x]
   (apply-generic :raise x))
 
