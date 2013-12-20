@@ -3281,7 +3281,42 @@ Least frequent:  O(n^2)"
              (zip-apply (rest fs) (rest xs)))
        []))))
 
-(def apply-generic apply-generic-2-82)
+(defn apply-generic-2-84
+  "Q. 2.84"
+  [op & args]
+  (letfn [(this [op args] ; allow recursion
+            (let [type-tags (map type-tag args)]
+              (if-let [proc (get_ op type-tags)]
+                (apply proc (map contents args))
+                (if (apply = type-tags)
+                  (throw (Exception. (str "No method for these types:  " [op type-tags])))
+                  (let [n-args (count args)]
+                    (loop [i-arg 0]
+                      (if (>= i-arg n-args)
+                        (throw (Exception. (str "No method for these types:  " [op type-tags])))
+                        (let [t-i (type-tag (nth args i-arg))]
+                          (letfn
+                              [(get-coercion
+                                 ([x] (get-coercion x identity))
+                                 ([x coerce]
+                                    (let [t-x (type-tag x)]
+                                      (if (= t-x t-i)
+                                        coerce
+                                        (when-let [raise (get_ :raise [t-x])]
+                                          (recur (raise (contents x))
+                                                 #(raise (contents (coerce %)))))))))]
+                            (let [coerces (map get-coercion args)]
+                              (if (all coerces)
+                                (if-let [proc (get_ op (repeat n-args t-i))]
+                                  (->> args
+                                       (zip-apply coerces ,,)
+                                       (map contents ,,)
+                                       (apply proc ,,))
+                                  (recur (inc i-arg)))
+                                (recur (inc i-arg)))))))))))))]
+    (this op args)))
+
+(def apply-generic apply-generic-2-84)
 
 (defn real-part [z] (apply-generic :real-part z))
 (defn imag-part [z] (apply-generic :imag-part z))
