@@ -3304,7 +3304,7 @@ Least frequent:  O(n^2)"
                                         coerce
                                         (when-let [raise (get_ :raise [t-x])]
                                           (recur (raise (contents x))
-                                                 #(raise (contents (coerce %)))))))))]
+                                                 (comp raise contents coerce)))))))]
                             (let [coerces (map get-coercion args)]
                               (if (all coerces)
                                 (if-let [proc (get_ op (repeat n-args t-i))]
@@ -3422,7 +3422,7 @@ To improve concurrency of development:
                      :mul *
                      :div /
                      :equ? ==}]
-      (put key [:clojure-number :clojure-number] #(tag (f %1 %2))))
+      (put key [:clojure-number :clojure-number] (comp tag f)))
     (put :=zero? [:clojure-number] zero?)
     (put :make :clojure-number tag)
     :done))
@@ -3434,10 +3434,10 @@ To improve concurrency of development:
   (install-rectangular-package)
   (install-polar-package)
   (letfn [(tag [x] (attach-tag :complex x))]
-    (doseq [[key f] {:add #(tag (add-complex %1 %2))
-                     :sub #(tag (sub-complex %1 %2))
-                     :mul #(tag (mul-complex %1 %2))
-                     :div #(tag (div-complex %1 %2))
+    (doseq [[key f] {:add (comp tag add-complex)
+                     :sub (comp tag sub-complex)
+                     :mul (comp tag mul-complex)
+                     :div (comp tag div-complex)
                      :equ? #(and (== (real-part %1) (real-part %2))
                                  (== (imag-part %1) (imag-part %2)))}]
       (put key [:complex :complex] f))
@@ -3447,8 +3447,8 @@ To improve concurrency of development:
                      :angle angle
                      :=zero? #(zero? (magnitude %))}]
       (put key [:complex] f))
-    (put :make-from-real-imag :complex #(tag (make-from-real-imag %1 %2)))
-    (put :make-from-mag-ang :complex #(tag (make-from-mag-ang %1 %2)))
+    (put :make-from-real-imag :complex (comp tag make-from-real-imag))
+    (put :make-from-mag-ang :complex (comp tag make-from-mag-ang))
     :done))
 (install-complex-package)
 (defn make-complex-from-real-imag [x y]
@@ -3459,7 +3459,7 @@ To improve concurrency of development:
 (defn install-real-package []
   (letfn [(tag [x] (attach-tag :real x))]
     (put :equ? [:real :real] #(== %1 %2))
-    (put :make :real #(tag (bigdec %)))
+    (put :make :real (comp tag bigdec))
     (put :raise [:real] #(make-complex-from-real-imag % 0))
     :done))
 (install-real-package)
@@ -3474,10 +3474,10 @@ To improve concurrency of development:
                      :div div-rat
                      :equ? #(and (== (numer %1) (numer %2))
                                  (== (denom %1) (denom %2)))}]
-      (put key [:rational :rational] #(tag (f %1 %2))))
+      (put key [:rational :rational] (comp tag f)))
     (put :=zero? [:rational] #(and (zero? (numer %))
                                    (zero? (denom %))))
-    (put :make :rational #(tag (make-rat %1 %2)))
+    (put :make :rational (comp tag make-rat))
     (put :raise [:rational] #(make-real (/ (numer %)
                                            (denom %))))
     :done))
@@ -3488,7 +3488,7 @@ To improve concurrency of development:
 (defn install-integer-package []
   (letfn [(tag [x] (attach-tag :integer x))]
     (put :equ? [:integer :integer] #(== %1 %2))
-    (put :make :integer #(tag (bigint %)))
+    (put :make :integer (comp tag bigint))
     (put :raise [:integer] #(make-rational % 1))
     :done))
 (install-integer-package)
