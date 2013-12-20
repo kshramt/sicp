@@ -3268,6 +3268,19 @@ Least frequent:  O(n^2)"
                             (recur (inc i-arg)))))))))))]
     (this op args)))
 
+(defn zip-apply
+  {:test (fn [] (is (= (zip-apply [inc #(+ % 2) #(+ % 3)]
+                                  [0 0 0 0])
+                       [1 2 3])))}
+  [fs xs]
+  (lazy-seq
+   (let [fs (seq fs)
+         xs (seq xs)]
+     (if (and fs xs)
+       (cons ((first fs) (first xs))
+             (zip-apply (rest fs) (rest xs)))
+       []))))
+
 (def apply-generic apply-generic-2-82)
 
 (defn real-part [z] (apply-generic :real-part z))
