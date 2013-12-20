@@ -3193,22 +3193,6 @@ Least frequent:  O(n^2)"
                                      (attach-tag :polar [r a])))
     :done))
 
-(ann all [(Seqable Any) -> Boolean])
-(defn all [xs]
-  (if-let [s (seq xs)]
-    (if (first s)
-      (recur (rest s))
-      false)
-    true))
-
-(ann any [(Seqable Any) -> Boolean])
-(defn any [xs]
-  (if-let [s (seq xs)]
-    (if (first s)
-      true
-      (recur (rest xs)))
-    true))
-
 (typed/tc-ignore
 
 (def coercion-table (make-table))
@@ -3258,8 +3242,8 @@ Least frequent:  O(n^2)"
                       (if (>= i-arg n-args)
                         (throw (Exception. (str "No method for these types:  " [op type-tags])))
                         (let [t-i (type-tag (nth args i-arg))]
-                          (if (all (map #(coerciable? % t-i)
-                                        type-tags))
+                          (if (every? #(coerciable? % t-i)
+                                      type-tags)
                             (if-let [proc (get_ op (repeat n-args t-i))]
                               (apply proc
                                      (map #(contents (coercion % t-i))
@@ -3306,7 +3290,7 @@ Least frequent:  O(n^2)"
                                           (recur (raise (contents x))
                                                  (comp raise contents coerce)))))))]
                             (let [coerces (map get-coercion args)]
-                              (if (all coerces)
+                              (if (every? identity coerces)
                                 (if-let [proc (get_ op (repeat n-args t-i))]
                                   (->> args
                                        (zip-apply coerces ,,)
