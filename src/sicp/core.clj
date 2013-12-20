@@ -3260,7 +3260,11 @@ Least frequent:  O(n^2)"
                         (let [t-i (type-tag (nth args i-arg))]
                           (if (all (map #(coerciable? % t-i)
                                         type-tags))
-                            (this op (map #(coercion % t-i) args))
+                            (if-let [proc (get_ op (repeat n-args t-i))]
+                              (apply proc
+                                     (map #(contents (coercion % t-i))
+                                          args))
+                              (recur (inc i-arg)))
                             (recur (inc i-arg)))))))))))]
     (this op args)))
 
