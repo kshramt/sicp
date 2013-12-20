@@ -3487,6 +3487,7 @@ To improve concurrency of development:
 
 (defn install-integer-package []
   (letfn [(tag [x] (attach-tag :integer x))]
+    (put :equ? [:integer :integer] #(== %1 %2))
     (put :make :integer #(tag (bigint %)))
     (put :raise [:integer] #(make-rational % 1))
     :done))
