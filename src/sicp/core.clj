@@ -3509,13 +3509,13 @@ To improve concurrency of development:
     x
     (second x)) x)
 
-(defn clojure-number->complex [x]
+(defn integer->complex [x]
   (make-complex-from-real-imag (contents x) 0))
-(put-coercion :clojure-number :complex clojure-number->complex)
+(put-coercion :integer :complex integer->complex)
 
 (deftest coercions
   (is (= (add (make-complex-from-real-imag 1 2)
-              (make-clojure-number 3))
+              (make-integer 3))
          [:complex [:rectangular [4 2]]])))
 
 "Q. 2.81
