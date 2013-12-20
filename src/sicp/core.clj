@@ -3386,7 +3386,7 @@ To improve concurrency of development:
                      :sub -
                      :mul *
                      :div /
-                     :equ? =}]
+                     :equ? ==}]
       (put key [:clojure-number :clojure-number] #(tag (f %1 %2))))
     (put :=zero? [:clojure-number] zero?)
     (put :make :clojure-number tag)
@@ -3403,8 +3403,8 @@ To improve concurrency of development:
                      :sub #(tag (sub-complex %1 %2))
                      :mul #(tag (mul-complex %1 %2))
                      :div #(tag (div-complex %1 %2))
-                     :equ? #(and (= (real-part %1) (real-part %2))
-                                 (= (imag-part %1) (imag-part %2)))}]
+                     :equ? #(and (== (real-part %1) (real-part %2))
+                                 (== (imag-part %1) (imag-part %2)))}]
       (put key [:complex :complex] f))
     (doseq [[key f] {:real-part real-part
                      :imag-part imag-part
@@ -3436,8 +3436,8 @@ To improve concurrency of development:
                      :sub sub-rat
                      :mul mul-rat
                      :div div-rat
-                     :equ? #(and (= (numer %1) (numer %2))
-                                 (= (denom %1) (denom %2)))}]
+                     :equ? #(and (== (numer %1) (numer %2))
+                                 (== (denom %1) (denom %2)))}]
       (put key [:rational :rational] #(tag (f %1 %2))))
     (put :=zero? [:rational] #(and (zero? (numer %))
                                    (zero? (denom %))))
