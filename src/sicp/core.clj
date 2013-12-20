@@ -3458,7 +3458,7 @@ To improve concurrency of development:
 
 (defn install-real-package []
   (letfn [(tag [x] (attach-tag :real x))]
-    (put :equ? [:real :real] #(== %1 %2))
+    (put :equ? [:real :real] ==)
     (put :make :real (comp tag bigdec))
     (put :raise [:real] #(make-complex-from-real-imag % 0))
     :done))
@@ -3487,7 +3487,7 @@ To improve concurrency of development:
 
 (defn install-integer-package []
   (letfn [(tag [x] (attach-tag :integer x))]
-    (put :equ? [:integer :integer] #(== %1 %2))
+    (put :equ? [:integer :integer] ==)
     (put :make :integer (comp tag bigint))
     (put :raise [:integer] #(make-rational % 1))
     :done))
