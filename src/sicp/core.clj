@@ -3515,9 +3515,9 @@ To improve concurrency of development:
 (put-coercion :integer :complex integer->complex)
 
 (deftest coercions
-  (is (= (add (make-complex-from-real-imag 1 2)
-              (make-integer 3))
-         [:complex [:rectangular [4 2]]])))
+  (is (equ? (add (make-complex-from-real-imag 1 2)
+                 (make-integer 3))
+            (make-complex-from-real-imag 4 2))))
 
 "Q. 2.81
 a: Infinite loop.
