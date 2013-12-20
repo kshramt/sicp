@@ -3459,7 +3459,7 @@ To improve concurrency of development:
 (defn install-real-package []
   (letfn [(tag [x] (attach-tag :real x))]
     (put :equ? [:real :real] ==)
-    (put :make :real (comp tag bigdec))
+    (put :make :real (comp tag double))
     (put :raise [:real] #(make-complex-from-real-imag % 0))
     :done))
 (install-real-package)
