@@ -3289,11 +3289,11 @@ Least frequent:  O(n^2)"
                                         (when-let [raise (get_ :raise [t-x])]
                                           (recur (raise (contents x))
                                                  (comp raise contents coerce)))))))]
-                            (let [coerces (map get-coercion args)]
-                              (if (every? identity coerces)
+                            (let [coercions (map get-coercion args)]
+                              (if (every? identity coercions)
                                 (if-let [proc (get_ op (repeat n-args t-i))]
                                   (->> args
-                                       (zip-apply coerces ,,)
+                                       (zip-apply coercions ,,)
                                        (map contents ,,)
                                        (apply proc ,,))
                                   (recur (inc i-arg)))
