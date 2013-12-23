@@ -3275,21 +3275,21 @@ Least frequent:  O(n^2)"
                 (if (apply = type-tags)
                   (throw (Exception. (str "No method for these types:  " [op type-tags])))
                   (let [n-args (count args)]
-                    (loop [i-arg 0]
-                      (if (>= i-arg n-args)
-                        (throw (Exception. (str "No method for these types:  " [op type-tags])))
-                        (let [t-i (type-tag (nth args i-arg))]
-                          (letfn
-                              [(get-coercion
-                                 ([x] (get-coercion x identity))
-                                 ([x coerce]
-                                    (let [t-x (type-tag x)]
-                                      (if (= t-x t-i)
-                                        coerce
-                                        (when-let [raise (get_ :raise [t-x])]
-                                          (recur (raise (contents x))
-                                                 (comp raise contents coerce)))))))]
-                            (let [coercions (map get-coercion args)]
+                    (letfn [(get-coercion
+                              ([x t] (get-coercion x t identity))
+                              ([x t coerce]
+                                 (let [t-x (type-tag x)]
+                                   (if (= t-x t)
+                                     coerce
+                                     (when-let [raise (get_ :raise [t-x])]
+                                       (recur (raise (contents x))
+                                              t
+                                              (comp raise contents coerce)))))))]
+                      (loop [i-arg 0]
+                        (if (>= i-arg n-args)
+                          (throw (Exception. (str "No method for these types:  " [op type-tags])))
+                          (let [t-i (type-tag (nth args i-arg))]
+                            (let [coercions (map #(get-coercion % t-i) args)]
                               (if (every? identity coercions)
                                 (if-let [proc (get_ op (repeat n-args t-i))]
                                   (->> args
