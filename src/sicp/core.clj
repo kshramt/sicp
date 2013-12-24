@@ -3231,24 +3231,24 @@ Least frequent:  O(n^2)"
 (defn apply-generic-2-82
   "Q. 2.82"
   [op & args]
-            (let [type-tags (map type-tag args)]
-              (if-let [proc (get_ op type-tags)]
-                (apply proc (map contents args))
-                (if (apply = type-tags)
-                  (throw (Exception. (str "No method for these types:  " [op type-tags])))
-                  (let [n-args (count args)]
-                    (loop [i-arg 0]
-                      (if (>= i-arg n-args)
-                        (throw (Exception. (str "No method for these types:  " [op type-tags])))
-                        (let [t-i (type-tag (nth args i-arg))]
-                          (if (every? #(coerciable? % t-i)
-                                      type-tags)
-                            (if-let [proc (get_ op (repeat n-args t-i))]
-                              (apply proc
-                                     (map #(contents (coercion % t-i))
-                                          args))
-                              (recur (inc i-arg)))
-                            (recur (inc i-arg)))))))))))
+  (let [type-tags (map type-tag args)]
+    (if-let [proc (get_ op type-tags)]
+      (apply proc (map contents args))
+      (if (apply = type-tags)
+        (throw (Exception. (str "No method for these types:  " [op type-tags])))
+        (let [n-args (count args)]
+          (loop [i-arg 0]
+            (if (>= i-arg n-args)
+              (throw (Exception. (str "No method for these types:  " [op type-tags])))
+              (let [t-i (type-tag (nth args i-arg))]
+                (if (every? #(coerciable? % t-i)
+                            type-tags)
+                  (if-let [proc (get_ op (repeat n-args t-i))]
+                    (apply proc
+                           (map #(contents (coercion % t-i))
+                                args))
+                    (recur (inc i-arg)))
+                  (recur (inc i-arg)))))))))))
 
 (defn zip-apply
   {:test (fn [] (is (= (zip-apply [inc #(+ % 2) #(+ % 3)]
