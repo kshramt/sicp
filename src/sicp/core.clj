@@ -3231,7 +3231,6 @@ Least frequent:  O(n^2)"
 (defn apply-generic-2-82
   "Q. 2.82"
   [op & args]
-  (letfn [(this [op args] ; allow recursion
             (let [type-tags (map type-tag args)]
               (if-let [proc (get_ op type-tags)]
                 (apply proc (map contents args))
@@ -3249,8 +3248,7 @@ Least frequent:  O(n^2)"
                                      (map #(contents (coercion % t-i))
                                           args))
                               (recur (inc i-arg)))
-                            (recur (inc i-arg)))))))))))]
-    (this op args)))
+                            (recur (inc i-arg)))))))))))
 
 (defn zip-apply
   {:test (fn [] (is (= (zip-apply [inc #(+ % 2) #(+ % 3)]
