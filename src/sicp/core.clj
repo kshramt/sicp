@@ -3268,35 +3268,35 @@ Least frequent:  O(n^2)"
 (defn apply-generic-2-84
   "Q. 2.84"
   [op & args]
-            (let [type-tags (map type-tag args)]
-              (if-let [proc (get_ op type-tags)]
-                (apply proc (map contents args))
-                (if (apply = type-tags)
-                  (throw (Exception. (str "No method for these types:  " [op type-tags])))
-                  (let [n-args (count args)]
-                    (letfn [(get-coercion
-                              ([x t] (get-coercion x t identity))
-                              ([x t coerce]
-                                 (let [t-x (type-tag x)]
-                                   (if (= t-x t)
-                                     coerce
-                                     (when-let [raise (get_ :raise [t-x])]
-                                       (recur (raise (contents x))
-                                              t
-                                              (comp raise contents coerce)))))))]
-                      (loop [i-arg 0]
-                        (if (>= i-arg n-args)
-                          (throw (Exception. (str "No method for these types:  " [op type-tags])))
-                          (let [t-i (type-tag (nth args i-arg))]
-                            (let [coercions (map #(get-coercion % t-i) args)]
-                              (if (every? identity coercions)
-                                (if-let [proc (get_ op (repeat n-args t-i))]
-                                  (->> args
-                                       (zip-apply coercions ,,)
-                                       (map contents ,,)
-                                       (apply proc ,,))
-                                  (recur (inc i-arg)))
-                                (recur (inc i-arg)))))))))))))
+  (let [type-tags (map type-tag args)]
+    (if-let [proc (get_ op type-tags)]
+      (apply proc (map contents args))
+      (if (apply = type-tags)
+        (throw (Exception. (str "No method for these types:  " [op type-tags])))
+        (let [n-args (count args)]
+          (letfn [(get-coercion
+                    ([x t] (get-coercion x t identity))
+                    ([x t coerce]
+                       (let [t-x (type-tag x)]
+                         (if (= t-x t)
+                           coerce
+                           (when-let [raise (get_ :raise [t-x])]
+                             (recur (raise (contents x))
+                                    t
+                                    (comp raise contents coerce)))))))]
+            (loop [i-arg 0]
+              (if (>= i-arg n-args)
+                (throw (Exception. (str "No method for these types:  " [op type-tags])))
+                (let [t-i (type-tag (nth args i-arg))]
+                  (let [coercions (map #(get-coercion % t-i) args)]
+                    (if (every? identity coercions)
+                      (if-let [proc (get_ op (repeat n-args t-i))]
+                        (->> args
+                             (zip-apply coercions ,,)
+                             (map contents ,,)
+                             (apply proc ,,))
+                        (recur (inc i-arg)))
+                      (recur (inc i-arg)))))))))))))
 
 (def apply-generic apply-generic-2-84)
 
