@@ -3268,7 +3268,6 @@ Least frequent:  O(n^2)"
 (defn apply-generic-2-84
   "Q. 2.84"
   [op & args]
-  (letfn [(this [op args] ; allow recursion
             (let [type-tags (map type-tag args)]
               (if-let [proc (get_ op type-tags)]
                 (apply proc (map contents args))
@@ -3297,8 +3296,7 @@ Least frequent:  O(n^2)"
                                        (map contents ,,)
                                        (apply proc ,,))
                                   (recur (inc i-arg)))
-                                (recur (inc i-arg)))))))))))))]
-    (this op args)))
+                                (recur (inc i-arg)))))))))))))
 
 (def apply-generic apply-generic-2-84)
 
