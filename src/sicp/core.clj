@@ -3098,13 +3098,10 @@ Least frequent:  O(n^2)"
 (ann contents (All [a b] ['[a b] -> b]))
 (defn contents [[_ x]] x)
 
-(typed/def-alias Key1 (U Keyword))
-(typed/def-alias Key2 (U Keyword (Seqable Keyword)))
-
 (ann make-table [-> (Fn
-                     [(Value :lookup) -> [Key1 Key2 -> Any]]
-                     [(Value :insert!) -> [Key1 Key2 Any ->
-                                           (LazySeq '[Key1 (Seqable '[Key2 Any])])]])])
+                     [(Value :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
+                     [(Value :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any ->
+                                           (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])]])])
 (defn make-table
   {:test #(do (is (let [t (make-table)]
                     ((t :insert!) :a :b 1)
@@ -3117,34 +3114,34 @@ Least frequent:  O(n^2)"
                     ((t :insert!) :b :a 2)
                     (= ((t :lookup) :b :a) 2))))}
   []
-  (let [local-table (atom> (LazySeq '[Key1 (Seqable '[Key2 Any])])
+  (let [local-table (atom> (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])
                            (lazy-seq empty-table))]
     (letfn> [dispatch :- (Fn
-                          [(Value :lookup) -> [Key1 Key2 -> Any]]
-                          [(Value :insert!) -> [Key1 Key2 Any
-                                                -> (LazySeq '[Key1 (Seqable '[Key2 Any])])]])
+                          [(Value :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
+                          [(Value :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any
+                                                -> (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])]])
              (dispatch [method]
                        (cond ; `case` here causes type error
-                        (= method :lookup) (fn> [key-1 :- Key1
-                                                 key-2 :- Key2]
+                        (= method :lookup) (fn> [key-1 :- Keyword
+                                                 key-2 :- (U Keyword (Seqable Keyword))]
                                              (lookup key-1 key-2 @local-table))
-                        (= method :insert!) (fn> [key-1 :- Key1
-                                                  key-2 :- Key2
+                        (= method :insert!) (fn> [key-1 :- Keyword
+                                                  key-2 :- (U Keyword (Seqable Keyword))
                                                   value :- Any]
                                               (reset! local-table (insert key-1 key-2 value @local-table)))
                         :else (throw (Exception. (str "unknown method:  " method)))))]
       dispatch)))
 
 (ann operation-table (Fn
-                      [(Value :lookup) -> [Key1 Key2 -> Any]]
-                      [(Value :insert!) -> [Key1 Key2 Any ->
-                                            (LazySeq '[Key1 (Seqable '[Key2 Any])])]]))
+                      [(Value :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
+                      [(Value :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any ->
+                                            (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])]]))
 (def operation-table (make-table))
 
-(ann get_ [Key1 Key2 -> Any])
+(ann get_ [Keyword (U Keyword (Seqable Keyword)) -> Any])
 (def get_ (operation-table :lookup))
 
-(ann put [Key1 Key2 Any -> (LazySeq '[Key1 (Seqable '[Key2 Any])])])
+(ann put [Keyword (U Keyword (Seqable Keyword)) Any -> (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])])
 (def put (operation-table :insert!))
 
 (ann install-rectangular-package [-> (Value :done)])
