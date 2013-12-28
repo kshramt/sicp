@@ -3193,6 +3193,35 @@ Least frequent:  O(n^2)"
                                      (attach-tag :polar [r a])))
     :done))
 
+(ann eps-1 Num)
+(def eps-1 (/ java.lang.Float/MIN_VALUE java.lang.Float/MIN_NORMAL))
+
+(ann approx-equal [Num Num -> Boolean])
+(defn approx-equal [x y]
+  (let [d (max (* 2 java.lang.Float/MIN_VALUE)
+               (* 2 (max (abs x) (abs y)) eps-1))]
+    (<= (abs (- x y)) d)))
+
+(ann real->rational [Num -> '[Int Int]])
+(defn real->rational
+  {:test #(do (is (= (real->rational 3.2) [16, 5]))
+              (is (= (real->rational 0.25) [1, 4])))}
+  [x]
+  (loop> [a :- Int 1
+          b :- Int 0
+          c :- Int (bigint x)
+          d :- Int 1
+          y :- Num x]
+    (if (approx-equal (/ c a) x)
+      [c a]
+      (let [y (/ 1 (- y (bigint y)))
+            iy (bigint y)]
+        (recur (+ (* a iy) b)
+               a
+               (+ (* c iy) d)
+               c
+               y)))))
+
 (typed/tc-ignore
 
 (def coercion-table (make-table))
