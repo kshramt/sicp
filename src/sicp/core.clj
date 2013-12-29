@@ -3249,8 +3249,8 @@ Least frequent:  O(n^2)"
                   t1->t2 (get-coercion t1 t2)
                   t2->t1 (get-coercion t2 t1)]
               (cond
-               t1->t2 (apply-generic-2-81 op (t1->t2 v1) v2) ; can't use `recur` here
-               t2->t1 (apply-generic-2-81 op v1 (t2->t1 v2))
+               t1->t2 (recur op [(t1->t2 v1) v2])
+               t2->t1 (recur op [v1 (t2->t1 v2)])
                :else (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
         (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
 
