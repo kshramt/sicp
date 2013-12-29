@@ -3201,8 +3201,8 @@ Least frequent:  O(n^2)"
 
 (ann real->rational [Num -> '[Int Int]])
 (defn real->rational
-  {:test #(do (is (= (real->rational 3.2) [16, 5]))
-              (is (= (real->rational 0.25) [1, 4])))}
+  {:test #(do (is (= (real->rational 3.2) [16 5]))
+              (is (= (real->rational 0.25) [1 4])))}
   [x]
   (loop> [a :- Int 1
           b :- Int 0
