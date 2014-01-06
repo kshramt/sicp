@@ -1422,7 +1422,7 @@ Skip...
 (ann total-weight (Fn [BinaryMobileStructure -> Num]
                       [BinaryMobileStructure' -> Num]))
 (defn total-weight
-  "Q. 2-29-b"
+  "Q. 2.29-b"
   [m]
   (if (number? m) ; (U (I (Coll Any) Num) BinaryMobile) /= BinaryMobile
     m
@@ -1432,7 +1432,7 @@ Skip...
 (ann is-balanced (Fn [BinaryMobileStructure -> Boolean]
                      [BinaryMobileStructure' -> Boolean]))
 (defn is-balanced
-  "Q. 2-29-c"
+  "Q. 2.29-c"
   {:test #(do (is (is-balanced (make-mobile
                                 (make-branch 3 1)
                                 (make-branch 1
