@@ -31,6 +31,11 @@
                                                      [Num -> Num]))
 (typed/override-method clojure.lang.Numbers/decP (Fn [Int -> Int]
                                                      [Num -> Num]))
+(typed/override-method java.lang.Math/sin [Num -> Double])
+(typed/override-method java.lang.Math/cos [Num -> Double])
+(typed/override-method java.lang.Math/log [Num -> Double])
+(typed/override-method java.lang.Math/pow [Num Num -> Double])
+(typed/override-method java.lang.Math/atan2 [Num Num -> Double])
 (ann ^:no-check clojure.core/rem (Fn [Int Int -> Int]
                                      [Num Num -> Num]))
 (ann ^:no-check clojure.core/mod (Fn [Int Int -> Int]
@@ -678,7 +683,7 @@
 
 (ann log2 [Num -> Num])
 (defn log2 [x]
-  (/ (Math/log (double x)) (Math/log 2.0)))
+  (/ (Math/log x) (Math/log 2.0)))
 
 (ann nth-root [Num Int -> Num])
 (defn nth-root
@@ -693,7 +698,7 @@
            basic :- [Num -> Num]
            (basic [guess]
                   (/ x
-                     (Math/pow (double guess) (double (dec' n)))))]
+                     (Math/pow guess (dec' n))))]
     (fixed-point ((damp n) basic) 1)))
 
 (ann iterative-improve [[Num -> Boolean] [Num -> Num] -> [Num -> Num]])
