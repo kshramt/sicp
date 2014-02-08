@@ -1462,14 +1462,8 @@ Skip...
              (= (branch-moment lb)
                 (branch-moment rb)))))))
 
-(typed/tc-ignore
+(typed/tc-ignore ; Recursive map seems to be not typable...
 
-; Recursive map seems to be not typable...
-
-(typed/def-alias IntTree (Coll (U Int IntTree)))
-(typed/def-alias NumTree (Coll (U Num NumTree)))
-
-(ann square-tree [(Coll Num) -> (Coll Num)])
 (defn square-tree
   "Q. 2.30-1"
   {:test #(do (is (= (square-tree [1 [2 [3]] 4]) [1 [4 [9]] 16])))}
@@ -1482,20 +1476,14 @@ Skip...
               (square-tree t1)))
           (square-tree (rest t)))))
 
-(ann square-tree' (Fn [IntTree -> IntTree]
-                      [NumTree -> NumTree]))
 (defn square-tree'
   "Q. 2.30-2"
   {:test #(do (is (= (square-tree' [1 [2 [3]] 4]) [1 [4 [9]] 16])))}
   [t]
-  (map_ (ann-form (fn [e] (if (number? e)
-                            (square e)
-                            (square-tree' e)))
-                  (Fn [Int -> Int]
-                      [IntTree -> IntTree]
-                      [Num -> Num]
-                      [NumTree -> NumTree]))
-       t))
+  (map_ (fn [e] (if (number? e)
+                  (square e)
+                  (square-tree' e)))
+        t))
 
 (defn tree-map
   "Q. 2.31"
@@ -1558,9 +1546,8 @@ Skip...
      []
      (cons low (range_ (inc low) high)))))
 
-(typed/tc-ignore
+(typed/tc-ignore ; operation over arbitrarily nested list
 
-(ann sum-odd-squares [(Rec [this] (Coll (U Int this))) -> Int])
 (defn sum-odd-squares
   [tree]
   (accumulate +'
