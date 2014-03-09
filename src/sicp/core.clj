@@ -3141,24 +3141,27 @@ Least frequent:  O(n^2)"
 (ann put [Keyword (U Keyword (Seqable Keyword)) Any -> (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])])
 (def put (operation-table :insert!))
 
+(declare make-real)
 (ann install-rectangular-package [-> (Value :done)])
 (defn install-rectangular-package []
-  (let [real-part (fn> [[r _] :- '[Double Double]] r)
-        imag-part (fn> [[_ i] :- '[Double Double]] i)]
-    (put :real-part [:rectangular] real-part)
-    (put :imag-part [:rectangular] imag-part)
-    (put :magnitude [:rectangular] (fn> [z :- '[Double Double]]
-                                     (sqrt (+ (square (real-part z))
-                                              (square (imag-part z))))))
-    (put :angle [:rectangular] (fn> [z :- '[Double Double]]
-                                 (Math/atan2 (imag-part z)
-                                             (real-part z))))
-    (put :make-from-real-imag :rectangular (fn> [r :- Double
-                                                 i :- Double]
+  (let [real-part (fn> [[r _] :- '[Num Num]] r)
+        imag-part (fn> [[_ i] :- '[Num Num]] i)]
+    (put :real-part [:rectangular] (fn> [z :- '[Num Num]] (make-real (real-part z)))) ; could not use `comp`
+    (put :imag-part [:rectangular] (fn> [z :- '[Num Num]] (make-real (imag-part z))))
+    (put :magnitude [:rectangular] (fn> [z :- '[Num Num]]
+                                     (make-real
+                                      (sqrt (+ (square (real-part z))
+                                               (square (imag-part z)))))))
+    (put :angle [:rectangular] (fn> [z :- '[Num Num]]
+                                 (make-real
+                                  (Math/atan2 (imag-part z)
+                                              (real-part z)))))
+    (put :make-from-real-imag :rectangular (fn> [r :- Num
+                                                 i :- Num]
                                              (attach-tag :rectangular
                                                          [r i])))
-    (put :make-from-mag-ang :rectangular (fn> [r :- Double
-                                               a :- Double]
+    (put :make-from-mag-ang :rectangular (fn> [r :- Num
+                                               a :- Num]
                                            (attach-tag :rectangular
                                                        [(* r (Math/cos a))
                                                         (* r (Math/sin a))])))
@@ -3166,24 +3169,26 @@ Least frequent:  O(n^2)"
 
 (ann install-polar-package [-> (Value :done)])
 (defn install-polar-package []
-  (let [magnitude (fn> [[r _] :- '[Double Double]] r)
-        angle (fn> [[_ a] :- '[Double Double]] a)]
-    (put :real-part [:polar] (fn> [z :- '[Double Double]]
-                               (* (magnitude z)
-                                  (Math/cos (angle z)))))
-    (put :imag-part [:polar] (fn> [z :- '[Double Double]]
-                               (* (magnitude z)
-                                  (Math/sin (angle z)))))
-    (put :magnitude [:polar] magnitude)
-    (put :angle [:polar] angle)
-    (put :make-from-real-imag :polar (fn> [r :- Double
-                                           i :- Double]
+  (let [magnitude (fn> [[r _] :- '[Num Num]] r)
+        angle (fn> [[_ a] :- '[Num Num]] a)]
+    (put :real-part [:polar] (fn> [z :- '[Num Num]]
+                               (make-real
+                                (* (magnitude z)
+                                   (Math/cos (angle z))))))
+    (put :imag-part [:polar] (fn> [z :- '[Num Num]]
+                               (make-real
+                                (* (magnitude z)
+                                   (Math/sin (angle z))))))
+    (put :magnitude [:polar] (fn> [z :- '[Num Num]] (make-real (magnitude z))))
+    (put :angle [:polar] (fn> [z :- '[Num Num]] (make-real (angle z))))
+    (put :make-from-real-imag :polar (fn> [r :- Num
+                                           i :- Num]
                                        (attach-tag :polar
                                                    [(sqrt (+ (square r)
                                                              (square i)))
                                                     (Math/atan2 i r)])))
-    (put :make-from-mag-ang :polar (fn> [r :- Double
-                                         a :- Double]
+    (put :make-from-mag-ang :polar (fn> [r :- Num
+                                         a :- Num]
                                      (attach-tag :polar [r a])))
     :done))
 
