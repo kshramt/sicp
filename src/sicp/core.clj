@@ -39,8 +39,6 @@
 (typed/override-method java.lang.Math/atan2 [Num Num -> Double])
 (ann ^:no-check clojure.core/rem (Fn [Int Int -> Int]
                                      [Num Num -> Num]))
-(ann ^:no-check clojure.core/mod (Fn [Int Int -> Int]
-                                     [Num Num -> Num]))
 (ann ^:no-check clojure.core/sequential? [Any -> Boolean
                                           :filters {:then (is (Seqable Any) 0)
                                                     :else (! (Seqable Any) 0)}])
