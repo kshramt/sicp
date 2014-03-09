@@ -2314,8 +2314,7 @@ n^n
 
 "Q. 2.53 skip"
 
-(typed/tc-ignore
-(ann equal? (All [a b] [a b -> Boolean]))
+(ann ^:no-check equal? (All [a b] [a b -> Boolean]))
 (defn equal?
   "Q. 2.54"
   {:test #(do (is (equal? [1 [2 [3] 4]] [1 [2 [3] 4]]))
@@ -2333,7 +2332,6 @@ n^n
                                 :else false))
      (and (not is-x-seq) (not is-y-seq)) (= x y)
      :else false)))
-) ; tc-ignore
 
 "Q. 2.55 (car ''abracadabra) = (car (quote (quote abracadabra))) = quote"
 
