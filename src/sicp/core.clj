@@ -9,6 +9,7 @@
                                         Keyword
                                         Option
                                         Vec
+                                        Seq
                                         Coll NonEmptyColl
                                         NonEmptySeq
                                         Seqable EmptySeqable NonEmptySeqable
@@ -1304,8 +1305,8 @@ Skip...
      (cons (square (first s)) (square-list (rest s)))
      [])))
 
-(ann square-list' (Fn [(Seqable Int) -> (LazySeq Int)]
-                      [(Seqable Num) -> (LazySeq Num)]))
+(ann square-list' (Fn [(Seqable Int) -> (Seq Int)]
+                      [(Seqable Num) -> (Seq Num)]))
 (defn square-list'
   "Q. 2.21-2"
   [coll]
@@ -1685,9 +1686,9 @@ Skip...
   ; (accumulate-n cons [] m)
   (lazy-seq
    (accumulate (fn> [column :- (Seqable a)
-                       rows :- (LazySeq (LazySeq a))]
+                       rows :- (Seqable (Seqable a))]
                    (map (fn> [x :- a
-                              row :- (LazySeq a)]
+                              row :- (Seqable a)]
                           (lazy-seq (cons x row)))
                         column
                         rows))
@@ -1697,7 +1698,7 @@ Skip...
                m)))
 
 (ann matrix-*-matrix [(NonEmptySeqable (Seqable Num)) (NonEmptySeqable (Seqable Num))
-                      -> (LazySeq (LazySeq Num))])
+                      -> (Seq (LazySeq Num))])
 (defn matrix-*-matrix
   "Q. 3.27"
   {:test #(do (is (= (matrix-*-matrix [[1]
@@ -2085,12 +2086,12 @@ n^n
         (l frame)
         (r frame)))))
 
-(ann each-cons (All [a] [Int (Seqable a) -> (LazySeq (LazySeq a))]))
+(ann each-cons (All [a] [Int (Seqable a) -> (LazySeq (Seq a))]))
 (defn each-cons
   {:test #(do (is (= (each-cons 2 [0 1 2 3]) [[0 1] [1 2] [2 3]])))}
   [n coll]
   {:pre [(>= n 0)]}
-  (letfn> [this :- [(Seqable a) -> (LazySeq (LazySeq a))]
+  (letfn> [this :- [(Seqable a) -> (LazySeq (Seq a))]
            (this [coll]
                  (lazy-seq
                   (let [head (take n coll)]
@@ -2099,9 +2100,9 @@ n^n
                       (lazy-seq [])))))]
     (this coll)))
 
-(ann vects->segments [(Seqable Vector) -> (LazySeq Segment)])
+(ann vects->segments [(Seqable Vector) -> (Seq Segment)])
 (defn vects->segments [vects]
-  (map (fn> [[start end] :- (LazySeq Vector)]
+  (map (fn> [[start end] :- (Seq Vector)]
          {:pre [(not (nil? start)) (not (nil? end))]}
          (make-segment start end))
        (each-cons 2 vects)))
@@ -2601,7 +2602,7 @@ n^n
 (ann union-set' (All [a b] [(Seqable a) (Seqable b) -> (LazySeq (U a b))]))
 (def union-set' append) ; concat
 
-(ann fizzbuzz (LazySeq (U String Int)))
+(ann fizzbuzz (Seq (U String Int)))
 (def fizzbuzz
   (map (fn> [n :- Int] (let [is-fizz (zero? (mod n 3))
                              is-buzz (zero? (mod n 5))]
