@@ -3085,6 +3085,7 @@ Least frequent:  O(n^2)"
 (ann contents (All [a b] ['[a b] -> b]))
 (defn contents [[_ x]] x)
 
+; `Any` is useless here, though
 (ann make-table [-> (Fn
                      [(Value :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
                      [(Value :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any ->
@@ -3108,7 +3109,7 @@ Least frequent:  O(n^2)"
                           [(Value :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any
                                                 -> (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])]])
              (dispatch [method]
-                       (cond ; `case` here causes type error
+                       (cond
                         (= method :lookup) (fn> [key-1 :- Keyword
                                                  key-2 :- (U Keyword (Seqable Keyword))]
                                              (lookup key-1 key-2 @local-table))
@@ -3116,7 +3117,16 @@ Least frequent:  O(n^2)"
                                                   key-2 :- (U Keyword (Seqable Keyword))
                                                   value :- Any]
                                               (reset! local-table (insert key-1 key-2 value @local-table)))
-                        :else (throw (Exception. (str "unknown method:  " method)))))]
+                        :else (throw (Exception. (str "unknown method:  " method))))
+                       #_(case method ; todo: `case` is not able to be used here
+                         :lookup (fn> [key-1 :- Keyword
+                                       key-2 :- (U Keyword (Seqable Keyword))]
+                                   (lookup key-1 key-2 @local-table))
+                         :insert! (fn> [key-1 :- Keyword
+                                        key-2 :- (U Keyword (Seqable Keyword))
+                                        value :- Any]
+                                    (reset! local-table (insert key-1 key-2 value @local-table)))
+                         (throw (Exception. (str "unknown method:  " method)))))]
       dispatch)))
 
 (ann operation-table (Fn
