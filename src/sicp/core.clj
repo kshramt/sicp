@@ -3195,6 +3195,9 @@ Least frequent:  O(n^2)"
 (ann eps-1 Num)
 (def eps-1 (/ java.lang.Float/MIN_VALUE java.lang.Float/MIN_NORMAL))
 
+(ann eps-2 Num)
+(def eps-2 (/ java.lang.Double/MIN_VALUE java.lang.Double/MIN_NORMAL))
+
 (ann approx-equal [Num Num -> Boolean])
 (defn approx-equal [x y]
   (let [d (max (* 2 java.lang.Float/MIN_VALUE)
