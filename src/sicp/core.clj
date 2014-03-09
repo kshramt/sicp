@@ -1342,11 +1342,11 @@ Skip...
                   x))])
      coll)))
 
-(typed/def-alias Tree (TFn [[a :variance :covariant]] (Rec [this] (typed/Coll (U a this)))))
+(typed/def-alias Tree (TFn [[a :variance :covariant]] (Rec [this] (Seqable (U a this)))))
 
 ;(ann fringe [(Coll Any) -> (Coll Any)])
 ;(ann fringe (All [a] [(Tree a) -> (Coll a)]))
-(ann fringe [(Tree Any) -> (Coll Any)])
+(ann fringe [(Tree Any) -> (Seqable Any)])
 (defn fringe
   "Q. 2.28"
   {:test #(do (is (= (fringe  [[1 2] [3 [4]]]) [1 2 3 4])))}
