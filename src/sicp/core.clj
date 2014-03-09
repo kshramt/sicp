@@ -1522,10 +1522,8 @@ Skip...
      [(lazy-seq coll)])))
 
 (ann accumulate (All [a b] (Fn [[a b -> b] b (Seqable a) -> b]
-                               [[a (Seqable (U a b)) -> (LazySeq (U a b))] (LazySeq (U a b)) (Seqable a) ; core.typed does not infer`b` = `(Seqable (U a b))`
-                                -> (LazySeq (U a b))]
-                               [[a (LazySeq (U a b)) -> (LazySeq (U a b))] (LazySeq (U a b)) (Seqable a) ; core.typed does not infer`b` = `(LazySeq (U a b))`
-                                -> (LazySeq (U a b))])))
+                               [[a (Seqable (U a b)) -> (Seq (U a b))] (Seqable (U a b)) (Seqable a) ; core.typed does not infer`b` = `(LazySeq (U a b))`
+                                -> (Seqable (U a b))])))
 
 (defn accumulate
   {:test #(do (is (= (accumulate +' 0 [1 2]) 3)))}
