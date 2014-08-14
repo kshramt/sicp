@@ -17,11 +17,12 @@
     contents
     [type-tag contents]))
 (defn type-tag [datum]
-  (if (number? datum)
-    :clojure-number
-    (first datum)))
+  (cond
+   (number? datum) :clojure-number
+   (instance? Boolean datum) :clojure-boolean
+   :else (first datum)))
 (defn contents [datum]
-  (if (number? datum)
+  (if (or (number? datum) (instance? Boolean datum))
     datum
     (second datum)))
 
@@ -67,26 +68,82 @@
                      (throw (Exception. (str "unknown method:  " method)))))]
     dispatch))
 
+(defn abs- [x] (if (pos? x) x (- x)))
+
 (def operation-table (make-table))
 (def get_ (operation-table :lookup))
 (def put (operation-table :insert!))
-(defn apply-generic [op & args]
+(defn apply-generic-basic [op & args]
   (let [type-tags (map type-tag args)]
     (if-let [proc (get_ op type-tags)]
       (apply proc (map contents args))
-(defn apply-generic [op & args]
       (throw (Exception. (str "no mtehod for these types: " op " " (apply list type-tags)))))))
+
+(declare equ? raise)
+(defn- projectable? [x]
+  (get_ :project [(type-tag x)]))
+(defn drop_ [x]
+  (if-let [project- (projectable? x)]
+    (let [xdown (project- (contents x))]
+      (if (equ? (raise xdown) x)
+        (recur xdown)
+        x))
+    x))
+
+(defn- raisable? [x]
+  (get_ :raise [(type-tag x)]))
+(defn- raised-list [x]
+  (if-let [raise- (raisable? x)]
+    (cons x (raised-list (raise- (contents x))))
+    [x]))
+(defn- index
+  {:test #(do (are [y xs i] (= (index y xs) i)
+                   1 [1 2 3] 0
+                   1 [2 1 3] 1
+                   0 [1 2 3] nil
+                   1 [] nil))}
+  ([y xs] (index y xs 0))
+  ([y xs i]
+     (when-let [s (seq xs)]
+       (if (= (first s) y)
+         i
+         (recur y (rest s) (inc i))))))
+(defn- raise-up-to [x t]
+  (if (= (type-tag x) t)
+    x
+    (if-let [raise- (raisable? x)]
+      (recur (raise- (contents x)) t)
+      (throw (Exception. (str "Unable to raise " x " up to " t))))))
+(defn- apply-generic-2-84-
+  "Q. 2.84"
+  [op args]
   (let [type-tags (map type-tag args)
-        error #(throw (Exception. (str "no mtehod for these types: " op args)))]
+        error #(throw (Exception. (str "no method for these types: " op " " (apply list args))))]
     (if-let [proc (get_ op type-tags)]
       (apply proc (map contents args))
-      (if (apply = type-tags)
+      (if (or (apply = type-tags) (< (count args) 2))
         (error)
-        (loop [i 0
-               t-high (type-tag (nth args i))
-               ; hero @@@@@@@@@ なんとか実装して，とっとと終わらせる．
-               ])))))
+        (let [raised-t1s (map type-tag (raised-list (first args)))
+              t-heights (map (comp #(if (nil? %) -1 %)
+                                   #(index % raised-t1s))
+                             type-tags)
+              t (nth raised-t1s (apply max t-heights))]
+          (apply-generic-2-84- op (map #(raise-up-to % t) args)))))))
+(defn apply-generic-2-84
+  "Q. 2.84"
+  [op & args]
+  (apply-generic-2-84- op args))
+(defn apply-generic-2-86
+  "Q. 2.86"
+  [op & args]
+  ((if (or (= op :raise)
+           (= op :project)
+           (= op :drop))
+     identity
+     drop_)
+    (apply-generic-2-84- op args)))
 
+(def apply-generic apply-generic-2-86)
 
 (def coercion-table (make-table))
 (def get-coercion (coercion-table :lookup))
@@ -112,7 +169,9 @@
 (defn equ? [x y] (apply-generic :equ? x y))
 (defn =zero? [x] (apply-generic :=zero? x))
 (defn raise [x] (apply-generic :raise x))
+(defn project [x] (apply-generic :project x))
 (defn square [x] (mul x x))
+(defn le? [x y] (or (lt? x y) (equ? x y)))
 (defn gcd
   {:test #(do (are [m n result] (= (gcd m n) result)
                    45 15 15
@@ -131,9 +190,6 @@
       large
       (recur (rem_ large small) small))))
 
-(defn raisable? [x]
-  (get_ :raise [(type-tag x)]))
-
 ; clojure number package
 (defn install-clojure-number-package []
   (let [tag #(attach-tag :clojure-number %)]
@@ -142,7 +198,7 @@
     (put :mul [:clojure-number :clojure-number] #(tag (* %1 %2)))
     (put :div [:clojure-number :clojure-number] #(tag (/ %1 %2)))
     (put :div-truncate [:clojure-number :clojure-number] #(tag (int (div %1 %2))))
-    (put :abs [:clojure-number] #(tag (Math/abs %)))
+    (put :abs [:clojure-number] #(tag (abs- %)))
     (put :sin [:clojure-number] #(tag (Math/sin %)))
     (put :cos [:clojure-number] #(tag (Math/cos %)))
     (put :sqrt [:clojure-number] #(tag (Math/sqrt %)))
@@ -159,21 +215,24 @@
 
 
 ; integer package
-(declare make-rational)
+(declare make-rational make-integer make-real)
 (defn install-integer-package []
   (let [tag #(attach-tag :integer %)]
     (put :add [:integer :integer] #(tag (add %1 %2)))
     (put :sub [:integer :integer] #(tag (sub %1 %2)))
     (put :mul [:integer :integer] #(tag (mul %1 %2)))
-    (put :div [:integer :integer] #(make-rational %1 %2))
+    (put :div [:integer :integer] #(make-rational (tag %1) (tag %2)))
     (put :div-truncate [:integer :integer] #(tag (int (div %1 %2))))
     (put :abs [:integer] #(tag (abs %)))
+    (put :sqrt [:integer] #(sqrt (raise (tag %))))
+    (put :cos [:integer] #(cos (raise (tag %))))
+    (put :sin [:integer] #(sin (raise (tag %))))
     (put :lt? [:integer :integer] lt?)
     (put :gt? [:integer :integer] gt?)
     (put :rem_ [:integer :integer] #(tag (rem_ %1 %2)))
     (put :equ? [:integer :integer] equ?)
     (put :=zero? [:integer] =zero?)
-    (put :raise [:integer] #(make-rational % 1))
+    (put :raise [:integer] #(make-rational (tag %) (tag 1)))
     (put :make :integer #(tag (int %))))
   :done)
 (install-integer-package)
@@ -194,8 +253,8 @@
                                                                (denom y))
                                                           (mul (denom x)
                                                                (numer y)))
-                                                     (* (denom x)
-                                                        (denom y))))))
+                                                     (mul (denom x)
+                                                          (denom y))))))
     (put :sub [:rational :rational] (fn [x y]
                                       (tag (make-rat (sub (mul (numer x)
                                                                (denom y))
@@ -215,6 +274,9 @@
                                                           (numer y))))))
     (put :abs [:rational] (fn [x] (tag (make-rat (abs (numer x))
                                                  (abs (denom x))))))
+    (put :sqrt [:rational] #(sqrt (raise (tag %))))
+    (put :cos [:rational] #(cos (raise (tag %))))
+    (put :sin [:rational] #(sin (raise (tag %))))
     (put :lt? [:rational :rational] #(lt? (raise (tag %1)) (raise (tag %2))))
     (put :gt? [:rational :rational] #(gt? (raise (tag %1)) (raise (tag %2))))
     (put :equ? [:rational :rational] (fn [x y] (and (equ? (numer x)
@@ -223,17 +285,33 @@
                                                           (denom y)))))
     (put =zero? [:rational] #(=zero? (div (numer %)
                                           (denom %))))
-    (put :raise [:rational] #(div (->> % numer contents make-real)
-                                  (->> % denom contents make-real)))
-    (put :drop [:real] (fn [x] (let [denom-x (denom x)]
-                                 (if (equ? (abs denom-x) 1)
-                                   (mul (numer x) denom-x)
-                                   (tag x)))))
+    (put :raise [:rational] #(make-real (div (contents (numer %))
+                                             (contents (denom %)))))
+    (put :project [:rational] #(div-truncate (numer %) (denom %)))
     (put :make :rational #(tag (make-rat %1 %2))))
   :done)
 (install-rational-package)
 (def make-rational (get_ :make :rational))
 
+(defn- real->rational
+  {:test #(do (is (= (real->rational 3.2) [16 5]))
+              (is (= (real->rational 0.25) [1 4])))}
+  [x]
+  (letfn [(approx-equal [a b] (<= (abs- (- a b)) 1e-7))]
+    (loop [a 1
+           b 0
+           c (bigint x)
+           d 1
+           y x]
+      (if (approx-equal (/ c a) x)
+        [c a]
+        (let [y (/ 1 (- y (bigint y)))
+              iy (bigint y)]
+          (recur (+ (* a iy) b)
+                 a
+                 (+ (* c iy) d)
+                 c
+                 y))))))
 
 ; integer package
 (declare make-complex-from-real-imag)
@@ -252,13 +330,10 @@
     (put :gt? [:real :real] gt?)
     (put :equ? [:real :real] equ?)
     (put :=zero? [:real] =zero?)
-    (put :raise [:real] #(make-complex-from-real-imag % 0))
-    (put :drop [:real] (fn [x] (let [rx (tag x)
-                                     ix (make-integer x)]
-                                 (if (equ? ix rx)
-                                   ix
-                                   rx))))
-    (put :make :real tag))
+    (put :raise [:real] #(make-complex-from-real-imag (tag %) (tag 0)))
+    (put :project [:real] #(let [[n d] (real->rational %)]
+                             (make-rational (make-integer n) (make-integer d))))
+    (put :make :real #(tag (double %))))
   :done)
 (install-real-package)
 (def make-real (get_ :make :real))
@@ -315,10 +390,10 @@
             (div-complex [x y]
               (make-from-mag-ang (div (magnitude x) (magnitude y))
                                  (sub (angle x) (angle y))))]
-      (put :real-part [:complex] #(make-real (real-part %)))
-      (put :imag-part [:complex] #(make-real (imag-part %)))
-      (put :magnitude [:complex] #(make-real (magnitude %)))
-      (put :angle [:complex] #(make-real (angle %)))
+      (put :real-part [:complex] #(make-real (contents (real-part %))))
+      (put :imag-part [:complex] #(make-real (contents (imag-part %))))
+      (put :magnitude [:complex] #(make-real (contents (magnitude %))))
+      (put :angle [:complex] #(make-real (contents (angle %))))
       (put :add [:complex :complex] #(tag (add-complex %1 %2)))
       (put :sub [:complex :complex] #(tag (sub-complex %1 %2)))
       (put :mul [:complex :complex] #(tag (mul-complex %1 %2)))
@@ -330,10 +405,7 @@
                                                           (imag-part y)))))
       (put :=zero? [:complex] #(and (=zero? (real-part %))
                                     (=zero? (imag-part %))))
-      (put :drop [:complex] (fn [x] (let [rx (real-part x)]
-                                      (if (equ? rx x)
-                                        rx
-                                        x))))
+      (put :project [:complex] real-part)
       (put :make-from-real-imag :complex #(tag (make-from-real-imag %1 %2)))
       (put :make-from-mag-ang :complex #(tag (make-from-mag-ang %1 %2))))))
 (install-complex-package)
@@ -344,15 +416,21 @@
 (put-coercion :clojure-number :complex #(make-complex-from-real-imag (contents %) 0))
 
 
+
 (deftest numeric-tower
   (is (equ? 1 1))
   (is (not (equ? 1 2)))
+  (is (equ? (project (make-complex-from-real-imag (make-real 7) (make-real 5)))
+            (make-real 7)))
   (is (equ? (add (div (make-complex-from-real-imag (make-real 1) (make-real 2))
                       (make-complex-from-real-imag (make-real 0.5) (make-real 1)))
                  (make-complex-from-real-imag (make-real 3) (make-real 4)))
             (make-complex-from-real-imag (make-real 5) (make-real 4))))
   (is (equ? (raise (raise (make-rational (make-integer 3) (make-integer 2))))
-            (make-complex-from-real-imag 1.5 0))))
+            (make-complex-from-real-imag (make-real 1.5) (make-real 0))))
+  (is (equ? (drop_ (make-complex-from-real-imag (make-real 1) (make-real 0)))
+            (make-integer 1))))
 
 
-(clojure.test/run-tests *ns*)
+;(clojure.test/run-tests *ns*)
+
