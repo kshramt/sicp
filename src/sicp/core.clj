@@ -3,11 +3,18 @@
             [clojure.pprint]
             [clojure.math.numeric-tower :refer [floor expt sqrt]]
             [clojure.repl]
-            [clojure.core.typed :refer [ann-form ann letfn> loop> fn> doseq> atom>
+            [clojure.core.typed :refer [ann-form ann letfn>
                                         Int Num
+                                        Any
+                                        All
                                         Symbol
                                         Keyword
                                         Option
+                                        U
+                                        IFn
+                                        TFn
+                                        Rec
+                                        Val
                                         Vec
                                         Seq
                                         Coll NonEmptyColl
@@ -20,24 +27,24 @@
 (set! *warn-on-reflection* false)
 
 (ann ^:no-check clojure.pprint/pprint [Any -> nil])
-(typed/override-method clojure.lang.Numbers/remainder (Fn [Int Int -> Int]
+(typed/override-method clojure.lang.Numbers/remainder (IFn [Int Int -> Int]
                                                           [Num Num -> Num]))
-(typed/override-method clojure.lang.Numbers/addP (Fn [Int Int -> Int]
+(typed/override-method clojure.lang.Numbers/addP (IFn [Int Int -> Int]
                                                      [Num Num -> Num]))
-(typed/override-method clojure.lang.Numbers/minusP (Fn [Int * -> Int]
+(typed/override-method clojure.lang.Numbers/minusP (IFn [Int * -> Int]
                                                        [Num * -> Num]))
-(typed/override-method clojure.lang.Numbers/multiplyP (Fn [Int Int -> Int]
+(typed/override-method clojure.lang.Numbers/multiplyP (IFn [Int Int -> Int]
                                                           [Num Num -> Num]))
-(typed/override-method clojure.lang.Numbers/incP (Fn [Int -> Int]
+(typed/override-method clojure.lang.Numbers/incP (IFn [Int -> Int]
                                                      [Num -> Num]))
-(typed/override-method clojure.lang.Numbers/decP (Fn [Int -> Int]
+(typed/override-method clojure.lang.Numbers/decP (IFn [Int -> Int]
                                                      [Num -> Num]))
 (typed/override-method java.lang.Math/sin [Num -> Double])
 (typed/override-method java.lang.Math/cos [Num -> Double])
 (typed/override-method java.lang.Math/log [Num -> Double])
 (typed/override-method java.lang.Math/pow [Num Num -> Double])
 (typed/override-method java.lang.Math/atan2 [Num Num -> Double])
-(ann ^:no-check clojure.core/rem (Fn [Int Int -> Int]
+(ann ^:no-check clojure.core/rem (IFn [Int Int -> Int]
                                      [Num Num -> Num]))
 (ann ^:no-check clojure.core/sequential? [Any -> Boolean
                                           :filters {:then (is (Seqable Any) 0)
@@ -65,17 +72,17 @@
          _# (typed/print-env ~(str form))]
      RETURN#))
 
-(ann twice (Fn [Int -> Int]
+(ann twice (IFn [Int -> Int]
                [Num -> Num]))
 (defn twice [x]
   (+' x x))
 
-(ann square (Fn [Int -> Int]
+(ann square (IFn [Int -> Int]
                 [Num -> Num]))
 (defn square [x]
   (*' x x))
 
-(ann cube (Fn [Int -> Int]
+(ann cube (IFn [Int -> Int]
               [Num -> Num]))
 (defn cube [x]
   (*' x (square x)))
@@ -84,7 +91,7 @@
 (defn half [x]
   (/ x 2))
 
-(ann abs (Fn [Int -> Int]
+(ann abs (IFn [Int -> Int]
              [Num -> Num]))
 (defn abs [x]
   (if (neg? x)
@@ -101,13 +108,13 @@
      enough-precision? :- [Num -> Boolean]
      (enough-precision? [guess]
                         (< (abs (-' x (cube guess))) 0.0001))]
-    (loop> [x :- Num x
+    (typed/loop [x :- Num x
             guess :- Num 1.0]
       (if (enough-precision? guess)
         guess
         (recur x (improved-guess guess))))))
 
-(ann my-expt (Fn [Int Int -> Int]
+(ann my-expt (IFn [Int Int -> Int]
                  [Int Int Int -> Int]
                  [Num Int -> Num]
                  [Num Int Num -> Num]))
@@ -128,7 +135,7 @@
       (odd? n) (*' ret b (my-expt b (dec' n)))
       :else (recur (square b) (half n) ret))))
 
-(ann my-* (Fn [Int Int -> Int]
+(ann my-* (IFn [Int Int -> Int]
               [Num Int -> Num]))
 (defn my-*
   "Q. 1.17"
@@ -203,7 +210,7 @@
            (fib-iter [a b p q n]
                      {:pre [(>= n 0)]}
 
-                     (loop> [a :- Int a
+                     (typed/loop [a :- Int a
                              b :- Int b
                              p :- Int p
                              q :- Int q
@@ -297,7 +304,7 @@
     0
     (+' (/ 1.0 (*' a (+' a 2))) (pi-sum (+' a 4) b))))
 
-(ann sum' (Fn [[Int -> Num]
+(ann sum' (IFn [[Int -> Num]
                Int
                [Int -> Int]
                Int
@@ -323,7 +330,7 @@
   (sum' cube a inc' b))
 
 (ann num-identity (All [[a :< Num]]
-                       (Fn [a -> a]
+                       (IFn [a -> a]
                            [Int -> Int]
                            [Num -> Num])))
 (defn num-identity [x]
@@ -343,7 +350,7 @@
                     (+' x 4))]
     (sum' pi-term a pi-next b)))
 
-(ann product' (Fn [[Num -> Num]
+(ann product' (IFn [[Num -> Num]
                    Num
                    [Num -> Num]
                    Num
@@ -416,7 +423,7 @@
             (and (pos? i) (= 1 (gcd i b))))]
     (filtered-accumulate' pos-and-coprime? *' 1 num-identity a inc' b)))
 
-(ann close-enough? (Fn [Num Num -> Boolean]
+(ann close-enough? (IFn [Num Num -> Boolean]
                        [Num Num Num -> Boolean]))
 (defn close-enough?
   ([x y] (close-enough? x y 0.001))
@@ -549,7 +556,7 @@
                      (cont-frac' (fn [x] x) (fn [x] x) 2))))}
   [n d k]
   {:pre [(>= k 1)]}
-  (loop> [n :- [Int -> Num] n
+  (typed/loop [n :- [Int -> Num] n
           d :- [Int -> Num] d
           i :- Int k
           k :- Int k
@@ -566,7 +573,7 @@
   [k]
   {:pre [(>= k 1)]}
   (+' (cont-frac' (fn [_] 1)
-                  (fn> [x :- Num]
+                  (typed/fn [x :- Num]
                     (if (= (mod x 3) 2)
                       (*' 2
                           (+' (/ (-' x 2)
@@ -652,7 +659,7 @@
   "Q. 1.42"
   [f g] (fn [x] (f (g x))))
 
-(ann repeated (All [a] (Fn [[a -> a] Int -> [a -> a]]
+(ann repeated (All [a] (IFn [[a -> a] Int -> [a -> a]]
                            [[a -> a] Int [a -> a] -> [a -> a]])))
 (defn repeated
   "Q. 1.43"
@@ -665,7 +672,7 @@
       (zero? (mod n 2)) (recur (compose f f) (half n) ret)
       :else (recur f (dec' n) (fn [x] (f (ret x)))))))
 
-(ann smooth (Fn [[Num -> Num] -> [Num -> Num]]
+(ann smooth (IFn [[Num -> Num] -> [Num -> Num]]
                 [[Num -> Num] Num -> [Num -> Num]]))
 (defn smooth
   "Q. 1.44-1"
@@ -705,7 +712,7 @@
   "Q. 1.46-1"
   [is-good? update]
   (fn [x]
-    (loop> [guess :- Num 1]
+    (typed/loop [guess :- Num 1]
       (if (is-good? guess)
         guess
         (recur (update guess))))))
@@ -715,19 +722,19 @@
   "Q. 1.46-2"
   {:test #(do (is (close-enough? (sqrt'''''' 4) 2 tolerance)))}
   [x]
-  ((iterative-improve (fn> [guess :- Num] (close-enough? guess (/ x guess) tolerance))
-                      (average-damp (fn> [guess :- Num] (/ x guess))))
+  ((iterative-improve (typed/fn [guess :- Num] (close-enough? guess (/ x guess) tolerance))
+                      (average-damp (typed/fn [guess :- Num] (/ x guess))))
    x))
 
 (ann fixed-point'' [[Num -> Num] Num -> Num])
 (defn fixed-point''
   "Q. 1.46-3"
   [f first-guess]
-  (iterative-improve (fn> [guess :- Num] (close-enough? guess (f guess)))
+  (iterative-improve (typed/fn [guess :- Num] (close-enough? guess (f guess)))
                      f)
   first-guess)
 
-(typed/def-alias Rat '[Int Int])
+(typed/defalias Rat '[Int Int])
 
 (ann numer [Rat -> Int])
 (defn numer [x]
@@ -794,7 +801,7 @@
   (= (*' (numer x) (denom y))
      (*' (denom x) (numer y))))
 
-(typed/def-alias Point '[Num Num])
+(typed/defalias Point '[Num Num])
 
 (ann x-point [Point -> Num])
 (defn x-point [p]
@@ -812,7 +819,7 @@
 (defn make-point [x y]
   [x y])
 
-(typed/def-alias Line '[Point Point])
+(typed/defalias Line '[Point Point])
 
 (ann start-line [Line -> Point])
 (defn start-line [l]
@@ -835,7 +842,7 @@
               (average (y-point (start-line l))
                        (y-point (end-line l)))))
 
-(typed/def-alias Rectangle '{:origin Point
+(typed/defalias Rectangle '{:origin Point
                              :width Num
                              :height Num
                              :angle Num})
@@ -856,7 +863,7 @@
 (defn area-rectangle [r]
   (*' (width-rectangle r) (height-rectangle r)))
 
-(typed/def-alias Rectangle' '{:origin Point
+(typed/defalias Rectangle' '{:origin Point
                               :diag Point
                               :angle Num})
 
@@ -877,7 +884,7 @@
   (*' (width-rectangle' r) (height-rectangle' r)))
 
 (ann cons_ (All [a b]
-                (Fn [a b -> [[a b -> a] -> a]]
+                (IFn [a b -> [[a b -> a] -> a]]
                     [a b -> [[a b -> b] -> b]])))
 (defn cons_ [x y]
   (fn [m] (m x y)))
@@ -885,13 +892,13 @@
 (ann car (All [a b]
               [[[a b -> a] -> a] -> a]))
 (defn car [z]
-  (z (fn> [p :- a
+  (z (typed/fn [p :- a
            _ :- b] p)))
 
 (ann cdr (All [a b]
               [[[a b -> b] -> b] -> b]))
 (defn cdr [z]
-  (z (fn> [_ :- a
+  (z (typed/fn [_ :- a
            q :- b] q)))
 
 (ann n-div [Int Int -> Int])
@@ -899,7 +906,7 @@
   {:test #(do (is (= (n-div -12 2) 2))
               (is (= (n-div 8 -2) 3)))}
   [n div]
-  (loop> [n :- Int (abs n)
+  (typed/loop [n :- Int (abs n)
           div :- Int (abs div)
           ret :- Int 0]
     (cond
@@ -928,7 +935,7 @@
   (*' (my-expt 2 m)
       (my-expt 3 n)))
 
-(typed/def-alias Church (All [a] [[a -> a] -> [a -> a]]))
+(typed/defalias Church (All [a] [[a -> a] -> [a -> a]]))
 
 (ann add-1 [Church -> Church])
 (defn add-1 [n]
@@ -956,7 +963,7 @@
 (ann four Church)
 (def four (add-church three one))
 
-(typed/def-alias Interval '[Num Num])
+(typed/defalias Interval '[Num Num])
 
 (ann lower-bound [Interval -> Num])
 (defn lower-bound
@@ -1103,8 +1110,8 @@ Each appearance of a variable `x` in a formula is mistakenly considered to be a 
 Skip...
 
 ```
-(typed/def-alias Interval (HMap :mandatory {:l Num :u Num :id Int}))
-(typed/def-alias IntervalOp [(U Interval IntervalOpRet)
+(typed/defalias Interval (HMap :mandatory {:l Num :u Num :id Int}))
+(typed/defalias IntervalOp [(U Interval IntervalOpRet)
                              (U Interval IntervalOpRet)
                              -> IntervalOpRet])
 ```
@@ -1136,7 +1143,7 @@ Skip...
      (cons (first s) (append (rest s) coll2))
      coll2)))
 
-(ann reduce_ (All [a b] (Fn [[a b -> b] b (Seqable a) -> b]
+(ann reduce_ (All [a b] (IFn [[a b -> b] b (Seqable a) -> b]
                             ; core.typed does not infer `b` = `(Seqable (U a b))`
                             [[a (Seqable (U a b))
                               -> (Seqable (U a b))]
@@ -1219,7 +1226,7 @@ Skip...
 (ann uk-coins (NonEmptyColl Int))
 (def uk-coins [10000 5000 2000 1000 500 200 100 50])
 
-(ann first-denomination' [(Seqable Int) -> Int])
+(ann first-denomination' [(NonEmptySeqable Int) -> Int])
 (defn first-denomination' [coin-values]
   (bigint (first coin-values)))
 
@@ -1232,7 +1239,7 @@ Skip...
 (defn no-more? [coin-values]
   (empty? coin-values))
 
-(ann cc' [Int (Seqable Int) -> Int])
+(ann ^:no-check cc' [Int (Seqable Int) -> Int])
 (defn cc'
   "Q. 2.19"
   {:test #(do (is (= (cc' 100 us-coins) 292)))}
@@ -1279,7 +1286,7 @@ Skip...
   {:test #(do (is (= (map_ square [1 2 3]) [1 4 9])))}
   [f coll]
   (lazy-seq
-   (reduce_ (fn> [x :- a
+   (reduce_ (typed/fn [x :- a
                   y :- (Seqable b)]
               (cons (f x) y))
             []
@@ -1293,7 +1300,7 @@ Skip...
      (cons (f (first s))
            (map_' f (rest s))))))
 
-(ann square-list (Fn [(Seqable Int) -> (LazySeq Int)]
+(ann square-list (IFn [(Seqable Int) -> (LazySeq Int)]
                      [(Seqable Num) -> (LazySeq Num)]))
 (defn square-list
   "Q. 2.21-1"
@@ -1303,7 +1310,7 @@ Skip...
      (cons (square (first s)) (square-list (rest s)))
      [])))
 
-(ann square-list' (Fn [(Seqable Int) -> (Seq Int)]
+(ann square-list' (IFn [(Seqable Int) -> (Seq Int)]
                       [(Seqable Num) -> (Seq Num)]))
 (defn square-list'
   "Q. 2.21-2"
@@ -1342,7 +1349,7 @@ Skip...
                   x))])
      coll)))
 
-(typed/def-alias Tree (TFn [[a :variance :covariant]] (Rec [this] (Seqable (U a this)))))
+(typed/defalias Tree (TFn [[a :variance :covariant]] (Rec [this] (Seqable (U a this)))))
 
 ;(ann fringe [(Coll Any) -> (Coll Any)])
 ;(ann fringe (All [a] [(Tree a) -> (Coll a)]))
@@ -1359,11 +1366,13 @@ Skip...
                 [x])
               (fringe (rest coll))))))
 
-(typed/def-alias BinaryMobile '{:left BinaryMobileBranch
+(declare BinaryMobileBranch)
+(typed/defalias BinaryMobile '{:left BinaryMobileBranch
                                 :right BinaryMobileBranch})
-(typed/def-alias BinaryMobileBranch '{:length Num
+(declare BinaryMobileStructure)
+(typed/defalias BinaryMobileBranch '{:length Num
                                       :structure BinaryMobileStructure})
-(typed/def-alias BinaryMobileStructure (U Num BinaryMobile))
+(typed/defalias BinaryMobileStructure (U Num BinaryMobile))
 
 (typed/ann-record BinaryMobile' [left :- BinaryMobileBranch'
                                  right :- BinaryMobileBranch'])
@@ -1372,7 +1381,7 @@ Skip...
 (typed/ann-record BinaryMobileBranch' [length :- Num
                                        structure :- (U Num BinaryMobile')])
 (defrecord BinaryMobileBranch' [length structure])
-(typed/def-alias BinaryMobileStructure' (U Num BinaryMobile'))
+(typed/defalias BinaryMobileStructure' (U Num BinaryMobile'))
 
 (ann make-mobile [BinaryMobileBranch BinaryMobileBranch
                   -> BinaryMobile])
@@ -1395,35 +1404,35 @@ Skip...
 (defn make-branch' [length structure]
   (->BinaryMobileBranch' length structure))
 
-(ann left-branch (Fn [BinaryMobile -> BinaryMobileBranch]
+(ann left-branch (IFn [BinaryMobile -> BinaryMobileBranch]
                      [BinaryMobile' -> BinaryMobileBranch']))
 (defn left-branch
   "Q. 2.29-a"
   [m]
   (:left m))
 
-(ann right-branch (Fn [BinaryMobile -> BinaryMobileBranch]
+(ann right-branch (IFn [BinaryMobile -> BinaryMobileBranch]
                       [BinaryMobile' -> BinaryMobileBranch']))
 (defn right-branch
   "Q. 2.29-a"
   [m]
   (:right m))
 
-(ann branch-length (Fn [BinaryMobileBranch -> Num]
+(ann branch-length (IFn [BinaryMobileBranch -> Num]
                        [BinaryMobileBranch' -> Num]))
 (defn branch-length
   "Q. 2.29-a"
   [b]
   (:length b))
 
-(ann branch-structure (Fn [BinaryMobileBranch -> BinaryMobileStructure]
+(ann branch-structure (IFn [BinaryMobileBranch -> BinaryMobileStructure]
                           [BinaryMobileBranch' -> BinaryMobileStructure']))
 (defn branch-structure
   "Q. 2.29-a"
   [b]
   (:structure b))
 
-(ann total-weight (Fn [BinaryMobileStructure -> Num]
+(ann total-weight (IFn [BinaryMobileStructure -> Num]
                       [BinaryMobileStructure' -> Num]))
 (defn total-weight
   "Q. 2.29-b"
@@ -1433,7 +1442,7 @@ Skip...
     (+' (total-weight (branch-structure (left-branch m)))
         (total-weight (branch-structure (right-branch m))))))
 
-(ann is-balanced (Fn [BinaryMobileStructure -> Boolean]
+(ann is-balanced (IFn [BinaryMobileStructure -> Boolean]
                      [BinaryMobileStructure' -> Boolean]))
 (defn is-balanced
   "Q. 2.29-c"
@@ -1452,7 +1461,7 @@ Skip...
   [m]
   (if (number? m)
     true
-    (letfn> [branch-moment :- (Fn [BinaryMobileBranch -> Num]
+    (letfn> [branch-moment :- (IFn [BinaryMobileBranch -> Num]
                                   [BinaryMobileBranch' -> Num])
              (branch-moment [b]
                             (*' (branch-length b)
@@ -1516,12 +1525,12 @@ Skip...
      (let [s1 (first s)
            subs (subsets (rest s))]
        (append_ subs
-                (map_ (fn> [sub :- (Seqable a)] ; XXX: anaphoric?
+                (map_ (typed/fn [sub :- (Seqable a)] ; XXX: anaphoric?
                         (lazy-seq (cons s1 sub)))
                       subs)))
      [(lazy-seq coll)])))
 
-(ann accumulate (All [a b] (Fn [[a b -> b] b (Seqable a) -> b]
+(ann accumulate (All [a b] (IFn [[a b -> b] b (Seqable a) -> b]
                                [[a (Seqable (U a b)) -> (Seq (U a b))] (Seqable (U a b)) (Seqable a) ; core.typed does not infer`b` = `(LazySeq (U a b))`
                                 -> (Seqable (U a b))])))
 
@@ -1562,7 +1571,7 @@ Skip...
 (ann flip (All [a b c] [[a b -> c]
                         -> [b a -> c]]))
 (defn flip [f]
-  (fn> [y :- b
+  (typed/fn [y :- b
         x :- a] (f x y)))
 
 (ann even-fib [Int -> (LazySeq Int)])
@@ -1586,7 +1595,7 @@ Skip...
   "Q. 2.33-1"
   {:test #(do (is (= (map_2_33 square [1 2 3]) [1 4 9])))}
   [f coll]
-  (reduce_ (fn> [x :- a
+  (reduce_ (typed/fn [x :- a
                  y :- (Seqable b)]
              (append_2_33 [(f x)] y))
            []
@@ -1600,7 +1609,7 @@ Skip...
               (is (= (length_2_33 [1 2]) 2))
               (is (= (length_2_33 [[] 2 [[]]]) 3)))}
   [coll]
-  (reduce_ (fn> [_ :- Any
+  (reduce_ (typed/fn [_ :- Any
                  sum :- Int] (inc sum)) 0 coll))
 
 (ann horner-eval [Num (NonEmptyColl Num) -> Num])
@@ -1608,7 +1617,7 @@ Skip...
   "Q. 2.34"
   {:test #(do (is (= (horner-eval 2 [1 3 0 5 0 1]) 79)))}
   [x coefficient-seqence]
-  (accumulate (fn> [this-term :- Num
+  (accumulate (typed/fn [this-term :- Num
                     higher-terms :- Num]
                 (+' this-term
                     (*' x
@@ -1621,7 +1630,7 @@ Skip...
   "Q. 2.35"
   {:test #(do (is (= (count-leaves' [[1 2] 3 4]) 4)))}
   [tree]
-  (accumulate (fn> [x :- Any
+  (accumulate (typed/fn [x :- Any
                     sum :- Int]
                 (if (coll? x)
                   (+' sum
@@ -1632,7 +1641,7 @@ Skip...
 
 (typed/tc-ignore
 
-(ann accumulate-n (All [a b] (Fn [[a b -> b] b (Coll (Coll a)) -> (Coll b)])))
+(ann accumulate-n (All [a b] (IFn [[a b -> b] b (Coll (Coll a)) -> (Coll b)])))
 (defn accumulate-n
   "Q. 2.36"
   {:test #(do (is (= (accumulate-n +' 0 [[1 2 3]
@@ -1650,7 +1659,7 @@ Skip...
         (accumulate-n op init (map_ rest colls))))))
 ) ; tc-ignore
 
-(ann dot-product (Fn [(Seqable Int) (Seqable Int) -> Int]
+(ann dot-product (IFn [(Seqable Int) (Seqable Int) -> Int]
                      [(Seqable Num) (Seqable Num) -> Num]))
 (defn dot-product
   {:test #(do (is (= (dot-product [1 2] [3 4]) 11)))}
@@ -1665,7 +1674,7 @@ Skip...
                                        [3 4]] [5 6])
                      [17 39])))}
   [m v]
-  (map_ (fn> [row :- (Seqable Num)] (dot-product row v))
+  (map_ (typed/fn [row :- (Seqable Num)] (dot-product row v))
         m))
 
 (ann transpose (All [a] [(NonEmptySeqable (Seqable a)) -> (LazySeq (LazySeq a))]))
@@ -1681,9 +1690,9 @@ Skip...
   [m]
   ; (accumulate-n cons [] m)
   (lazy-seq
-   (accumulate (fn> [column :- (Seqable a)
+   (accumulate (typed/fn [column :- (Seqable a)
                        rows :- (Seqable (Seqable a))]
-                   (map (fn> [x :- a
+                   (map (typed/fn [x :- a
                               row :- (Seqable a)]
                           (lazy-seq (cons x row)))
                         column
@@ -1703,7 +1712,7 @@ Skip...
                      [[3 4]
                       [6 8]])))}
   [m n]
-  (map (fn> [v :- (Seqable Num)]
+  (map (typed/fn [v :- (Seqable Num)]
          (matrix-*-vector (transpose n) v))
        m))
 
@@ -1712,7 +1721,7 @@ Skip...
 (assert (= (op a b) (op b a)))
 "
 
-(ann fold-left (All [a b] (Fn [[a b -> b] b (Seqable a) -> b]
+(ann fold-left (All [a b] (IFn [[a b -> b] b (Seqable a) -> b]
                               [[a (Seqable (U a b))
                                 -> (Seqable (U a b))]
                                (Seqable (U a b))
@@ -1729,7 +1738,7 @@ Skip...
   "Q. 2.39"
   {:test #(do (is (= (reverse_2_39_1 [1 2 3]) [3 2 1])))}
   [coll]
-  (reduce_ (fn> [x :- a
+  (reduce_ (typed/fn [x :- a
                  ret :- (Seqable a)] (append_ ret [x]))
            []
            coll))
@@ -1749,7 +1758,7 @@ Skip...
 (defn prime-sum? [[l r]]
   (prime? (+' l r)))
 
-(ann make-pair-sum (Fn ['[Int Int] -> '[Int Int Int]]
+(ann make-pair-sum (IFn ['[Int Int] -> '[Int Int Int]]
                        ['[Num Num] -> '[Num Num Num]]))
 (defn make-pair-sum [[l r]]
   [l r (+' l r)])
@@ -1761,8 +1770,8 @@ Skip...
   [n]
   (map make-pair-sum
        (filter prime-sum?
-               (flat-map (fn> [j :- Int]
-                           (map_ (fn> [i :- Int]
+               (flat-map (typed/fn [j :- Int]
+                           (map_ (typed/fn [i :- Int]
                                    [i j])
                                  (range_ 1 (dec j))))
                          (range_ 1 n)))))
@@ -1773,9 +1782,9 @@ Skip...
                      [[1 2] [2 1]])))}
   [coll]
   (if-let [set (seq coll)]
-    (flat-map (fn> [s1 :- a]
-                (map (fn> [set-1 :- (Seqable a)] (cons s1 set-1))
-                     (permutations (remove (fn> [x :- a] (= x s1))
+    (flat-map (typed/fn [s1 :- a]
+                (map (typed/fn [set-1 :- (Seqable a)] (cons s1 set-1))
+                     (permutations (remove (typed/fn [x :- a] (= x s1))
                                            set))))
               set)
     [coll]))
@@ -1784,8 +1793,8 @@ Skip...
 (defn unique-pairs
   "Q. 2.40"
   [n]
-  (flat-map (fn> [j :- Int]
-              (map (fn> [i :- Int]
+  (flat-map (typed/fn [j :- Int]
+              (map (typed/fn [i :- Int]
                      [i j])
                    (range 1 j)))
             (range 1 (inc n))))
@@ -1802,13 +1811,13 @@ Skip...
 (ann unique-triples [Int -> (Seqable '[Int Int Int])])
 (defn unique-triples
   [n]
-  (flat-map (fn> [k :- Int]
-              (map (fn> [[i j] :- '[Int Int]]
+  (flat-map (typed/fn [k :- Int]
+              (map (typed/fn [[i j] :- '[Int Int]]
                      [i j k])
                    (unique-pairs (dec k))))
             (range 1 (inc n))))
 
-(ann sum_ (Fn [(Seqable Int) -> Int]
+(ann sum_ (IFn [(Seqable Int) -> Int]
               [(Seqable Num) -> Num]))
 (defn sum_ [coll]
   (reduce_ +' 0 coll))
@@ -1820,7 +1829,7 @@ Skip...
                      [[1 3 4]
                       [1 2 5]])))}
   [n, s]
-  (filter (fn> [triple :- '[Int Int Int]]
+  (filter (typed/fn [triple :- '[Int Int Int]]
             (= (sum_ triple) s))
           (unique-triples n)))
 
@@ -1832,13 +1841,13 @@ Skip...
                       [2 3]
                       [2 4]])))}
   [coll1 coll2]
-  (flat-map (fn> [x :- a]
-              (map (fn> [y :- b]
+  (flat-map (typed/fn [x :- a]
+              (map (typed/fn [y :- b]
                      [x y])
                    coll2))
             coll1))
 
-(typed/def-alias QueenPosition '[Int Int])
+(typed/defalias QueenPosition '[Int Int])
 
 (ann queens [Int -> (Seqable (Seqable QueenPosition))])
 (defn queens
@@ -1852,7 +1861,7 @@ Skip...
              (safe? [positions]
                     (if-let [s (seq positions)]
                       (let [[i1 j1] (first s)]
-                        (every? (fn> [[i2 j2] :- QueenPosition]
+                        (every? (typed/fn [[i2 j2] :- QueenPosition]
                                   (not
                                    (or
                                     (= i1 i2)
@@ -1874,8 +1883,8 @@ Skip...
                            (filter
                             safe?
                             (flat-map
-                             (fn> [rest-of-queens :- (Seqable QueenPosition)]
-                               (map (fn> [new-row :- Int]
+                             (typed/fn [rest-of-queens :- (Seqable QueenPosition)]
+                               (map (typed/fn [new-row :- Int]
                                       (adjoin-position new-row k rest-of-queens))
                                     (range 1 (inc board-size))))
                              (queen-cols (dec k))))))]
@@ -1892,7 +1901,7 @@ Q_{n} = Σ_{k = 1}^{n} n^{n - k}*T_{k}
 n^n
 "
 
-(typed/def-alias Vector '[Num Num])
+(typed/defalias Vector '[Num Num])
 
 (ann make-vect [Num Num -> Vector])
 (defn make-vect
@@ -1930,7 +1939,7 @@ n^n
   [s [x y]]
   [(* s x) (* s y)])
 
-(typed/def-alias Frame '[Vector Vector Vector])
+(typed/defalias Frame '[Vector Vector Vector])
 
 (ann make-frame [Vector Vector Vector -> Frame])
 (defn make-frame [origin edge1 edge2]
@@ -1954,7 +1963,7 @@ n^n
   [[_ _ edge2]]
   edge2)
 
-(typed/def-alias Frame' '{:origin Vector
+(typed/defalias Frame' '{:origin Vector
                           :edge1 Vector
                           :edge2 Vector})
 
@@ -1991,7 +2000,7 @@ n^n
                         (scale-vect (ycor-vect v)
                                     (edge2-frame frame))))))
 
-(typed/def-alias Segment '[Vector Vector])
+(typed/defalias Segment '[Vector Vector])
 
 (ann make-segment [Vector Vector -> Segment])
 (defn make-segment
@@ -2019,19 +2028,19 @@ n^n
   (println (xcor-vect end) (ycor-vect end))
   (println ">"))
 
-(typed/def-alias Painter [Frame -> nil])
+(typed/defalias Painter [Frame -> nil])
 
 (ann segments->painter [(Seqable Segment) -> Painter])
 (defn segments->painter [segment-list]
-  (fn> [frame :- Frame]
-    (doseq> [segment :- Segment segment-list]
+  (typed/fn [frame :- Frame]
+    (typed/doseq [segment :- Segment segment-list]
       (draw-line
          ((frame-coord-map frame) (start-segment segment))
          ((frame-coord-map frame) (end-segment segment))))))
 
 (ann transform-painter [Painter Vector Vector Vector -> Painter])
 (defn transform-painter [painter origin corner1 corner2]
-  (fn> [frame :- Frame]
+  (typed/fn [frame :- Frame]
     (let [m (frame-coord-map frame)]
       (let [new-origin (m origin)]
         (painter
@@ -2078,7 +2087,7 @@ n^n
                                split-point
                                (make-vect 1.0 0.0)
                                (make-vect 0.5 1.0))]
-      (fn> [frame :- Frame]
+      (typed/fn [frame :- Frame]
         (l frame)
         (r frame)))))
 
@@ -2096,12 +2105,11 @@ n^n
                       (lazy-seq [])))))]
     (this coll)))
 
-(ann vects->segments [(Seqable Vector) -> (Seq Segment)])
+(ann ^:no-check vects->segments [(Seqable Vector) -> (Seq Segment)])
 (defn vects->segments [vects]
-  (map (fn> [[start end] :- (Seq Vector)]
+  (map (typed/fn [[start end] :- '[Vector Vector]]
          {:pre [(not (nil? start)) (not (nil? end))]}
-         (make-segment start end))
-       (each-cons 2 vects)))
+         (make-segment start end))       (each-cons 2 vects)))
 
 (ann outer-frame-painter Painter)
 (def outer-frame-painter
@@ -2141,7 +2149,7 @@ n^n
 
 (ann merge-painter [Painter Painter -> Painter])
 (defn merge-painter [p1 p2]
-  (fn> [frame :- Frame]
+  (typed/fn [frame :- Frame]
     (p1 frame)
     (p2 frame)))
 
@@ -2185,7 +2193,7 @@ n^n
                                split-point
                                (make-vect 1.0 0.5)
                                (make-vect 0.0 1.0))]
-      (fn> [frame :- Frame]
+      (typed/fn [frame :- Frame]
         (b frame)
         (t frame)))))
 
@@ -2256,7 +2264,7 @@ n^n
                      [Painter -> Painter]
                      -> [Painter -> Painter]])
 (defn square-of-four [tl tr bl br]
-  (fn> [painter :- Painter]
+  (typed/fn [painter :- Painter]
     (let [top (beside (tl painter) (tr painter))
           bottom (beside (bl painter) (br painter))]
       (below bottom top))))
@@ -2348,7 +2356,7 @@ n^n
   {:test #(do (is (= (index 1 [2 3]) nil))
               (is (= (index 3 [1 2 3]) 2)))}
   [x coll]
-  (loop> [x :- Any x
+  (typed/loop [x :- Any x
           s :- (Seqable Any) coll
           i :- Int 0]
     (if-let [s (seq s)]
@@ -2598,7 +2606,7 @@ n^n
 
 (ann fizzbuzz (Seq (U String Int)))
 (def fizzbuzz
-  (map (fn> [n :- Int] (let [is-fizz (zero? (mod n 3))
+  (map (typed/fn [n :- Int] (let [is-fizz (zero? (mod n 3))
                              is-buzz (zero? (mod n 5))]
                          (cond
                           (and is-fizz is-buzz) "FizzBuzz"
@@ -3043,7 +3051,7 @@ Least frequent:  O(n^2)"
 
 (ann lookup (All [a b c
                   d e f g h]
-                 (Fn [a (Seqable '[b c]) -> (Option c)]
+                 (IFn [a (Seqable '[b c]) -> (Option c)]
                      [d e (Seqable '[f (Seqable '[g h])]) -> (Option h)])))
 (defn lookup
   ([key table]
@@ -3057,7 +3065,7 @@ Least frequent:  O(n^2)"
 
 (ann insert (All [a b c d
                   e f g h i j]
-                 (Fn [a b (Seqable '[c d])
+                 (IFn [a b (Seqable '[c d])
                       -> (LazySeq '[(U a c) (U b d)])]
                      [e f g (Seqable '[h (Seqable '[i j])])
                       -> (LazySeq '[(U e h) (U (Seqable '[i j])
@@ -3086,9 +3094,9 @@ Least frequent:  O(n^2)"
 (defn contents [[_ x]] x)
 
 ; `Any` is useless here, though
-(ann make-table [-> (Fn
-                     [(Value :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
-                     [(Value :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any ->
+(ann make-table [-> (IFn
+                     [(Val :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
+                     [(Val :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any ->
                                            (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])]])])
 (defn make-table
   {:test #(do (is (let [t (make-table)]
@@ -3102,36 +3110,36 @@ Least frequent:  O(n^2)"
                     ((t :insert!) :b :a 2)
                     (= ((t :lookup) :b :a) 2))))}
   []
-  (let [local-table (atom> (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])
+  (let [local-table (typed/atom :- (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])
                            (lazy-seq empty-table))]
-    (letfn> [dispatch :- (Fn
-                          [(Value :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
-                          [(Value :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any
+    (letfn> [dispatch :- (IFn
+                          [(Val :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
+                          [(Val :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any
                                                 -> (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])]])
              (dispatch [method]
                        (cond
-                        (= method :lookup) (fn> [key-1 :- Keyword
+                        (= method :lookup) (typed/fn [key-1 :- Keyword
                                                  key-2 :- (U Keyword (Seqable Keyword))]
                                              (lookup key-1 key-2 @local-table))
-                        (= method :insert!) (fn> [key-1 :- Keyword
+                        (= method :insert!) (typed/fn [key-1 :- Keyword
                                                   key-2 :- (U Keyword (Seqable Keyword))
                                                   value :- Any]
                                               (reset! local-table (insert key-1 key-2 value @local-table)))
                         :else (throw (Exception. (str "unknown method:  " method))))
                        #_(case method ; todo: `case` is not able to be used here
-                         :lookup (fn> [key-1 :- Keyword
+                         :lookup (typed/fn [key-1 :- Keyword
                                        key-2 :- (U Keyword (Seqable Keyword))]
                                    (lookup key-1 key-2 @local-table))
-                         :insert! (fn> [key-1 :- Keyword
+                         :insert! (typed/fn [key-1 :- Keyword
                                         key-2 :- (U Keyword (Seqable Keyword))
                                         value :- Any]
                                     (reset! local-table (insert key-1 key-2 value @local-table)))
                          (throw (Exception. (str "unknown method:  " method)))))]
       dispatch)))
 
-(ann operation-table (Fn
-                      [(Value :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
-                      [(Value :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any ->
+(ann operation-table (IFn
+                      [(Val :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
+                      [(Val :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any ->
                                             (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])]]))
 (def operation-table (make-table))
 
@@ -3142,52 +3150,52 @@ Least frequent:  O(n^2)"
 (def put (operation-table :insert!))
 
 (declare make-real)
-(ann install-rectangular-package [-> (Value :done)])
+(ann install-rectangular-package [-> (Val :done)])
 (defn install-rectangular-package []
-  (let [real-part (fn> [[r _] :- '[Num Num]] r)
-        imag-part (fn> [[_ i] :- '[Num Num]] i)]
-    (put :real-part [:rectangular] (fn> [z :- '[Num Num]] (make-real (real-part z)))) ; could not use `comp`
-    (put :imag-part [:rectangular] (fn> [z :- '[Num Num]] (make-real (imag-part z))))
-    (put :magnitude [:rectangular] (fn> [z :- '[Num Num]]
+  (let [real-part (typed/fn [[r _] :- '[Num Num]] r)
+        imag-part (typed/fn [[_ i] :- '[Num Num]] i)]
+    (put :real-part [:rectangular] (typed/fn [z :- '[Num Num]] (make-real (real-part z)))) ; could not use `comp`
+    (put :imag-part [:rectangular] (typed/fn [z :- '[Num Num]] (make-real (imag-part z))))
+    (put :magnitude [:rectangular] (typed/fn [z :- '[Num Num]]
                                      (make-real
                                       (sqrt (+ (square (real-part z))
                                                (square (imag-part z)))))))
-    (put :angle [:rectangular] (fn> [z :- '[Num Num]]
+    (put :angle [:rectangular] (typed/fn [z :- '[Num Num]]
                                  (make-real
                                   (Math/atan2 (imag-part z)
                                               (real-part z)))))
-    (put :make-from-real-imag :rectangular (fn> [r :- Num
+    (put :make-from-real-imag :rectangular (typed/fn [r :- Num
                                                  i :- Num]
                                              (attach-tag :rectangular
                                                          [r i])))
-    (put :make-from-mag-ang :rectangular (fn> [r :- Num
+    (put :make-from-mag-ang :rectangular (typed/fn [r :- Num
                                                a :- Num]
                                            (attach-tag :rectangular
                                                        [(* r (Math/cos a))
                                                         (* r (Math/sin a))])))
     :done))
 
-(ann install-polar-package [-> (Value :done)])
+(ann install-polar-package [-> (Val :done)])
 (defn install-polar-package []
-  (let [magnitude (fn> [[r _] :- '[Num Num]] r)
-        angle (fn> [[_ a] :- '[Num Num]] a)]
-    (put :real-part [:polar] (fn> [z :- '[Num Num]]
+  (let [magnitude (typed/fn [[r _] :- '[Num Num]] r)
+        angle (typed/fn [[_ a] :- '[Num Num]] a)]
+    (put :real-part [:polar] (typed/fn [z :- '[Num Num]]
                                (make-real
                                 (* (magnitude z)
                                    (Math/cos (angle z))))))
-    (put :imag-part [:polar] (fn> [z :- '[Num Num]]
+    (put :imag-part [:polar] (typed/fn [z :- '[Num Num]]
                                (make-real
                                 (* (magnitude z)
                                    (Math/sin (angle z))))))
-    (put :magnitude [:polar] (fn> [z :- '[Num Num]] (make-real (magnitude z))))
-    (put :angle [:polar] (fn> [z :- '[Num Num]] (make-real (angle z))))
-    (put :make-from-real-imag :polar (fn> [r :- Num
+    (put :magnitude [:polar] (typed/fn [z :- '[Num Num]] (make-real (magnitude z))))
+    (put :angle [:polar] (typed/fn [z :- '[Num Num]] (make-real (angle z))))
+    (put :make-from-real-imag :polar (typed/fn [r :- Num
                                            i :- Num]
                                        (attach-tag :polar
                                                    [(sqrt (+ (square r)
                                                              (square i)))
                                                     (Math/atan2 i r)])))
-    (put :make-from-mag-ang :polar (fn> [r :- Num
+    (put :make-from-mag-ang :polar (typed/fn [r :- Num
                                          a :- Num]
                                      (attach-tag :polar [r a])))
     :done))
@@ -3204,12 +3212,12 @@ Least frequent:  O(n^2)"
                (* 2 (max (abs x) (abs y)) eps-1))]
     (<= (abs (- x y)) d)))
 
-(ann real->rational [Num -> '[Int Int]])
+(ann real->rational [Num -> Rat])
 (defn real->rational
   {:test #(do (is (= (real->rational 3.2) [16 5]))
               (is (= (real->rational 0.25) [1 4])))}
   [x]
-  (loop> [a :- Int 1
+  (typed/loop [a :- Int 1
           b :- Int 0
           c :- Int (bigint x)
           d :- Int 1
@@ -3268,7 +3276,7 @@ Least frequent:  O(n^2)"
       (if (apply = type-tags)
         (throw (Exception. (str "No method for these types:  " [op type-tags])))
         (let [n-args (count args)]
-          (loop [i-arg 0]
+          (typed/loop [i-arg :- Int 0]
             (if (>= i-arg n-args)
               (throw (Exception. (str "No method for these types:  " [op type-tags])))
               (let [t-i (type-tag (nth args i-arg))]
