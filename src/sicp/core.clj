@@ -2289,7 +2289,7 @@ n^n
                                  flip-vert rotate180)]
     (combine4 (corner-split painter n))))
 
-(ann split [[Painter Painter -> Painter] [Painter Painter -> Painter]
+(ann ^:no-check split [[Painter Painter -> Painter] [Painter Painter -> Painter]
             -> [Painter Int -> Painter]])
 (defn split
   "Q. 2.45"
@@ -3094,7 +3094,7 @@ Least frequent:  O(n^2)"
 (defn contents [[_ x]] x)
 
 ; `Any` is useless here, though
-(ann make-table [-> (IFn
+(ann ^:no-check make-table [-> (IFn
                      [(Val :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
                      [(Val :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any ->
                                            (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])]])])
