@@ -156,6 +156,7 @@
 (defn add [x y] (apply-generic :add x y))
 (defn sub [x y] (apply-generic :sub x y))
 (defn mul [x y] (apply-generic :mul x y))
+(defn negate [x] (apply-generic :negate x))
 (defn div [x y] (apply-generic :div x y))
 (defn div-truncate [x y] (apply-generic :div-truncate x y))
 (defn sin [x] (apply-generic :sin x))
@@ -198,6 +199,7 @@
     (put :mul [:clojure-number :clojure-number] #(tag (* %1 %2)))
     (put :div [:clojure-number :clojure-number] #(tag (/ %1 %2)))
     (put :div-truncate [:clojure-number :clojure-number] #(tag (int (div %1 %2))))
+    (put :negate [:clojure-number] #(tag (* -1 %)))
     (put :abs [:clojure-number] #(tag (abs- %)))
     (put :sin [:clojure-number] #(tag (Math/sin %)))
     (put :cos [:clojure-number] #(tag (Math/cos %)))
@@ -224,6 +226,7 @@
     (put :div [:integer :integer] #(make-rational (tag %1) (tag %2)))
     (put :div-truncate [:integer :integer] #(tag (int (div %1 %2))))
     (put :abs [:integer] #(tag (abs %)))
+    (put :negate [:integer] #(tag (negate %)))
     (put :sqrt [:integer] #(sqrt (raise (tag %))))
     (put :cos [:integer] #(cos (raise (tag %))))
     (put :sin [:integer] #(sin (raise (tag %))))
@@ -272,6 +275,8 @@
                                                           (denom y))
                                                      (mul (denom x)
                                                           (numer y))))))
+    (put :negate [:rational] #(tag (make-rat (negate (numer %))
+                                             (denom %))))
     (put :abs [:rational] (fn [x] (tag (make-rat (abs (numer x))
                                                  (abs (denom x))))))
     (put :sqrt [:rational] #(sqrt (raise (tag %))))
@@ -283,7 +288,7 @@
                                                           (numer y))
                                                     (equ? (denom x)
                                                           (denom y)))))
-    (put =zero? [:rational] #(=zero? (div (numer %)
+    (put :=zero? [:rational] #(=zero? (div (numer %)
                                           (denom %))))
     (put :raise [:rational] #(make-real (div (contents (numer %))
                                              (contents (denom %)))))
@@ -322,6 +327,7 @@
     (put :mul [:real :real] #(tag (mul %1 %2)))
     (put :div [:real :real] #(tag (div %1 %2)))
     (put :abs [:real] #(tag (abs %)))
+    (put :negate [:real] #(tag (negate %)))
     (put :sin [:real] #(tag (sin %)))
     (put :cos [:real] #(tag (cos %)))
     (put :sqrt [:real] #(tag (sqrt %)))
@@ -405,6 +411,7 @@
                                                           (imag-part y)))))
       (put :=zero? [:complex] #(and (=zero? (real-part %))
                                     (=zero? (imag-part %))))
+      (put :negate [:complex] #(tag (make-from-real-imag (negate (real-part %)) (negate (imag-part %)))))
       (put :project [:complex] real-part)
       (put :make-from-real-imag :complex #(tag (make-from-real-imag %1 %2)))
       (put :make-from-mag-ang :complex #(tag (make-from-mag-ang %1 %2))))))
@@ -491,7 +498,15 @@
               (throw (Exception. (str "Polys not in same var " [a b])))))
           (tag [p] (attach-tag :polynomial p))]
     (put :add [:polynomial :polynomial] #(tag (add-poly %1 %2)))
+    ; Q. 2.88
+    (put :sub [:polynomial :polynomial] #(add (tag %1) (negate (tag %2))))
     (put :mul [:polynomial :polynomial] #(tag (mul-poly %1 %2)))
+    (put :negate [:polynomial] (fn [p]
+                                 (tag (let [v (variable p)
+                                            ts (term-list p)]
+                                        (make-poly v
+                                                   (map #(make-term (order %) (negate (coeff %)))
+                                                        ts))))))
     ; Q. 2.87
     (put :=zero? [:polynomial] #(loop [l (term-list %)]
                                   (or (empty-termlist? l)
@@ -504,5 +519,7 @@
 
 
 (deftest polynomial-test
-  (=zero? (make-polynomial 'x (the-empty-term-list))))
+  (=zero? (make-polynomial 'x (the-empty-term-list)))
+  (=zero? (sub [:polynomial ['x [2 (make-real 1)] [1 (make-real 1)]]]
+               [:polynomial ['x [2 (make-integer 1)] [1 (make-complex-from-real-imag (make-real 1) (make-real 0))]]])))
 
