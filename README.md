@@ -2,14 +2,10 @@
 
 SICP in Clojure with `clojure.core.typed`.
 
-## How to
+## Test
 
 ```bash
-# run tests
-lein test sicp.core
-
-# type check
-lein typed check sicp.core
+make test
 ```
 
 ## License
