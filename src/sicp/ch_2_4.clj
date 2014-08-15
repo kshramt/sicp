@@ -434,3 +434,75 @@
 
 ;(clojure.test/run-tests *ns*)
 
+; 2.5.3 ----------------------------------------------------
+
+
+(defn the-empty-term-list [] [])
+(defn make-term [o c] [o c])
+(defn coeff [t] (second t))
+(defn adjoin-term [t l]
+  (if (=zero? (coeff t))
+    l
+    (cons t l)))
+(defn install-polynomial-package []
+  (letfn [(variable? [x] (symbol? x))
+          (same-variable? [x y] (and (variable? x) (variable? y) (= x y)))
+          (make-poly [v ts] (cons v ts))
+          (variable [p] (first p))
+          (term-list [p] (rest p))
+          (empty-termlist? [l] (empty? l))
+          (first-term [l] (first l))
+          (rest-terms [l] (rest l))
+          (order [t] (first t))
+          (add-terms [l1 l2]
+            (cond
+             (empty-termlist? l1) l2
+             (empty-termlist? l2) l1
+             :else (let [t1 (first-term l1)
+                         t2 (first-term l2)]
+                     (cond
+                      (gt? (order t1) (order t2)) (adjoin-term t1 (add-terms (rest-terms l1) l2))
+                      (lt? (order t1) (order t2)) (adjoin-term t2 (add-terms l1 (rest-terms l2)))
+                      :else (adjoin-term (make-term (order t1) (add (coeff t1) (coeff t2)))
+                                         (add-terms (rest-terms l1) (rest-terms l2)))))))
+          (add-poly [a b]
+            (if (same-variable? (variable a) (variable b))
+              (make-poly (variable a)
+                         (add-terms (term-list a)
+                                    (term-list b)))
+              (throw (Exception. (str "Polys not in same var " [a b])))))
+          (mul-term-by-all-terms [t1 l]
+            (if (empty-termlist? l)
+              (the-empty-term-list)
+              (let [t2 (first-term l)]
+                (adjoin-term (make-term (add (order t1) (order t2))
+                                        (mul (coeff t1) (coeff t2)))
+                             (mul-term-by-all-terms t1 (rest-terms l))))))
+          (mul-terms [l1 l2]
+            (if (empty-termlist? l1)
+              (the-empty-term-list)
+              (add-terms (mul-term-by-all-terms (first-term l1) l2)
+                         (mul-terms (rest-terms l1) l2))))
+          (mul-poly [a b]
+            (if (same-variable? (variable a) (variable b))
+              (make-poly (variable a)
+                         (mul-terms (term-list a)
+                                    (term-list b)))
+              (throw (Exception. (str "Polys not in same var " [a b])))))
+          (tag [p] (attach-tag :polynomial p))]
+    (put :add [:polynomial :polynomial] #(tag (add-poly %1 %2)))
+    (put :mul [:polynomial :polynomial] #(tag (mul-poly %1 %2)))
+    ; Q. 2.87
+    (put :=zero? [:polynomial] #(loop [l (term-list %)]
+                                  (or (empty-termlist? l)
+                                      (and (=zero? (coeff (first-term l)))
+                                           (recur (rest-terms l))))))
+    (put :make :polynomial (fn [v ts] (tag (make-poly v ts)))))
+  :done)
+(install-polynomial-package)
+(def make-polynomial (get_ :make :polynomial))
+
+
+(deftest polynomial-test
+  (=zero? (make-polynomial 'x (the-empty-term-list))))
+
