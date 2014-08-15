@@ -19,9 +19,11 @@
                                         Seq
                                         Coll NonEmptyColl
                                         NonEmptySeq
+                                        NonEmptyASeq ASeq
                                         Seqable EmptySeqable NonEmptySeqable
                                         NonEmptyLazySeq] :as typed]
-            :verbose)
+            ;:verbose
+            )
   (:import [clojure.lang LazySeq])
   (:gen-class))
 (set! *warn-on-reflection* false)
@@ -3136,6 +3138,42 @@ Least frequent:  O(n^2)"
                                     (reset! local-table (insert key-1 key-2 value @local-table)))
                          (throw (Exception. (str "unknown method:  " method)))))]
       dispatch)))
+;; (ann make-table (All [a b c]
+;;                     [-> (IFn
+;;                           [(Val :lookup) -> [a b -> (Option c)]]
+;;                           [(Val :insert!) -> [a b c
+;;                                                 -> (LazySeq '[a (Seqable '[b c])])]])]))
+;; (defn make-table
+;;   {:test #(do (is (let [t (make-table)]
+;;                     ((t :insert!) 1 2 3)
+;;                     (= ((t :lookup) 1 2) 3)))
+;;               (is (let [t (make-table)]
+;;                     ((t :insert!) 1 2 3)
+;;                     (nil? ((t :lookup) 2 1))))
+;;               (is (let [t (make-table)]
+;;                     ((t :insert!) 1 2 3)
+;;                     ((t :insert!) 2 1 4)
+;;                     (= ((t :lookup) 2 1) 4))))}
+;;   []
+;;   (let [local-table (typed/atom (LazySeq '[a (Seqable '[b c])])
+;;                            (lazy-seq empty-table))]
+;;     (letfn> [lookup' :- [a b -> (Option c)]
+;;              (lookup' [key-1 key-2] (lookup key-1 key-2 @local-table))
+;;              insert! :- [a b c
+;;                          -> (LazySeq '[a (Seqable '[b c])])]
+;;              (insert! [key-1 key-2 value]
+;;                       (reset! local-table
+;;                               (insert key-1 key-2 value @local-table)))
+;;              dispatch :- (IFn
+;;                           [(Val :lookup) -> [a b -> (Option c)]]
+;;                           [(Val :insert!) -> [a b c
+;;                                                 -> (LazySeq '[a (Seqable '[b c])])]])
+;;              (dispatch [m]
+;;                        (cond
+;;                         (= m :lookup) lookup'
+;;                         (= m :insert!) insert!
+;;                         :else (throw (Exception. (str "unknown method:  " m)))))]
+;;       dispatch)))
 
 (ann operation-table (IFn
                       [(Val :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
@@ -3149,225 +3187,230 @@ Least frequent:  O(n^2)"
 (ann put [Keyword (U Keyword (Seqable Keyword)) Any -> (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])])
 (def put (operation-table :insert!))
 
-(declare make-real)
-(ann install-rectangular-package [-> (Val :done)])
-(defn install-rectangular-package []
-  (let [real-part (typed/fn [[r _] :- '[Num Num]] r)
-        imag-part (typed/fn [[_ i] :- '[Num Num]] i)]
-    (put :real-part [:rectangular] (typed/fn [z :- '[Num Num]] (make-real (real-part z)))) ; could not use `comp`
-    (put :imag-part [:rectangular] (typed/fn [z :- '[Num Num]] (make-real (imag-part z))))
-    (put :magnitude [:rectangular] (typed/fn [z :- '[Num Num]]
-                                     (make-real
-                                      (sqrt (+ (square (real-part z))
-                                               (square (imag-part z)))))))
-    (put :angle [:rectangular] (typed/fn [z :- '[Num Num]]
-                                 (make-real
-                                  (Math/atan2 (imag-part z)
-                                              (real-part z)))))
-    (put :make-from-real-imag :rectangular (typed/fn [r :- Num
-                                                 i :- Num]
-                                             (attach-tag :rectangular
-                                                         [r i])))
-    (put :make-from-mag-ang :rectangular (typed/fn [r :- Num
-                                               a :- Num]
-                                           (attach-tag :rectangular
-                                                       [(* r (Math/cos a))
-                                                        (* r (Math/sin a))])))
-    :done))
+;; declare make-real)
+;; (ann install-rectangular-package [-> (Val :done)])
+;; (defn install-rectangular-package []
+;;   (let [real-part (typed/fn [[r _] :- '[Num Num]] r)
+;;         imag-part (typed/fn [[_ i] :- '[Num Num]] i)]
+;;     (put :real-part [:rectangular] (typed/fn [z :- '[Num Num]] (make-real (real-part z)))) ; could not use `comp`
+;;     (put :imag-part [:rectangular] (typed/fn [z :- '[Num Num]] (make-real (imag-part z))))
+;;     (put :magnitude [:rectangular] (typed/fn [z :- '[Num Num]]
+;;                                      (make-real
+;;                                       (sqrt (+ (square (real-part z))
+;;                                                (square (imag-part z)))))))
+;;     (put :angle [:rectangular] (typed/fn [z :- '[Num Num]]
+;;                                  (make-real
+;;                                   (Math/atan2 (imag-part z)
+;;                                               (real-part z)))))
+;;     (put :make-from-real-imag :rectangular (typed/fn [r :- Num
+;;                                                  i :- Num]
+;;                                              (attach-tag :rectangular
+;;                                                          [r i])))
+;;     (put :make-from-mag-ang :rectangular (typed/fn [r :- Num
+;;                                                a :- Num]
+;;                                            (attach-tag :rectangular
+;;                                                        [(* r (Math/cos a))
+;;                                                         (* r (Math/sin a))])))
+;;     :done))
 
-(ann install-polar-package [-> (Val :done)])
-(defn install-polar-package []
-  (let [magnitude (typed/fn [[r _] :- '[Num Num]] r)
-        angle (typed/fn [[_ a] :- '[Num Num]] a)]
-    (put :real-part [:polar] (typed/fn [z :- '[Num Num]]
-                               (make-real
-                                (* (magnitude z)
-                                   (Math/cos (angle z))))))
-    (put :imag-part [:polar] (typed/fn [z :- '[Num Num]]
-                               (make-real
-                                (* (magnitude z)
-                                   (Math/sin (angle z))))))
-    (put :magnitude [:polar] (typed/fn [z :- '[Num Num]] (make-real (magnitude z))))
-    (put :angle [:polar] (typed/fn [z :- '[Num Num]] (make-real (angle z))))
-    (put :make-from-real-imag :polar (typed/fn [r :- Num
-                                           i :- Num]
-                                       (attach-tag :polar
-                                                   [(sqrt (+ (square r)
-                                                             (square i)))
-                                                    (Math/atan2 i r)])))
-    (put :make-from-mag-ang :polar (typed/fn [r :- Num
-                                         a :- Num]
-                                     (attach-tag :polar [r a])))
-    :done))
+;; (ann install-polar-package [-> (Val :done)])
+;; (defn install-polar-package []
+;;   (let [magnitude (typed/fn [[r _] :- '[Num Num]] r)
+;;         angle (typed/fn [[_ a] :- '[Num Num]] a)]
+;;     (put :real-part [:polar] (typed/fn [z :- '[Num Num]]
+;;                                (make-real
+;;                                 (* (magnitude z)
+;;                                    (Math/cos (angle z))))))
+;;     (put :imag-part [:polar] (typed/fn [z :- '[Num Num]]
+;;                                (make-real
+;;                                 (* (magnitude z)
+;;                                    (Math/sin (angle z))))))
+;;     (put :magnitude [:polar] (typed/fn [z :- '[Num Num]] (make-real (magnitude z))))
+;;     (put :angle [:polar] (typed/fn [z :- '[Num Num]] (make-real (angle z))))
+;;     (put :make-from-real-imag :polar (typed/fn [r :- Num
+;;                                            i :- Num]
+;;                                        (attach-tag :polar
+;;                                                    [(sqrt (+ (square r)
+;;                                                              (square i)))
+;;                                                     (Math/atan2 i r)])))
+;;     (put :make-from-mag-ang :polar (typed/fn [r :- Num
+;;                                          a :- Num]
+;;                                      (attach-tag :polar [r a])))
+;;     :done))
 
-(ann eps-1 Num)
-(def eps-1 (/ java.lang.Float/MIN_VALUE java.lang.Float/MIN_NORMAL))
+;; (ann eps-1 Num)
+;; (def eps-1 (/ java.lang.Float/MIN_VALUE java.lang.Float/MIN_NORMAL))
 
-(ann eps-2 Num)
-(def eps-2 (/ java.lang.Double/MIN_VALUE java.lang.Double/MIN_NORMAL))
+;; (ann eps-2 Num)
+;; (def eps-2 (/ java.lang.Double/MIN_VALUE java.lang.Double/MIN_NORMAL))
 
-(ann approx-equal [Num Num -> Boolean])
-(defn approx-equal [x y]
-  (let [d (max (* 2 java.lang.Float/MIN_VALUE)
-               (* 2 (max (abs x) (abs y)) eps-1))]
-    (<= (abs (- x y)) d)))
+;; (ann approx-equal [Num Num -> Boolean])
+;; (defn approx-equal [x y]
+;;   (let [d (max (* 2 java.lang.Float/MIN_VALUE)
+;;                (* 2 (max (abs x) (abs y)) eps-1))]
+;;     (<= (abs (- x y)) d)))
 
-(ann real->rational [Num -> Rat])
-(defn real->rational
-  {:test #(do (is (= (real->rational 3.2) [16 5]))
-              (is (= (real->rational 0.25) [1 4])))}
-  [x]
-  (typed/loop [a :- Int 1
-          b :- Int 0
-          c :- Int (bigint x)
-          d :- Int 1
-          y :- Num x]
-    (if (approx-equal (/ c a) x)
-      [c a]
-      (let [y (/ 1 (- y (bigint y)))
-            iy (bigint y)]
-        (recur (+ (* a iy) b)
-               a
-               (+ (* c iy) d)
-               c
-               y)))))
+;; (ann real->rational [Num -> Rat])
+;; (defn real->rational
+;;   {:test #(do (is (= (real->rational 3.2) [16 5]))
+;;               (is (= (real->rational 0.25) [1 4])))}
+;;   [x]
+;;   (typed/loop [a :- Int 1
+;;           b :- Int 0
+;;           c :- Int (bigint x)
+;;           d :- Int 1
+;;           y :- Num x]
+;;     (if (approx-equal (/ c a) x)
+;;       [c a]
+;;       (let [y (/ 1 (- y (bigint y)))
+;;             iy (bigint y)]
+;;         (recur (+ (* a iy) b)
+;;                a
+;;                (+ (* c iy) d)
+;;                c
+;;                y)))))
 
-(typed/tc-ignore
+;; (typed/tc-ignore
 
-(def coercion-table (make-table))
-(def get-coercion (coercion-table :lookup))
-(def put-coercion (coercion-table :insert!))
+;; (def coercion-table (make-table))
+;; (def get-coercion (coercion-table :lookup))
+;; (def put-coercion (coercion-table :insert!))
 
-(defn coercion [x t]
-  (let [tx (type-tag x)]
-    (if (= tx t)
-      x
-      (when-let [tx->t (get-coercion tx t)]
-        (tx->t x)))))
+;; (defn coercion [x t]
+;;   (let [tx (type-tag x)]
+;;     (if (= tx t)
+;;       x
+;;       (when-let [tx->t (get-coercion tx t)]
+;;         (tx->t x)))))
 
-(defn coerciable? [t-from t-to]
-  (or (= t-from t-to)
-      (get-coercion t-from t-to)))
+;; (defn coerciable? [t-from t-to]
+;;   (or (= t-from t-to)
+;;       (get-coercion t-from t-to)))
 
-(defn apply-generic-2-81 [op & args]
-  (let [type-tags (map type-tag args)
-        proc (get_ op type-tags)]
-    (if proc
-      (apply proc (map contents args))
-      (if (= (count args) 2)
-        (let [[t1 t2] type-tags]
-          (if (= t1 t2)
-            (throw (Exception. (str "No method for these types:  " [op type-tags])))
-            (let [[v1 v2] args
-                  t1->t2 (get-coercion t1 t2)
-                  t2->t1 (get-coercion t2 t1)]
-              (cond
-               t1->t2 (recur op [(t1->t2 v1) v2])
-               t2->t1 (recur op [v1 (t2->t1 v2)])
-               :else (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
-        (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
+;; (defn apply-generic-2-81 [op & args]
+;;   (let [type-tags (map type-tag args)
+;;         proc (get_ op type-tags)]
+;;     (if proc
+;;       (apply proc (map contents args))
+;;       (if (= (count args) 2)
+;;         (let [[t1 t2] type-tags]
+;;           (if (= t1 t2)
+;;             (throw (Exception. (str "No method for these types:  " [op type-tags])))
+;;             (let [[v1 v2] args
+;;                   t1->t2 (get-coercion t1 t2)
+;;                   t2->t1 (get-coercion t2 t1)]
+;;               (cond
+;;                t1->t2 (recur op [(t1->t2 v1) v2])
+;;                t2->t1 (recur op [v1 (t2->t1 v2)])
+;;                :else (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
+;;         (throw (Exception. (str "No method for these types:  " [op type-tags])))))))
 
-(defn apply-generic-2-82
-  "Q. 2.82"
-  [op & args]
-  (let [type-tags (map type-tag args)]
-    (if-let [proc (get_ op type-tags)]
-      (apply proc (map contents args))
-      (if (apply = type-tags)
-        (throw (Exception. (str "No method for these types:  " [op type-tags])))
-        (let [n-args (count args)]
-          (typed/loop [i-arg :- Int 0]
-            (if (>= i-arg n-args)
-              (throw (Exception. (str "No method for these types:  " [op type-tags])))
-              (let [t-i (type-tag (nth args i-arg))]
-                (if (every? #(coerciable? % t-i)
-                            type-tags)
-                  (if-let [proc (get_ op (repeat n-args t-i))]
-                    (apply proc
-                           (map #(contents (coercion % t-i))
-                                args))
-                    (recur (inc i-arg)))
-                  (recur (inc i-arg)))))))))))
+;; (defn apply-generic-2-82
+;;   "Q. 2.82"
+;;   [op & args]
+;;   (let [type-tags (map type-tag args)]
+;;     (if-let [proc (get_ op type-tags)]
+;;       (apply proc (map contents args))
+;;       (if (apply = type-tags)
+;;         (throw (Exception. (str "No method for these types:  " [op type-tags])))
+;;         (let [n-args (count args)]
+;;           (typed/loop [i-arg :- Int 0]
+;;             (if (>= i-arg n-args)
+;;               (throw (Exception. (str "No method for these types:  " [op type-tags])))
+;;               (let [t-i (type-tag (nth args i-arg))]
+;;                 (if (every? #(coerciable? % t-i)
+;;                             type-tags)
+;;                   (if-let [proc (get_ op (repeat n-args t-i))]
+;;                     (apply proc
+;;                            (map #(contents (coercion % t-i))
+;;                                 args))
+;;                     (recur (inc i-arg)))
+;;                   (recur (inc i-arg)))))))))))
 
-(defn zip-apply
-  {:test (fn [] (is (= (zip-apply [inc #(+ % 2) #(+ % 3)]
-                                  [0 0 0 0])
-                       [1 2 3])))}
-  [fs xs]
-  (lazy-seq
-   (let [fs (seq fs)
-         xs (seq xs)]
-     (if (and fs xs)
-       (cons ((first fs) (first xs))
-             (zip-apply (rest fs) (rest xs)))
-       []))))
+;; (defn zip-apply
+;;   {:test (fn [] (is (= (zip-apply [inc #(+ % 2) #(+ % 3)]
+;;                                   [0 0 0 0])
+;;                        [1 2 3])))}
+;;   [fs xs]
+;;   (lazy-seq
+;;    (let [fs (seq fs)
+;;          xs (seq xs)]
+;;      (if (and fs xs)
+;;        (cons ((first fs) (first xs))
+;;              (zip-apply (rest fs) (rest xs)))
+;;        []))))
 
-(defn apply-generic-2-84
-  "Q. 2.84"
-  [op & args]
-  (let [type-tags (map type-tag args)]
-    (if-let [proc (get_ op type-tags)]
-      (apply proc (map contents args))
-      (if (apply = type-tags)
-        (throw (Exception. (str "No method for these types:  " [op type-tags])))
-        (let [n-args (count args)]
-          (letfn [(get-coercion
-                    ([x t] (get-coercion x t identity))
-                    ([x t coerce]
-                       (let [t-x (type-tag x)]
-                         (if (= t-x t)
-                           coerce
-                           (when-let [raise (get_ :raise [t-x])]
-                             (recur (raise (contents x))
-                                    t
-                                    (comp raise contents coerce)))))))]
-            (loop [i-arg 0]
-              (if (>= i-arg n-args)
-                (throw (Exception. (str "No method for these types:  " [op type-tags])))
-                (let [t-i (type-tag (nth args i-arg))]
-                  (let [coercions (map #(get-coercion % t-i) args)]
-                    (if (every? identity coercions)
-                      (if-let [proc (get_ op (repeat n-args t-i))]
-                        (->> args
-                             (zip-apply coercions ,,)
-                             (map contents ,,)
-                             (apply proc ,,))
-                        (recur (inc i-arg)))
-                      (recur (inc i-arg)))))))))))))
+;; (defn apply-generic-2-84
+;;   "Q. 2.84"
+;;   [op & args]
+;;   (let [type-tags (map type-tag args)]
+;;     (if-let [proc (get_ op type-tags)]
+;;       (apply proc (map contents args))
+;;       (if (apply = type-tags)
+;;         (throw (Exception. (str "No method for these types:  " [op type-tags])))
+;;         (let [n-args (count args)]
+;;           (letfn [(get-coercion
+;;                     ([x t] (get-coercion x t identity))
+;;                     ([x t coerce]
+;;                        (let [t-x (type-tag x)]
+;;                          (if (= t-x t)
+;;                            coerce
+;;                            (when-let [raise (get_ :raise [t-x])]
+;;                              (recur (raise (contents x))
+;;                                     t
+;;                                     (comp raise contents coerce)))))))]
+;;             (loop [i-arg 0]
+;;               (if (>= i-arg n-args)
+;;                 (throw (Exception. (str "No method for these types:  " [op type-tags])))
+;;                 (let [t-i (type-tag (nth args i-arg))]
+;;                   (let [coercions (map #(get-coercion % t-i) args)]
+;;                     (if (every? identity coercions)
+;;                       (if-let [proc (get_ op (repeat n-args t-i))]
+;;                         (->> args
+;;                              (zip-apply coercions ,,)
+;;                              (map contents ,,)
+;;                              (apply proc ,,))
+;;                         (recur (inc i-arg)))
+;;                       (recur (inc i-arg)))))))))))))
 
-(def apply-generic apply-generic-2-84)
+;; (def apply-generic apply-generic-2-84)
 
-(defn real-part [z] (apply-generic :real-part z))
-(defn imag-part [z] (apply-generic :imag-part z))
-(defn magnitude [z] (apply-generic :magnitude z))
-(defn angle [z] (apply-generic :angle z))
+;; (defn real-part [z] (apply-generic :real-part z))
+;; (defn imag-part [z] (apply-generic :imag-part z))
+;; (defn magnitude [z] (apply-generic :magnitude z))
+;; (defn angle [z] (apply-generic :angle z))
 
-(defn make-from-real-imag [x y]
-  ((get_ :make-from-real-imag :rectangular) x y))
-(defn make-from-mag-ang [x y]
-  ((get_ :make-from-mag-ang :polar) x y))
+;; (defn make-from-real-imag [x y]
+;;   ((get_ :make-from-real-imag :rectangular) x y))
+;; (defn make-from-mag-ang [x y]
+;;   ((get_ :make-from-mag-ang :polar) x y))
 
-(defn add-complex [x y]
-  (make-from-real-imag (+ (real-part x) (real-part y))
-                       (+ (imag-part x) (imag-part y))))
+;; (defn add-complex [x y]
+;;   (make-from-real-imag (+ (real-part x) (real-part y))
+;;                        (+ (imag-part x) (imag-part y))))
 
-(defn sub-complex [x y]
-  (make-from-real-imag (- (real-part x) (real-part y))
-                       (- (imag-part x) (imag-part y))))
+;; (defn sub-complex [x y]
+;;   (make-from-real-imag (- (real-part x) (real-part y))
+;;                        (- (imag-part x) (imag-part y))))
 
-(defn mul-complex [x y]
-  (make-from-mag-ang (* (magnitude x) (magnitude y))
-                     (+ (angle x) (angle y))))
+;; (defn mul-complex [x y]
+;;   (make-from-mag-ang (* (magnitude x) (magnitude y))
+                     ;; (+ (angle x) (angle y))))
 
-(defn div-complex [x y]
-  (make-from-mag-ang (* (magnitude x) (magnitude y))
-                     (- (angle x) (angle y))))
-
+;; (defn div-complex [x y]
+;;   (make-from-mag-ang (* (magnitude x) (magnitude y))
+;;                      (- (angle x) (angle y))))
+(ann operator (All [a] ['[a Any Any] -> a]))
 (defn operator [[o _ _]] o)
+(ann operands (All [a b] ['[Any a b] -> '[a b]]))
 (defn operands [[_ l r]] [l r])
 
+(ann variable?-2-73 [Any -> boolean :filters {:then (is clojure.lang.Keyword 0), :else (! clojure.lang.Keyword 0)}])
 (def variable?-2-73 keyword?)
+(ann same-variable?-2-73 [Any Any * -> (U true false)])
 (def same-variable?-2-73 =)
+
+(typed/tc-ignore
 
 (defn deriv-2-73
   [exp var]
@@ -3434,154 +3477,159 @@ To improve concurrency of development:
 
 ; 2.5 systems with generic operations
 
-(defn install-clojure-number-package []
-  (letfn [(tag [x] (attach-tag :clojure-number x))]
-    (doseq [[key f] {:add +
-                     :sub -
-                     :mul *
-                     :div /
-                     :equ? ==}]
-      (put key [:clojure-number :clojure-number] (comp tag f)))
-    (put :=zero? [:clojure-number] zero?)
-    (put :make :clojure-number tag)
-    :done))
-(install-clojure-number-package)
-(defn make-clojure-number [x]
-  ((get_ :make :clojure-number) x))
+;; (defn install-clojure-number-package []
+;;   (letfn [(tag [x] (attach-tag :clojure-number x))]
+;;     (doseq [[key f] {:add +
+;;                      :sub -
+;;                      :mul *
+;;                      :div /
+;;                      :equ? ==}]
+;;       (put key [:clojure-number :clojure-number] (comp tag f)))
+;;     (put :=zero? [:clojure-number] zero?)
+;;     (put :make :clojure-number tag)
+;;     :done))
+;; (install-clojure-number-package)
+;; (defn make-clojure-number [x]
+;;   ((get_ :make :clojure-number) x))
 
-(defn install-complex-package []
-  (install-rectangular-package)
-  (install-polar-package)
-  (letfn [(tag [x] (attach-tag :complex x))]
-    (doseq [[key f] {:add (comp tag add-complex)
-                     :sub (comp tag sub-complex)
-                     :mul (comp tag mul-complex)
-                     :div (comp tag div-complex)
-                     :equ? #(and (== (real-part %1) (real-part %2))
-                                 (== (imag-part %1) (imag-part %2)))}]
-      (put key [:complex :complex] f))
-    (doseq [[key f] {:real-part real-part
-                     :imag-part imag-part
-                     :magnitude magnitude
-                     :angle angle
-                     :=zero? #(zero? (magnitude %))}]
-      (put key [:complex] f))
-    (put :make-from-real-imag :complex (comp tag make-from-real-imag))
-    (put :make-from-mag-ang :complex (comp tag make-from-mag-ang))
-    :done))
-(install-complex-package)
-(defn make-complex-from-real-imag [x y]
-  ((get_ :make-from-real-imag :complex) x y))
-(defn make-complex-from-mag-ang [x y]
-  ((get_ :make-from-mag-ang :complex) x y))
+;; (defn install-complex-package []
+;;   (install-rectangular-package)
+;;   (install-polar-package)
+;;   (letfn [(tag [x] (attach-tag :complex x))]
+;;     (doseq [[key f] {:add (comp tag add-complex)
+;;                      :sub (comp tag sub-complex)
+;;                      :mul (comp tag mul-complex)
+;;                      :div (comp tag div-complex)
+;;                      :equ? #(and (== (real-part %1) (real-part %2))
+;;                                  (== (imag-part %1) (imag-part %2)))}]
+;;       (put key [:complex :complex] f))
+;;     (doseq [[key f] {:real-part real-part
+;;                      :imag-part imag-part
+;;                      :magnitude magnitude
+;;                      :angle angle
+;;                      :=zero? #(zero? (magnitude %))}]
+;;       (put key [:complex] f))
+;;     (put :make-from-real-imag :complex (comp tag make-from-real-imag))
+;;     (put :make-from-mag-ang :complex (comp tag make-from-mag-ang))
+;;     :done))
+;; (install-complex-package)
+;; (defn make-complex-from-real-imag [x y]
+;;   ((get_ :make-from-real-imag :complex) x y))
+;; (defn make-complex-from-mag-ang [x y]
+;;   ((get_ :make-from-mag-ang :complex) x y))
 
-(defn install-real-package []
-  (letfn [(tag [x] (attach-tag :real x))]
-    (put :equ? [:real :real] ==)
-    (put :make :real (comp tag double))
-    (put :raise [:real] #(make-complex-from-real-imag % 0))
-    :done))
-(install-real-package)
-(defn make-real [x]
-  ((get_ :make :real) x))
+;; (defn install-real-package []
+;;   (letfn [(tag [x] (attach-tag :real x))]
+;;     (put :equ? [:real :real] ==)
+;;     (put :make :real (comp tag double))
+;;     (put :raise [:real] #(make-complex-from-real-imag % 0))
+;;     :done))
+;; (install-real-package)
+;; (defn make-real [x]
+;;   ((get_ :make :real) x))
 
-(defn install-rational-package []
-  (letfn [(tag [x] (attach-tag :rational x))]
-    (doseq [[key f] {:add add-rat
-                     :sub sub-rat
-                     :mul mul-rat
-                     :div div-rat
-                     :equ? #(and (== (numer %1) (numer %2))
-                                 (== (denom %1) (denom %2)))}]
-      (put key [:rational :rational] (comp tag f)))
-    (put :=zero? [:rational] #(and (zero? (numer %))
-                                   (zero? (denom %))))
-    (put :make :rational (comp tag make-rat))
-    (put :raise [:rational] #(make-real (/ (numer %)
-                                           (denom %))))
-    :done))
-(install-rational-package)
-(defn make-rational [n d]
-  ((get_ :make :rational) n d))
+;; (defn install-rational-package []
+;;   (letfn [(tag [x] (attach-tag :rational x))]
+;;     (doseq [[key f] {:add add-rat
+;;                      :sub sub-rat
+;;                      :mul mul-rat
+;;                      :div div-rat
+;;                      :equ? #(and (== (numer %1) (numer %2))
+;;                                  (== (denom %1) (denom %2)))}]
+;;       (put key [:rational :rational] (comp tag f)))
+;;     (put :=zero? [:rational] #(and (zero? (numer %))
+;;                                    (zero? (denom %))))
+;;     (put :make :rational (comp tag make-rat))
+;;     (put :raise [:rational] #(make-real (/ (numer %)
+;;                                            (denom %))))
+;;     :done))
+;; (install-rational-package)
+;; (defn make-rational [n d]
+;;   ((get_ :make :rational) n d))
 
-(defn install-integer-package []
-  (letfn [(tag [x] (attach-tag :integer x))]
-    (put :equ? [:integer :integer] ==)
-    (put :make :integer (comp tag bigint))
-    (put :raise [:integer] #(make-rational % 1))
-    :done))
-(install-integer-package)
-(defn make-integer [x]
-  ((get_ :make :integer) x))
+;; (defn install-integer-package []
+;;   (letfn [(tag [x] (attach-tag :integer x))]
+;;     (put :equ? [:integer :integer] ==)
+;;     (put :make :integer (comp tag bigint))
+;;     (put :raise [:integer] #(make-rational % 1))
+;;     :done))
+;; (install-integer-package)
+;; (defn make-integer [x]
+;;   ((get_ :make :integer) x))
 
-(defn add [x y] (apply-generic :add x y))
-(defn sub [x y] (apply-generic :sub x y))
-(defn mul [x y] (apply-generic :mul x y))
-(defn div [x y] (apply-generic :div x y))
-(defn equ?
-  "Q. 2.79"
-  [x y]
-  (apply-generic :equ? x y))
-(defn =zero?
-  "Q. 2.80"
-  [x]
-  (apply-generic :=zero? x))
-(defn raise
-  "Q. 2.83"
-  {:test #(do (are [from to] (equ? (raise from) to)
-                   (make-integer 2) (make-rational 2 1)
-                   (make-rational 3 5) (make-real 0.6)
-                   (make-real 1) (make-complex-from-real-imag 1 0)))}
-  [x]
-  (apply-generic :raise x))
+;; (defn add [x y] (apply-generic :add x y))
+;; (defn sub [x y] (apply-generic :sub x y))
+;; (defn mul [x y] (apply-generic :mul x y))
+;; (defn div [x y] (apply-generic :div x y))
+;; (defn equ?
+;;   "Q. 2.79"
+;;   [x y]
+;;   (apply-generic :equ? x y))
+;; (defn =zero?
+;;   "Q. 2.80"
+;;   [x]
+;;   (apply-generic :=zero? x))
+;; (defn raise
+;;   "Q. 2.83"
+;;   {:test #(do (are [from to] (equ? (raise from) to)
+;;                    (make-integer 2) (make-rational 2 1)
+;;                    (make-rational 3 5) (make-real 0.6)
+;;                    (make-real 1) (make-complex-from-real-imag 1 0)))}
+;;   [x]
+;;   (apply-generic :raise x))
 
-"Q. 2.77
-(magnitude [:complex [:rectangular [1 2]]])
-  (apply-generic :magnitude [:complex [:rectangular [1 2]]])
-    ((get_ :magnitude [:complex]) [:rectangular [1 2]])
-    (magnitude [:rectangular [1 2]])
-      (apply-generic :magnitude [:rectangular [1 2]])
-        ((get :magnitude [:rectangular]) [1 2])
-          1.732..."
+;; "Q. 2.77
+;; (magnitude [:complex [:rectangular [1 2]]])
+;;   (apply-generic :magnitude [:complex [:rectangular [1 2]]])
+;;     ((get_ :magnitude [:complex]) [:rectangular [1 2]])
+;;     (magnitude [:rectangular [1 2]])
+;;       (apply-generic :magnitude [:rectangular [1 2]])
+;;         ((get :magnitude [:rectangular]) [1 2])
+;;           1.732..."
 
-(defn attach-tag'
-  "Q. 2.78"
-  [tag x]
-  (if (number? x)
-    x
-    [tag x]))
+;; (defn attach-tag'
+;;   "Q. 2.78"
+;;   [tag x]
+;;   (if (number? x)
+;;     x
+;;     [tag x]))
 
-(defn type-tag'
-  "Q. 2.78"
-  [x]
-  (if (number? x)
-    :clojure-number
-    (first x)))
+;; (defn type-tag'
+;;   "Q. 2.78"
+;;   [x]
+;;   (if (number? x)
+;;     :clojure-number
+;;     (first x)))
 
-(defn contents'
-  "Q. 2.78"
-  [x]
-  (if (number? x)
-    x
-    (second x)) x)
+;; (defn contents'
+;;   "Q. 2.78"
+;;   [x]
+;;   (if (number? x)
+;;     x
+;;     (second x)) x)
 
-(defn integer->complex [x]
-  (make-complex-from-real-imag (contents x) 0))
-(put-coercion :integer :complex integer->complex)
+;; (defn integer->complex [x]
+;;   (make-complex-from-real-imag (contents x) 0))
+;; (put-coercion :integer :complex integer->complex)
 
-(deftest coercions
-  (is (equ? (add (make-complex-from-real-imag 1 2)
-                 (make-integer 3))
-            (make-complex-from-real-imag 4 2))))
+;; (deftest coercions
+;;   (is (equ? (add (make-complex-from-real-imag 1 2)
+;;                  (make-integer 3))
+;;             (make-complex-from-real-imag 4 2))))
 
-"Q. 2.81
-a: Infinite loop.
-b: It works as is since `null` is not callable"
+;; "Q. 2.81
+;; a: Infinite loop.
+;; b: It works as is since `null` is not callable"
 ) ; typed/tc-ignore
 
 ; 3.1 assignment and local state
 
-(ann -main [String * -> nil])
+;(clojure.test/run-tests 'sicp.core)
+
+(ann -main [String * -> '{:type Keyword
+                          :test Int
+                          :pass Int
+                          :fail Int
+                          :error Int}])
 (defn -main [& args]
-  (clojure.test/run-tests 'sicp.core)
-  (println "ok"))
+  (clojure.test/run-tests 'sicp.core))
