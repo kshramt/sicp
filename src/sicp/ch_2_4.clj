@@ -444,27 +444,75 @@
 ; 2.5.3 ----------------------------------------------------
 
 
-(defn the-empty-term-list [] [])
-(defn make-term [o c] [o c])
-(defn coeff [t] (second t))
-(defn adjoin-term [t l]
-  (if (=zero? (coeff t))
-    l
-    (cons t l)))
+(def variable? symbol?)
+(defn same-variable? [x y] (and (variable? x) (variable? y) (= x y)))
+
+(def coeff-term- second)
+(def order-term- first)
+(declare make-term)
+(defn install-term-package []
+   (letfn [(tag [t] (attach-tag :term t))]
+     (put :coeff [:term] coeff-term-)
+     (put :order [:term] order-term-)
+     (put :negate [:term] #(make-term (order-term- %) (negate (coeff-term- %))))
+     (put :=zero? [:term] #(=zero? (coeff-term- %)))
+     (put :make :term (fn [o c] (tag [o c])))
+     :done))
+(install-term-package)
+(def make-term (get_ :make :term))
+(defn order [t] (apply-generic :order t))
+(defn coeff [t] (apply-generic :coeff t))
+
+(defn empty-term-list? [l] (apply-generic :empty-term-list? l))
+(defn first-term [l] (apply-generic :first-term l))
+(defn rest-terms [l] (apply-generic :rest-terms l))
+(defn adjoin-term [t l] (apply-generic :adjoin-term t l))
+(defn install-dense-term-list-package []
+  (letfn [(tag [l] (attach-tag :dense-term-list l))]
+    (put :empty-term-list? [:dense-term-list] empty?)
+    (put :first-term [:dense-term-list] #(make-term (make-integer (dec (count %))) (first %))) ; todo: empty case
+    (put :rest-terms [:dense-term-list] #(tag (rest %)))
+    (put :negate [:dense-term-list] #(tag (map negate %)))
+    (put :adjoin-term [:term :dense-term-list] (fn [t l]
+                                                 (tag (if (=zero? (coeff-term- t))
+                                                        l
+                                                        (cons (coeff-term- t)
+                                                              (concat (repeat (contents (sub (sub (order-term- t)
+                                                                                                  (make-integer 1))
+                                                                                             (order (first-term (tag l)))))
+                                                                              (make-integer 0))
+                                                                      l))))))
+    :done))
+(install-dense-term-list-package)
+
+(defn install-sparse-term-list-package []
+  (letfn [(tag [l] (attach-tag :sparse-term-list l))
+          (negate- [ts] (if (empty-term-list? ts)
+                          ts
+                          (adjoin-term (negate (first-term ts))
+                                       (negate- (rest-terms ts)))))]
+    (put :empty-term-list? [:sparse-term-list] empty?)
+    (put :first-term [:sparse-term-list] #(let [t (first %)]
+                                            (make-term (first t)
+                                                       (second t))))
+    (put :rest-terms [:sparse-term-list] #(tag (rest %)))
+    (put :negate [:sparse-term-list] #(negate- (tag %)))
+    (put :adjoin-term [:term :sparse-term-list] (fn [t l]
+                                                  (tag (if (=zero? (coeff-term- t))
+                                                         l
+                                                         (cons t l)))))
+    :done))
+(install-sparse-term-list-package)
+
+(def the-empty-term-list [:sparse-term-list []])
 (defn install-polynomial-package []
-  (letfn [(variable? [x] (symbol? x))
-          (same-variable? [x y] (and (variable? x) (variable? y) (= x y)))
-          (make-poly [v ts] (cons v ts))
+  (letfn [(make-poly [v ts] [v ts])
           (variable [p] (first p))
-          (term-list [p] (rest p))
-          (empty-termlist? [l] (empty? l))
-          (first-term [l] (first l))
-          (rest-terms [l] (rest l))
-          (order [t] (first t))
+          (term-list [p] (second p))
           (add-terms [l1 l2]
             (cond
-             (empty-termlist? l1) l2
-             (empty-termlist? l2) l1
+             (empty-term-list? l1) l2
+             (empty-term-list? l2) l1
              :else (let [t1 (first-term l1)
                          t2 (first-term l2)]
                      (cond
@@ -479,15 +527,15 @@
                                     (term-list b)))
               (throw (Exception. (str "Polys not in same var " [a b])))))
           (mul-term-by-all-terms [t1 l]
-            (if (empty-termlist? l)
-              (the-empty-term-list)
+            (if (empty-term-list? l)
+              the-empty-term-list
               (let [t2 (first-term l)]
                 (adjoin-term (make-term (add (order t1) (order t2))
                                         (mul (coeff t1) (coeff t2)))
                              (mul-term-by-all-terms t1 (rest-terms l))))))
           (mul-terms [l1 l2]
-            (if (empty-termlist? l1)
-              (the-empty-term-list)
+            (if (empty-term-list? l1)
+              the-empty-term-list
               (add-terms (mul-term-by-all-terms (first-term l1) l2)
                          (mul-terms (rest-terms l1) l2))))
           (mul-poly [a b]
@@ -504,12 +552,10 @@
     (put :negate [:polynomial] (fn [p]
                                  (tag (let [v (variable p)
                                             ts (term-list p)]
-                                        (make-poly v
-                                                   (map #(make-term (order %) (negate (coeff %)))
-                                                        ts))))))
+                                        (make-poly v (negate ts))))))
     ; Q. 2.87
     (put :=zero? [:polynomial] #(loop [l (term-list %)]
-                                  (or (empty-termlist? l)
+                                  (or (empty-term-list? l)
                                       (and (=zero? (coeff (first-term l)))
                                            (recur (rest-terms l))))))
     (put :make :polynomial (fn [v ts] (tag (make-poly v ts)))))
@@ -519,7 +565,12 @@
 
 
 (deftest polynomial-test
-  (=zero? (make-polynomial 'x (the-empty-term-list)))
-  (=zero? (sub [:polynomial ['x [2 (make-real 1)] [1 (make-real 1)]]]
-               [:polynomial ['x [2 (make-integer 1)] [1 (make-complex-from-real-imag (make-real 1) (make-real 0))]]])))
+  (is (=zero? (make-polynomial 'x the-empty-term-list)))
+  (is (=zero? (sub [:polynomial ['x [:sparse-term-list [[(make-integer 2) (make-real 1)] [(make-integer 1) (make-real 1)]]]]]
+                   [:polynomial ['x [:sparse-term-list [[(make-integer 2) (make-integer 1)] [(make-integer 1) (make-complex-from-real-imag (make-real 1) (make-real 0))]]]]])))
+  (is (=zero? (sub [:polynomial ['x [:sparse-term-list [[(make-integer 2) (make-real 1)] [(make-integer 1) (make-real 1)]]]]]
+                   [:polynomial ['x [:dense-term-list [(make-integer 1) (make-complex-from-real-imag (make-real 1) (make-real 0)) (make-integer 0)]]]])))
+  (is (= (adjoin-term [:term [(make-integer 8) (make-integer 1)]] [:dense-term-list [(make-integer 2) (make-integer 1) (make-integer 0)]])
+         [:dense-term-list [[:integer 1] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 2] [:integer 1] [:integer 0]]])))
+
 
