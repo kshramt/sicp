@@ -136,6 +136,7 @@
 (defn apply-generic-2-86
   "Q. 2.86"
   [op & args]
+;  (println op args)
   ((if (or (= op :raise)
            (= op :project)
            (= op :drop))
@@ -439,7 +440,6 @@
             (make-integer 1))))
 
 
-;(clojure.test/run-tests *ns*)
 
 ; 2.5.3 ----------------------------------------------------
 
@@ -505,7 +505,7 @@
 (install-sparse-term-list-package)
 
 (def the-empty-term-list [:sparse-term-list []])
-(defn install-polynomial-package []
+#_(defn install-polynomial-package []
   (letfn [(make-poly [v ts] [v ts])
           (variable [p] (first p))
           (term-list [p] (second p))
@@ -544,6 +544,17 @@
                          (mul-terms (term-list a)
                                     (term-list b)))
               (throw (Exception. (str "Polys not in same var " [a b])))))
+          (div-terms [l1 l2]
+            (if (empty-term-list? l1)
+              [the-empty-term-list the-empty-term-list]
+              (let [t1 (first-term l1)
+                    t2 (first-term t2)]
+                (if (gt? (order t2) (order t1))
+                  [the-empty-term-list l1]
+                  (let [new-c (div (coeff t1) (coeff t2))
+                        new-o (- (order t1) (order t2))]
+                    (let [rest-of-result (),,,]
+                      ,,,,))))));HERO
           (tag [p] (attach-tag :polynomial p))]
     (put :add [:polynomial :polynomial] #(tag (add-poly %1 %2)))
     ; Q. 2.88
@@ -560,7 +571,7 @@
                                            (recur (rest-terms l))))))
     (put :make :polynomial (fn [v ts] (tag (make-poly v ts)))))
   :done)
-(install-polynomial-package)
+#_(install-polynomial-package)
 (def make-polynomial (get_ :make :polynomial))
 
 
@@ -574,3 +585,4 @@
          [:dense-term-list [[:integer 1] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 2] [:integer 1] [:integer 0]]])))
 
 
+(clojure.test/run-tests *ns*)
