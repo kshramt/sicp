@@ -7,7 +7,7 @@ export SHELL := /bin/bash
 .PHONY: all test
 all:
 test:
-	for n in sicp.core sicp.ch-2-4
+	for n in sicp.core sicp.ch-2-4 sicp.ch-3
 	do
 	   lein test "$${n}"
 	   lein typed check "$${n}"
