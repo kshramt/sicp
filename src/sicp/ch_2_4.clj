@@ -473,15 +473,18 @@
     (put :first-term [:dense-term-list] #(make-term (make-integer (dec (count %))) (first %))) ; todo: empty case
     (put :rest-terms [:dense-term-list] #(tag (rest %)))
     (put :negate [:dense-term-list] #(tag (map negate %)))
-    (put :adjoin-term [:term :dense-term-list] (fn [t l]
-                                                 (tag (if (=zero? (coeff-term- t))
-                                                        l
-                                                        (cons (coeff-term- t)
-                                                              (concat (repeat (contents (sub (sub (order-term- t)
-                                                                                                  (make-integer 1))
-                                                                                             (order (first-term (tag l)))))
-                                                                              (make-integer 0))
-                                                                      l))))))
+    (put :adjoin-term [:term :dense-term-list]
+         (fn [t l]
+           (tag (if (=zero? (coeff-term- t))
+                  l
+                  (cons (coeff-term- t)
+                        (concat
+                         (repeat
+                          (contents (sub (sub (order-term- t)
+                                              (make-integer 1))
+                                         (order (first-term (tag l)))))
+                                 (make-integer 0))
+                                l))))))
     :done))
 (install-dense-term-list-package)
 
@@ -520,12 +523,6 @@
                       (lt? (order t1) (order t2)) (adjoin-term t2 (add-terms l1 (rest-terms l2)))
                       :else (adjoin-term (make-term (order t1) (add (coeff t1) (coeff t2)))
                                          (add-terms (rest-terms l1) (rest-terms l2)))))))
-          (add-poly [a b]
-            (if (same-variable? (variable a) (variable b))
-              (make-poly (variable a)
-                         (add-terms (term-list a)
-                                    (term-list b)))
-              (throw (Exception. (str "Polys not in same var " [a b])))))
           (mul-term-by-all-terms [t1 l]
             (if (empty-term-list? l)
               the-empty-term-list
@@ -538,12 +535,6 @@
               the-empty-term-list
               (add-terms (mul-term-by-all-terms (first-term l1) l2)
                          (mul-terms (rest-terms l1) l2))))
-          (mul-poly [a b]
-            (if (same-variable? (variable a) (variable b))
-              (make-poly (variable a)
-                         (mul-terms (term-list a)
-                                    (term-list b)))
-              (throw (Exception. (str "Polys not in same var " [a b])))))
           (div-terms [l1 l2]
             (if (empty-term-list? l1)
               [the-empty-term-list the-empty-term-list]
@@ -556,10 +547,25 @@
                     (let [rest-of-result (),,,]
                       ,,,,))))));HERO
           (tag [p] (attach-tag :polynomial p))]
-    (put :add [:polynomial :polynomial] #(tag (add-poly %1 %2)))
+    (put :add [:polynomial :polynomial]
+         (fn [a b]
+           (tag (if (same-variable? (variable a) (variable b))
+                  (make-poly (variable a)
+                             (add-terms (term-list a)
+                                        (term-list b)))
+                  (throw (Exception.
+                          (str "Polys not in same var " [a b])))))))
     ; Q. 2.88
     (put :sub [:polynomial :polynomial] #(add (tag %1) (negate (tag %2))))
-    (put :mul [:polynomial :polynomial] #(tag (mul-poly %1 %2)))
+    (put :mul [:polynomial :polynomial]
+         (fn [a b]
+           (tag
+            (if (same-variable? (variable a) (variable b))
+              (make-poly (variable a)
+                         (mul-terms (term-list a)
+                                    (term-list b)))
+              (throw (Exception.
+                      (str "Polys not in same var " [a b])))))))
     (put :negate [:polynomial] (fn [p]
                                  (tag (let [v (variable p)
                                             ts (term-list p)]
