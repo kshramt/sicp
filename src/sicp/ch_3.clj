@@ -165,5 +165,19 @@
                s))))
 
 
+(ann make-joint [[Keyword -> [Num String -> Num]] String String ->
+                 [Keyword -> [Num String -> Num]]])
+(defn make-joint
+  "Q. 3.7"
+  [acc pass pass-another]
+  ((acc :deposit) 0 pass) ; check if `pass` is valid
+  (typed/fn [m :- Keyword]
+    (typed/fn [amount :- Num
+               password :- String]
+      (if (= password pass-another)
+        ((acc m) amount pass)
+        ((acc m) amount (str pass "break pass"))))))
+
+
 (typed/check-ns)
 (clojure.test/run-tests)
