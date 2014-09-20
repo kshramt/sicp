@@ -2,7 +2,6 @@
   (:require [clojure.test :refer [is are deftest]]
             [clojure.pprint]
             [clojure.core.typed :refer [ann
-                                        fn> ; `typed/fn` is not usable in REPL
                                         letfn>
                                         Int Num
                                         Keyword
@@ -10,7 +9,7 @@
                                         IFn
                                         All
                                         ] :as typed]
-            ;:verbose
+                                        ;:verbose
             )
   (:gen-class))
 
@@ -155,7 +154,7 @@
 
 (ann ^:no-check my-rand (IFn [(Value :generate) -> Double]
                   [(Value :reset) -> [Long -> Double]]))
-n(let [r (typed/atom :- java.util.Random (java.util.Random.))]
+(let [r (typed/atom :- java.util.Random (java.util.Random.))]
   (defn my-rand
     "Q. 3.6"
     [m]
