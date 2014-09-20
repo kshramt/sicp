@@ -179,5 +179,13 @@
         ((acc m) amount (str pass "break pass"))))))
 
 
+(ann f-3-8 [Num -> Num])
+(let [y (typed/atom :- Num 1)]
+  (defn f-3-8
+    "Q. 3.8"
+    [x]
+    (reset! y (* @y x))))
+
+
 (typed/check-ns)
 (clojure.test/run-tests)
