@@ -15,6 +15,13 @@
   (:gen-class))
 
 
+(ann ^:no-check clojure.test/run-tests [-> '{:type Keyword
+                                             :test Int
+                                             :pass Int
+                                             :fail Int
+                                             :error Int}])
+
+
 (ann make-account [Num -> [Keyword -> [Num -> Num]]])
 (defn make-account [balance]
   (let [local-balance (typed/atom :- Num balance)]
@@ -117,5 +124,34 @@
         (throw (Exception. (str "Unknown request: " m)))))))
 
 
+(ann random-in-range [Num Num -> Num])
+(defn random-in-range [low high]
+  (+ low (rand (- high low))))
+
+
+(ann monte-carlo [Int [-> Boolean] -> Num])
+(defn monte-carlo [trials experiment]
+  (typed/loop [trials-remaining :- Int trials
+         trials-passed :- Int 0]
+    (if (<= trials-remaining 0)
+      (/ trials-passed trials)
+      (if (experiment)
+        (recur (dec trials-remaining) (inc trials-passed))
+        (recur (dec trials-remaining) trials-passed)))))
+
+
+(ann estimate-integral [[Num Num -> Boolean] Num Num Num Num Int -> Num])
+(defn estimate-integral
+  "Q. 3.5"
+  {:test (fn [] (do (is (<= 2.15 (estimate-integral #(<= (Math/sqrt (+ (* %1 %1) (* %2 %2))) 1) -1 1 -1 1 1000) 4.15))))}
+  [P x1 x2 y1 y2 n-iter]
+  (* (- x2 x1)
+     (- y2 y1)
+     (monte-carlo n-iter
+                  (typed/fn []
+                    (P (random-in-range x1 x2)
+                       (random-in-range y1 y2))))))
+
 
 (typed/check-ns)
+(clojure.test/run-tests)
