@@ -152,17 +152,16 @@
                        (random-in-range y1 y2))))))
 
 
-(ann ^:no-check my-rand (IFn [(Value :generate) -> Double]
-                  [(Value :reset) -> [Long -> Double]]))
+(ann my-rand (IFn [-> Double]
+                  [Long -> Long]))
 (let [r (typed/atom :- java.util.Random (java.util.Random.))]
   (defn my-rand
     "Q. 3.6"
-    [m]
-    (case m
-      :generate (.nextDouble @r)
-      :reset (typed/fn [s :- Long]
-               (reset! r (java.util.Random. s))
-               s))))
+  ([]
+     (.nextDouble ^java.util.Random @r))
+  ([seed]
+     (reset! r (java.util.Random. seed))
+     seed)))
 
 
 (ann make-joint [[Keyword -> [Num String -> Num]] String String ->
