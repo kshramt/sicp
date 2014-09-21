@@ -1,0 +1,53 @@
+digraph G {
+        compound=true
+        node [shape=plaintext]
+        subgraph cluster0 {
+                factorial
+        }
+        toplevel -> factorial [lhead=cluster0]
+        subgraph cluster1 {
+                n2[label="parent"]
+                n3[label="code"]
+                n4[label="param: n\l(if (= n 1)\l  1\l  (* n (recur (- n 1))))"]
+                n2 -> factorial [lhead=cluster0]
+                n3 -> n4
+        }
+        factorial -> n2
+        factorial -> n3
+
+        subgraph cluster2 {
+                n5 [label="n: 6"]
+        }
+        E1 -> n5
+        n5 -> factorial [lhead=cluster0]
+
+        subgraph cluster3 {
+                n6 [label="n: 5"]
+        }
+        E2 -> n6
+        n6 -> factorial [lhead=cluster0]
+
+        subgraph cluster4 {
+                n7 [label="n: 4"]
+        }
+        E3 -> n7
+        n7 -> factorial [lhead=cluster0]
+
+        subgraph cluster5 {
+                n8 [label="n: 3"]
+        }
+        E4 -> n8
+        n8 -> factorial [lhead=cluster0]
+
+        subgraph cluster6 {
+                n9 [label="n: 2"]
+        }
+        E5 -> n9
+        n9 -> factorial [lhead=cluster0]
+
+        subgraph cluster7 {
+                n10 [label="n: 1"]
+        }
+        E6 -> n10
+        n10 -> factorial [lhead=cluster0]
+}

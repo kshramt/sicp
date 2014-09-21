@@ -1,0 +1,76 @@
+digraph G {
+        compound=true
+        node [shape=plaintext]
+        subgraph cluster0 {
+                center[label=""]
+                factorial
+                factorialiter[label="factorial-iter"]
+        }
+        toplevel -> factorial [lhead=cluster0]
+        subgraph cluster1 {
+                n2[label="parent"]
+                n3[label="code"]
+                n4[label="param: n\l(fact-iter 1 1 n)"]
+                n2 -> center [lhead=cluster0]
+                n3 -> n4
+        }
+        factorial -> n2
+        factorial -> n3
+        subgraph cluster2 {
+                n5[label="parent"]
+                n6[label="code"]
+                n7[label="param: product counter max-count \l(if (> counter max-count)\lproduct\l(recur\l(* counter product)\l(+ counter 1)\lmax-count))"]
+                n5 -> center [lhead=cluster0]
+                n6 -> n7
+        }
+        factorialiter -> n5
+        factorialiter -> n6
+
+        subgraph cluster3 {
+                n8 [label="n: 6"]
+        }
+        E1 -> n8
+        n8 -> center [lhead=cluster0]
+
+        subgraph cluster4 {
+                n9 [label="product: 1\ncounter: 1\lmax-count: 6"]
+        }
+        E2 -> n9
+        n9 -> center [lhead=cluster0]
+
+        subgraph cluster5 {
+                n10 [label="product: 1\ncounter: 2\lmax-count: 6"]
+        }
+        E3 -> n10
+        n10 -> center [lhead=cluster0]
+
+        subgraph cluster6 {
+                n11 [label="product: 2\ncounter: 3\lmax-count: 6"]
+        }
+        E4 -> n11
+        n11 -> center [lhead=cluster0]
+
+        subgraph cluster7 {
+                n12 [label="product: 6\ncounter: 4\lmax-count: 6"]
+        }
+        E5 -> n12
+        n12 -> center [lhead=cluster0]
+
+        subgraph cluster8 {
+                n13 [label="product: 24\ncounter: 5\lmax-count: 6"]
+        }
+        E6 -> n13
+        n13 -> center [lhead=cluster0]
+
+        subgraph cluster9 {
+                n14 [label="product: 120\ncounter: 6\lmax-count: 6"]
+        }
+        E7 -> n14
+        n14 -> center [lhead=cluster0]
+
+        subgraph cluster10 {
+                n15 [label="product: 720\ncounter: 7\lmax-count: 6"]
+        }
+        E8 -> n15
+        n15 -> center [lhead=cluster0]
+}
