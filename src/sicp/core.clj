@@ -712,12 +712,12 @@
 (ann iterative-improve [[Num -> Boolean] [Num -> Num] -> [Num -> Num]])
 (defn iterative-improve
   "Q. 1.46-1"
-  [is-good? update]
+  [is-good? update-]
   (fn [x]
     (typed/loop [guess :- Num 1]
       (if (is-good? guess)
         guess
-        (recur (update guess))))))
+        (recur (update- guess))))))
 
 (ann sqrt'''''' [Num -> Num])
 (defn sqrt''''''
