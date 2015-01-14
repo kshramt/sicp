@@ -22,6 +22,11 @@
                                         NonEmptyASeq ASeq
                                         Seqable EmptySeqable NonEmptySeqable
                                         NonEmptyLazySeq] :as typed]
+            [clojure.core.typed.unsafe
+             :refer
+             [
+              ignore-with-unchecked-cast
+              ]]
             ;:verbose
             )
   (:import [clojure.lang LazySeq])
@@ -135,7 +140,7 @@
      (cond
       (zero? n) ret
       (odd? n) (*' ret b (my-expt b (dec' n)))
-      :else (recur (square b) (half n) ret))))
+      :else (recur (square b) (ignore-with-unchecked-cast (half n) Int) ret))))
 
 (ann my-* (IFn [Int Int -> Int]
               [Num Int -> Num]))
@@ -158,7 +163,7 @@
   (cond
    (zero? b) 0
    (odd? b) (+' a (my-* a (dec' b)))
-   :else (recur (twice a) (half b))))
+   :else (recur (twice a) (ignore-with-unchecked-cast (half b) Int))))
 
 
 (ann my-expt-with-my-* [Int Int -> Int])
@@ -174,7 +179,7 @@
        (cond
         (zero? n) 1
         (odd? n) (my-* b (my-expt-with-my-* b (dec' n)))
-        :else (recur (square-with-my-* b) (half n)))))
+        :else (recur (square-with-my-* b) (ignore-with-unchecked-cast (half n) Int)))))
 
   {:test #(do (are [b n result] (= (my-expt-with-my-* b n) result)
                    0 0 1
@@ -671,7 +676,7 @@
      {:pre [(>= n 0)]}
      (cond
       (zero? n) ret
-      (zero? (mod n 2)) (recur (compose f f) (half n) ret)
+      (even? n) (recur (compose f f) (ignore-with-unchecked-cast (half n) Int) ret)
       :else (recur f (dec' n) (fn [x] (f (ret x)))))))
 
 (ann smooth (IFn [[Num -> Num] -> [Num -> Num]]
