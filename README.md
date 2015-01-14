@@ -5,7 +5,7 @@ SICP in Clojure with `clojure.core.typed`.
 ## Test
 
 ```bash
-make test
+make check
 ```
 
 ## License
