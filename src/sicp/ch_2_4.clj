@@ -462,6 +462,7 @@
 (def make-term (get_ :make :term))
 (defn order [t] (apply-generic :order t))
 (defn coeff [t] (apply-generic :coeff t))
+(defn negate [x] (apply-generic :negate x))
 
 (defn empty-term-list? [l] (apply-generic :empty-term-list? l))
 (defn first-term [l] (apply-generic :first-term l))
@@ -508,7 +509,7 @@
 (install-sparse-term-list-package)
 
 (def the-empty-term-list [:sparse-term-list []])
-#_(defn install-polynomial-package []
+(defn install-polynomial-package []
   (letfn [(make-poly [v ts] [v ts])
           (variable [p] (first p))
           (term-list [p] (second p))
@@ -577,7 +578,7 @@
                                            (recur (rest-terms l))))))
     (put :make :polynomial (fn [v ts] (tag (make-poly v ts)))))
   :done)
-#_(install-polynomial-package)
+(install-polynomial-package)
 (def make-polynomial (get_ :make :polynomial))
 
 
@@ -588,7 +589,10 @@
   (is (=zero? (sub [:polynomial ['x [:sparse-term-list [[(make-integer 2) (make-real 1)] [(make-integer 1) (make-real 1)]]]]]
                    [:polynomial ['x [:dense-term-list [(make-integer 1) (make-complex-from-real-imag (make-real 1) (make-real 0)) (make-integer 0)]]]])))
   (is (= (adjoin-term [:term [(make-integer 8) (make-integer 1)]] [:dense-term-list [(make-integer 2) (make-integer 1) (make-integer 0)]])
-         [:dense-term-list [[:integer 1] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 2] [:integer 1] [:integer 0]]])))
+         [:dense-term-list [[:integer 1] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 2] [:integer 1] [:integer 0]]]))
+  ; xxx: some real test `equ?` or `=zero?`
+  (add (make-polynomial 'a (adjoin-term (make-term 2 3) the-empty-term-list))
+       (make-polynomial 'a (adjoin-term (make-term 2 3) the-empty-term-list))))
 
 
-(clojure.test/run-tests *ns*)
+;(clojure.test/run-tests *ns*)
