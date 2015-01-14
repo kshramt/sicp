@@ -1,6 +1,25 @@
 (ns sicp.ch-2-4
   (:require [clojure.test :refer [is are deftest]]
             [clojure.pprint]
+            [clojure.core.typed
+             :refer
+             [
+              ann
+              Int Num
+              Keyword
+              Value
+              Option
+              Seqable
+              Any
+              All
+              U
+              IFn
+              ] :as typed]
+            [clojure.core.typed.unsafe
+             :refer
+             [
+              ignore-with-unchecked-cast
+              ]]
             [clojure.repl]))
 (set! *warn-on-reflection* false)
 
@@ -12,20 +31,38 @@
      x#))
 
 
+(ann ^:no-check attach-tag
+     (All [a] (IFn [(Value :clojure-number) a -> a]
+                   [Keyword a -> '[Keyword a]])))
 (defn attach-tag [type-tag contents]
   (if (= type-tag :clojure-number)
     contents
     [type-tag contents]))
+
+
+(ann type-tag [(U Num Boolean '[Keyword Any]) -> Keyword])
 (defn type-tag [datum]
   (cond
    (number? datum) :clojure-number
    (instance? Boolean datum) :clojure-boolean
    :else (first datum)))
+
+
+(ann ^:no-check contents
+     (All [[n :< Num]
+           [b :< Boolean]
+           a]
+          (IFn [n -> n]
+               [b -> b]
+               ['[Keyword a] -> a])))
 (defn contents [datum]
   (if (or (number? datum) (instance? Boolean datum))
     datum
     (second datum)))
 
+
+(ann lookup (All [a] (IFn [Keyword (Seqable '[Keyword a]) -> (Option a)]
+                          [Keyword Keyword (Seqable '[Keyword (Seqable '[Keyword a])]) -> (Option a)])))
 (defn lookup
   ([key table]
      (if-let [[k v] (first table)]
@@ -36,6 +73,9 @@
      (if-let [inner-table (lookup key-1 table)]
        (lookup key-2 inner-table))))
 
+
+(ann insert (All [a b] (IFn [Keyword a (Seqable '[Keyword b]) -> (Seqable (U '[Keyword a] '[Keyword b]))]
+                            [Keyword Keyword a (Seqable '[Keyword (Seqable '[Keyword b])]) -> (Seqable '[Keyword (Seqable (U '[Keyword a] '[Keyword b]))])])))
 (defn insert
   ([key value table]
      (if-let [[k v :as kv] (first table)]
@@ -48,6 +88,12 @@
         (insert key-1 (insert key-2 value inner-table) table)
         (insert key-1 (insert key-2 value []) table))))
 
+
+(ann abs- (All [[a :< Num]] [a -> a]))
+(defn abs- [x] (if (pos? x) x (ignore-with-unchecked-cast (- x) a)))
+
+
+(typed/tc-ignore
 (defn make-table
   {:test #(do (is (let [t (make-table)]
                     ((t :insert!) :a :b 1)
@@ -67,8 +113,6 @@
                      :insert! (fn [key-1 key-2 value] (reset! local-table (insert key-1 key-2 value @local-table)))
                      (throw (Exception. (str "unknown method:  " method)))))]
     dispatch))
-
-(defn abs- [x] (if (pos? x) x (- x)))
 
 (def operation-table (make-table))
 (def get_ (operation-table :lookup))
@@ -596,3 +640,4 @@
 
 
 ;(clojure.test/run-tests *ns*)
+); typed/tc-ignore
