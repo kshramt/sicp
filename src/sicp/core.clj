@@ -1246,7 +1246,7 @@ Skip...
 (defn no-more? [coin-values]
   (empty? coin-values))
 
-(ann ^:no-check cc' [Int (Seqable Int) -> Int])
+(ann cc' [Int (Seqable Int) -> Int])
 (defn cc'
   "Q. 2.19"
   {:test #(do (is (= (cc' 100 us-coins) 292)))}
@@ -1257,7 +1257,7 @@ Skip...
    :else (+ (cc' amount
                  (rest coin-values))
             (cc' (-' amount
-                     (first-denomination' coin-values))
+                     (first-denomination' (ignore-with-unchecked-cast coin-values (NonEmptySeqable Int))))
                  coin-values))))
 
 (ann filter_ (All [a] [[a -> Boolean] (Seqable a)
@@ -2112,11 +2112,12 @@ n^n
                       (lazy-seq [])))))]
     (this coll)))
 
-(ann ^:no-check vects->segments [(Seqable Vector) -> (Seq Segment)])
+(ann vects->segments [(Seqable Vector) -> (Seq Segment)])
 (defn vects->segments [vects]
   (map (typed/fn [[start end] :- '[Vector Vector]]
          {:pre [(not (nil? start)) (not (nil? end))]}
-         (make-segment start end))       (each-cons 2 vects)))
+         (make-segment start end))
+       (ignore-with-unchecked-cast (each-cons 2 vects) (Seq '[Vector Vector]))))
 
 (ann outer-frame-painter Painter)
 (def outer-frame-painter
@@ -2296,7 +2297,7 @@ n^n
                                  flip-vert rotate180)]
     (combine4 (corner-split painter n))))
 
-(ann ^:no-check split [[Painter Painter -> Painter] [Painter Painter -> Painter]
+(ann split [[Painter Painter -> Painter] [Painter Painter -> Painter]
             -> [Painter Int -> Painter]])
 (defn split
   "Q. 2.45"
@@ -2325,7 +2326,7 @@ n^n
 
 "Q. 2.53 skip"
 
-(ann ^:no-check equal? (All [a b] [a b -> Boolean]))
+(ann equal? (All [a b] [a b -> Boolean]))
 (defn equal?
   "Q. 2.54"
   {:test #(do (is (equal? [1 [2 [3] 4]] [1 [2 [3] 4]]))
@@ -3101,7 +3102,7 @@ Least frequent:  O(n^2)"
 (defn contents [[_ x]] x)
 
 ; `Any` is useless here, though
-(ann ^:no-check make-table [-> (IFn
+(ann make-table [-> (IFn
                      [(Val :lookup) -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
                      [(Val :insert!) -> [Keyword (U Keyword (Seqable Keyword)) Any ->
                                            (LazySeq '[Keyword (Seqable '[(U Keyword (Seqable Keyword)) Any])])]])])
