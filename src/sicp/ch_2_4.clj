@@ -7,7 +7,7 @@
               ann
               Int Num
               Keyword
-              Value
+              Val
               Option
               Seqable
               Any
@@ -32,7 +32,7 @@
 
 
 (ann ^:no-check attach-tag
-     (All [a] (IFn [(Value :clojure-number) a -> a]
+     (All [a] (IFn [(Val :clojure-number) a -> a]
                    [Keyword a -> '[Keyword a]])))
 (defn attach-tag [type-tag contents]
   (if (= type-tag :clojure-number)
@@ -500,7 +500,7 @@
 (def order-term- first)
 (declare make-term)
 (typed/tc-ignore
-(ann install-term-package [-> (Value :done)])
+(ann install-term-package [-> (Val :done)])
 (defn install-term-package []
    (letfn [(tag [t] (attach-tag :term t))]
      (put :coeff [:term] coeff-term-)
