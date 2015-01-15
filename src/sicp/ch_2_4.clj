@@ -482,18 +482,25 @@
             (make-complex-from-real-imag (make-real 1.5) (make-real 0))))
   (is (equ? (drop_ (make-complex-from-real-imag (make-real 1) (make-real 0)))
             (make-integer 1))))
-
+); typed/tc-ignore
 
 
 ; 2.5.3 ----------------------------------------------------
 
 
+(ann variable? [Any -> Boolean :filters {:then (is typed/Symbol 0), :else (! typed/Symbol 0)}])
 (def variable? symbol?)
+(typed/tc-ignore
 (defn same-variable? [x y] (and (variable? x) (variable? y) (= x y)))
+); typed/tc-ignore
 
+(ann coeff-term- (All [x] (IFn [(typed/HSequential [Any x Any *]) -> x :object {:path [(Nth 1)], :id 0}] [(Option (typed/I (clojure.lang.Seqable x) (typed/CountRange 0 1))) -> nil] [(typed/I (clojure.lang.Seqable x) (typed/CountRange 2)) -> x] [(Option (clojure.lang.Seqable x)) -> (Option x)])))
 (def coeff-term- second)
+(ann order-term- (All [x] (IFn [(typed/HSequential [x Any *]) -> x :object {:path [(Nth 0)], :id 0}] [(Option (typed/EmptySeqable x)) -> nil] [(typed/NonEmptySeqable x) -> x] [(Option (clojure.lang.Seqable x)) -> (Option x)])))
 (def order-term- first)
 (declare make-term)
+(typed/tc-ignore
+(ann install-term-package [-> (Value :done)])
 (defn install-term-package []
    (letfn [(tag [t] (attach-tag :term t))]
      (put :coeff [:term] coeff-term-)
