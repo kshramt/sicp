@@ -7,7 +7,7 @@
               ann
               defalias
               Int Num
-              Keyword
+              Kw
               Val
               Option
               Seqable
@@ -38,14 +38,14 @@
 
 (ann ^:no-check attach-tag
      (All [a] (IFn [(Val :clojure-number) a -> a]
-                   [Keyword a -> '[Keyword a]])))
+                   [Kw a -> '[Kw a]])))
 (defn attach-tag [type-tag contents]
   (if (= type-tag :clojure-number)
     contents
     [type-tag contents]))
 
 
-(ann type-tag [TaggedObject -> Keyword])
+(ann type-tag [TaggedObject -> Kw])
 (defn type-tag [datum]
   (cond
    (number? datum) :clojure-number
@@ -59,7 +59,7 @@
            a]
           (IFn [n -> n]
                [b -> b]
-               ['[Keyword a] -> a]
+               ['[Kw a] -> a]
                [TaggedObject -> TaggedObject])))
 (defn contents [datum]
   (if (or (number? datum) (instance? Boolean datum))
@@ -110,14 +110,14 @@
 (ann ^:no-check make-table
      [-> (IFn
           [(Val :lookup)
-           -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
+           -> [Kw (U Kw (Seqable Kw)) -> Any]]
           [(Val :insert!)
-           -> [Keyword (U Keyword (Seqable Keyword)) Any
+           -> [Kw (U Kw (Seqable Kw)) Any
                -> (LazySeq
-                   '[Keyword
+                   '[Kw
                      (Seqable
-                      '[(U Keyword
-                           (Seqable Keyword))
+                      '[(U Kw
+                           (Seqable Kw))
                         Any])])]])])
 (defn make-table
   {:test #(do (is (let [t (make-table)]
@@ -141,33 +141,33 @@
 
 (ann operation-table (IFn
                       [(Val :lookup)
-                       -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
+                       -> [Kw (U Kw (Seqable Kw)) -> Any]]
                       [(Val :insert!)
-                       -> [Keyword (U Keyword (Seqable Keyword)) Any
+                       -> [Kw (U Kw (Seqable Kw)) Any
                            -> (LazySeq
-                               '[Keyword
+                               '[Kw
                                  (Seqable
-                                  '[(U Keyword
-                                       (Seqable Keyword))
+                                  '[(U Kw
+                                       (Seqable Kw))
                                     Any])])]]))
 (def operation-table (make-table))
 
 
-(ann get_ [Keyword (U Keyword (Seqable Keyword)) -> Any])
+(ann get_ [Kw (U Kw (Seqable Kw)) -> Any])
 (def get_ (operation-table :lookup))
 
 
-(ann put [Keyword (U Keyword (Seqable Keyword)) Any
+(ann put [Kw (U Kw (Seqable Kw)) Any
           -> (LazySeq
-              '[Keyword
+              '[Kw
                 (Seqable
-                 '[(U Keyword
-                      (Seqable Keyword))
+                 '[(U Kw
+                      (Seqable Kw))
                    Any])])])
 (def put (operation-table :insert!))
 
 
-(ann ^:no-check apply-generic-basic [Keyword TaggedObject * -> TaggedObject])
+(ann ^:no-check apply-generic-basic [Kw TaggedObject * -> TaggedObject])
 (defn apply-generic-basic [op & args]
   (let [type-tags (map type-tag args)]
     (if-let [proc (get_ op type-tags)]
@@ -223,7 +223,7 @@
       (recur (raise- (contents x)) t)
       (throw (Exception. (str "Unable to raise " x " up to " t))))))
 ); typed/tc-ignore
-(ann ^:no-check apply-generic-2-84- [Keyword (Option (Seqable TaggedObject)) -> TaggedObject])
+(ann ^:no-check apply-generic-2-84- [Kw (Option (Seqable TaggedObject)) -> TaggedObject])
 (defn- apply-generic-2-84-
   "Q. 2.84"
   [op args]
@@ -241,14 +241,14 @@
           (apply-generic-2-84- op (map #(raise-up-to % t) args)))))))
 
 
-(ann apply-generic-2-84 [Keyword TaggedObject * -> TaggedObject])
+(ann apply-generic-2-84 [Kw TaggedObject * -> TaggedObject])
 (defn apply-generic-2-84
   "Q. 2.84"
   [op & args]
   (apply-generic-2-84- op args))
 
 
-(ann apply-generic-2-86 [Keyword TaggedObject * -> TaggedObject])
+(ann apply-generic-2-86 [Kw TaggedObject * -> TaggedObject])
 (defn apply-generic-2-86
   "Q. 2.86"
   [op & args]
