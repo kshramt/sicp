@@ -5,11 +5,13 @@
              :refer
              [
               ann
+              defalias
               Int Num
               Keyword
               Val
               Option
               Seqable
+              ASeq
               Any
               All
               U
@@ -22,6 +24,9 @@
               ]]
             [clojure.repl]))
 (set! *warn-on-reflection* false)
+
+(defalias LazySeq clojure.lang.LazySeq)
+(defalias TaggedObject (U Num Boolean '[Keyword Any]))
 
 
 (defmacro p- [x]
@@ -40,7 +45,7 @@
     [type-tag contents]))
 
 
-(ann type-tag [(U Num Boolean '[Keyword Any]) -> Keyword])
+(ann type-tag [TaggedObject -> Keyword])
 (defn type-tag [datum]
   (cond
    (number? datum) :clojure-number
@@ -54,15 +59,18 @@
            a]
           (IFn [n -> n]
                [b -> b]
-               ['[Keyword a] -> a])))
+               ['[Keyword a] -> a]
+               [TaggedObject -> TaggedObject])))
 (defn contents [datum]
   (if (or (number? datum) (instance? Boolean datum))
     datum
     (second datum)))
 
 
-(ann lookup (All [a] (IFn [Keyword (Seqable '[Keyword a]) -> (Option a)]
-                          [Keyword Keyword (Seqable '[Keyword (Seqable '[Keyword a])]) -> (Option a)])))
+(ann lookup (All [a b c
+                  d e f g h]
+                 (IFn [a (Seqable '[b c]) -> (Option c)]
+                      [d e (Seqable '[f (Seqable '[g h])]) -> (Option h)])))
 (defn lookup
   ([key table]
      (if-let [[k v] (first table)]
@@ -74,15 +82,21 @@
        (lookup key-2 inner-table))))
 
 
-(ann insert (All [a b] (IFn [Keyword a (Seqable '[Keyword b]) -> (Seqable (U '[Keyword a] '[Keyword b]))]
-                            [Keyword Keyword a (Seqable '[Keyword (Seqable '[Keyword b])]) -> (Seqable '[Keyword (Seqable (U '[Keyword a] '[Keyword b]))])])))
+(ann ^:no-check insert
+     (All [a b c d
+           e f g h i j]
+          (IFn [a b (Seqable '[c d]) -> (ASeq (U '[a b] '[c d]))]
+               [e f g (Seqable '[h (Seqable '[i j])])
+                -> (ASeq (U '[e (ASeq '[f g])]
+                            '[h (ASeq (U '[f g]
+                                         '[i j]))]))])))
 (defn insert
   ([key value table]
      (if-let [[k v :as kv] (first table)]
        (if (= k key)
          (cons [k value] (rest table))
          (cons kv (insert key value (rest table))))
-       [[key value]]))
+       (cons [key value] [])))
   ([key-1 key-2 value table]
      (if-let [inner-table (lookup key-1 table)]
         (insert key-1 (insert key-2 value inner-table) table)
@@ -93,7 +107,18 @@
 (defn abs- [x] (if (pos? x) x (ignore-with-unchecked-cast (- x) a)))
 
 
-(typed/tc-ignore
+(ann ^:no-check make-table
+     [-> (IFn
+          [(Val :lookup)
+           -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
+          [(Val :insert!)
+           -> [Keyword (U Keyword (Seqable Keyword)) Any
+               -> (LazySeq
+                   '[Keyword
+                     (Seqable
+                      '[(U Keyword
+                           (Seqable Keyword))
+                        Any])])]])])
 (defn make-table
   {:test #(do (is (let [t (make-table)]
                     ((t :insert!) :a :b 1)
@@ -114,18 +139,51 @@
                      (throw (Exception. (str "unknown method:  " method)))))]
     dispatch))
 
+(ann operation-table (IFn
+                      [(Val :lookup)
+                       -> [Keyword (U Keyword (Seqable Keyword)) -> Any]]
+                      [(Val :insert!)
+                       -> [Keyword (U Keyword (Seqable Keyword)) Any
+                           -> (LazySeq
+                               '[Keyword
+                                 (Seqable
+                                  '[(U Keyword
+                                       (Seqable Keyword))
+                                    Any])])]]))
 (def operation-table (make-table))
+
+
+(ann get_ [Keyword (U Keyword (Seqable Keyword)) -> Any])
 (def get_ (operation-table :lookup))
+
+
+(ann put [Keyword (U Keyword (Seqable Keyword)) Any
+          -> (LazySeq
+              '[Keyword
+                (Seqable
+                 '[(U Keyword
+                      (Seqable Keyword))
+                   Any])])])
 (def put (operation-table :insert!))
+
+
+(ann ^:no-check apply-generic-basic [Keyword TaggedObject * -> TaggedObject])
 (defn apply-generic-basic [op & args]
   (let [type-tags (map type-tag args)]
     (if-let [proc (get_ op type-tags)]
       (apply proc (map contents args))
       (throw (Exception. (str "no mtehod for these types: " op " " (apply list type-tags)))))))
 
+
 (declare equ? raise)
+
+
+(ann ^:no-check projectable? [TaggedObject -> (Option [TaggedObject -> TaggedObject])])
 (defn- projectable? [x]
   (get_ :project [(type-tag x)]))
+
+
+(ann drop_ [TaggedObject -> TaggedObject])
 (defn drop_ [x]
   (if-let [project- (projectable? x)]
     (let [xdown (project- (contents x))]
@@ -134,12 +192,18 @@
         x))
     x))
 
+
+(ann ^:no-check raisable? [TaggedObject -> (Option [TaggedObject -> TaggedObject])])
 (defn- raisable? [x]
   (get_ :raise [(type-tag x)]))
+
+
+(ann raised-list [TaggedObject -> (ASeq TaggedObject)])
 (defn- raised-list [x]
   (if-let [raise- (raisable? x)]
     (cons x (raised-list (raise- (contents x))))
-    [x]))
+    (cons x ())))
+(typed/tc-ignore
 (defn- index
   {:test #(do (are [y xs i] (= (index y xs) i)
                    1 [1 2 3] 0
@@ -158,6 +222,8 @@
     (if-let [raise- (raisable? x)]
       (recur (raise- (contents x)) t)
       (throw (Exception. (str "Unable to raise " x " up to " t))))))
+); typed/tc-ignore
+(ann ^:no-check apply-generic-2-84- [Keyword (Option (Seqable TaggedObject)) -> TaggedObject])
 (defn- apply-generic-2-84-
   "Q. 2.84"
   [op args]
@@ -173,10 +239,16 @@
                              type-tags)
               t (nth raised-t1s (apply max t-heights))]
           (apply-generic-2-84- op (map #(raise-up-to % t) args)))))))
+
+
+(ann apply-generic-2-84 [Keyword TaggedObject * -> TaggedObject])
 (defn apply-generic-2-84
   "Q. 2.84"
   [op & args]
   (apply-generic-2-84- op args))
+
+
+(ann apply-generic-2-86 [Keyword TaggedObject * -> TaggedObject])
 (defn apply-generic-2-86
   "Q. 2.86"
   [op & args]
@@ -190,6 +262,7 @@
 
 (def apply-generic apply-generic-2-86)
 
+(typed/tc-ignore
 (def coercion-table (make-table))
 (def get-coercion (coercion-table :lookup))
 (def put-coercion (coercion-table :insert!))
@@ -212,9 +285,15 @@
 (defn lt? [x y] (apply-generic :lt? x y))
 (defn gt? [x y] (apply-generic :gt? x y))
 (defn rem_ [x y] (apply-generic :rem_ x y))
+); typed/tc-ignore
+(ann ^:no-check equ? [TaggedObject TaggedObject -> Boolean])
 (defn equ? [x y] (apply-generic :equ? x y))
+(typed/tc-ignore
 (defn =zero? [x] (apply-generic :=zero? x))
+); typed/tc-ignore
+(ann raise [TaggedObject -> TaggedObject])
 (defn raise [x] (apply-generic :raise x))
+(typed/tc-ignore
 (defn project [x] (apply-generic :project x))
 (defn square [x] (mul x x))
 (defn le? [x y] (or (lt? x y) (equ? x y)))
