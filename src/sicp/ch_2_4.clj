@@ -8,7 +8,9 @@
               defalias
               Int Num
               Kw
+              Sym
               Val
+              Pred
               Option
               Seqable
               ASeq
@@ -567,7 +569,7 @@
 ; 2.5.3 ----------------------------------------------------
 
 
-(ann variable? [Any -> Boolean :filters {:then (is typed/Symbol 0), :else (! typed/Symbol 0)}])
+(ann variable? (Pred Sym))
 (def variable? symbol?)
 (typed/tc-ignore
 (defn same-variable? [x y] (and (variable? x) (variable? y) (= x y)))
