@@ -28,7 +28,7 @@
 (set! *warn-on-reflection* false)
 
 (defalias LazySeq clojure.lang.LazySeq)
-(defalias TaggedObject (U Num Boolean '[Keyword Any]))
+(defalias TaggedObject (U Num Boolean '[Kw Any]))
 
 
 (defmacro p- [x]
@@ -205,7 +205,10 @@
   (if-let [raise- (raisable? x)]
     (cons x (raised-list (raise- (contents x))))
     (cons x ())))
-(typed/tc-ignore
+
+
+(ann index (All [a b] (IFn [a (Seqable b) -> (Option Int)]
+                           [a (Seqable b) Int -> (Option Int)])))
 (defn- index
   {:test #(do (are [y xs i] (= (index y xs) i)
                    1 [1 2 3] 0
@@ -218,13 +221,17 @@
        (if (= (first s) y)
          i
          (recur y (rest s) (inc i))))))
+
+
+(ann raise-up-to [TaggedObject Kw -> TaggedObject])
 (defn- raise-up-to [x t]
   (if (= (type-tag x) t)
     x
     (if-let [raise- (raisable? x)]
       (recur (raise- (contents x)) t)
       (throw (Exception. (str "Unable to raise " x " up to " t))))))
-); typed/tc-ignore
+
+
 (ann ^:no-check apply-generic-2-84- [Kw (Option (Seqable TaggedObject)) -> TaggedObject])
 (defn- apply-generic-2-84-
   "Q. 2.84"
@@ -290,13 +297,13 @@
 ); typed/tc-ignore
 (ann ^:no-check equ? [TaggedObject TaggedObject -> Boolean])
 (defn equ? [x y] (apply-generic :equ? x y))
-(typed/tc-ignore
+(ann ^:no-check =zero? [TaggedObject -> Boolean])
 (defn =zero? [x] (apply-generic :=zero? x))
-); typed/tc-ignore
 (ann raise [TaggedObject -> TaggedObject])
 (defn raise [x] (apply-generic :raise x))
-(typed/tc-ignore
+(ann project [TaggedObject -> TaggedObject])
 (defn project [x] (apply-generic :project x))
+(typed/tc-ignore
 (defn square [x] (mul x x))
 (defn le? [x y] (or (lt? x y) (equ? x y)))
 (defn gcd
@@ -571,9 +578,11 @@
 
 (ann variable? (Pred Sym))
 (def variable? symbol?)
-(typed/tc-ignore
+
+
+(ann same-variable? (All [a b] [a b -> Boolean]))
 (defn same-variable? [x y] (and (variable? x) (variable? y) (= x y)))
-); typed/tc-ignore
+
 
 (ann coeff-term- (All [x] (IFn [(typed/HSequential [Any x Any *]) -> x :object {:path [(Nth 1)], :id 0}] [(Option (typed/I (clojure.lang.Seqable x) (typed/CountRange 0 1))) -> nil] [(typed/I (clojure.lang.Seqable x) (typed/CountRange 2)) -> x] [(Option (clojure.lang.Seqable x)) -> (Option x)])))
 (def coeff-term- second)
