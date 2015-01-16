@@ -666,7 +666,7 @@
               the-empty-term-list
               (add-terms (mul-term-by-all-terms (first-term l1) l2)
                          (mul-terms (rest-terms l1) l2))))
-          (div-terms [l1 l2]
+          #_(div-terms [l1 l2]
             (if (empty-term-list? l1)
               [the-empty-term-list the-empty-term-list]
               (let [t1 (first-term l1)
