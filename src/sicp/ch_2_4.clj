@@ -27,8 +27,31 @@
             [clojure.repl]))
 (set! *warn-on-reflection* false)
 
+
 (defalias LazySeq clojure.lang.LazySeq)
+
+
+(defalias IntegerTag (Val :integer))
+(defalias TaggedInteger '[IntegerTag Int])
+(defalias RationalTag (Value :rational))
+(defalias TaggedRationalInternal '[TaggedInteger TaggedInteger])
+(defalias TaggedRational '[RationalTag TaggedRationalInternal])
+(defalias RealTag (Val :real))
+(defalias TaggedReal '[RealTag Num])
+(defalias TaggedFloat (U TaggedInteger TaggedRational TaggedReal))
+(defalias RectangularComplexTag (Val :rectangular))
+(defalias TaggedRawComplexInternal '[TaggedFloat TaggedFloat])
+(defalias TaggedRectangularComplex '[RectangularComplexTag TaggedRawComplexInternal])
+(defalias PolarComplexTag (Val :polar))
+(defalias TaggedPolarComplex '[PolarComplexTag TaggedRawComplexInternal])
+(defalias ComplexTag (Val :complex))
+(defalias TaggedRawComplex (U TaggedRectangularComplex
+                              TaggedPolarComplex))
+(defalias TaggedComplex '[ComplexTag TaggedRawComplex])
+(defalias TaggedNumber (U TaggedFloat TaggedComplex))
 (defalias TaggedObject (U Num Boolean '[Kw Any]))
+(defalias ClojureNumberTag (Val :clojure-number))
+(defalias BooleanTag (Val :boolean))
 
 
 (defmacro p- [x]
@@ -38,35 +61,62 @@
      x#))
 
 
+(defmacro pef
+  "print-env-form"
+  [form]
+  `(let [RETURN# ~form
+         _# (typed/print-env ~(str form))]
+     RETURN#))
+
+
 (ann ^:no-check attach-tag
-     (All [a] (IFn [(Val :clojure-number) a -> a]
-                   [Kw a -> '[Kw a]])))
+     (IFn [ClojureNumberTag Int -> Int]
+          [ClojureNumberTag Num -> Num]
+          [BooleanTag Boolean -> Boolean]
+          [IntegerTag Int -> TaggedInteger]
+          [RationalTag TaggedRationalInternal -> TaggedRational]
+          [RealTag Num -> TaggedReal]
+          [RectangularComplexTag TaggedRawComplexInternal -> TaggedRectangularComplex]
+          [PolarComplexTag TaggedRawComplexInternal -> TaggedPolarComplex]
+          [ComplexTag TaggedRawComplex -> TaggedComplex]))
 (defn attach-tag [type-tag contents]
-  (if (= type-tag :clojure-number)
-    contents
+  (case type-tag
+    :clojure-number contents
+    :boolean contents
     [type-tag contents]))
 
 
-(ann type-tag [TaggedObject -> Kw])
+(ann ^:no-check type-tag
+     (IFn [Num -> ClojureNumberTag]
+          [Boolean -> BooleanTag]
+          [TaggedInteger -> IntegerTag]
+          [TaggedRational -> RationalTag]
+          [TaggedReal -> RealTag]
+          [TaggedRectangularComplex -> RectangularComplexTag]
+          [TaggedPolarComplex -> PolarComplexTag]
+          [TaggedComplex -> ComplexTag]))
 (defn type-tag [datum]
   (cond
    (number? datum) :clojure-number
-   (instance? Boolean datum) :clojure-boolean
+   (instance? Boolean datum) :boolean
    :else (first datum)))
 
 
 (ann ^:no-check contents
-     (All [[n :< Num]
-           [b :< Boolean]
-           a]
-          (IFn [n -> n]
-               [b -> b]
-               ['[Kw a] -> a]
-               [TaggedObject -> TaggedObject])))
+     (IFn [Int -> Int]
+          [Num -> Num]
+          [Boolean -> Boolean]
+          [TaggedInteger -> Int]
+          [TaggedRational -> TaggedRationalInternal]
+          [TaggedReal -> Num]
+          [TaggedRectangularComplex -> TaggedRawComplexInternal]
+          [TaggedPolarComplex -> TaggedRawComplexInternal]
+          [TaggedComplex -> TaggedRawComplex]))
 (defn contents [datum]
-  (if (or (number? datum) (instance? Boolean datum))
-    datum
-    (second datum)))
+  (cond
+    (number? datum) datum
+    (instance? Boolean datum) datum
+    :else (second datum)))
 
 
 (ann lookup (All [a b c
@@ -98,7 +148,7 @@
        (if (= k key)
          (cons [k value] (rest table))
          (cons kv (insert key value (rest table))))
-       (cons [key value] [])))
+       (cons [key value] nil)))
   ([key-1 key-2 value table]
      (if-let [inner-table (lookup key-1 table)]
         (insert key-1 (insert key-2 value inner-table) table)
@@ -180,12 +230,24 @@
 (declare equ? raise)
 
 
-(ann ^:no-check projectable? [TaggedObject -> (Option [TaggedObject -> TaggedObject])])
+(ann ^:no-check projectable?
+     (IFn [TaggedComplex -> (Option [TaggedRawComplex -> TaggedReal])]
+          [TaggedReal -> (Option [Num -> TaggedRational])]
+          [TaggedRational -> (Option [TaggedRawComplexInternal -> TaggedInteger])]
+          [TaggedObject -> nil]))
 (defn- projectable? [x]
   (get_ :project [(type-tag x)]))
 
 
-(ann drop_ [TaggedObject -> TaggedObject])
+(ann ^:no-check drop_ ; xxx:
+     (IFn [TaggedComplex -> TaggedNumber]
+          [TaggedReal -> TaggedFloat]
+          [TaggedRational -> (U TaggedInteger TaggedRational)]
+          [TaggedInteger -> TaggedInteger]
+          [Int -> Int]
+          [Num -> Num]
+          [Boolean -> Boolean]
+          [TaggedObject -> TaggedObject]))
 (defn drop_ [x]
   (if-let [project- (projectable? x)]
     (let [xdown (project- (contents x))]
@@ -195,16 +257,24 @@
     x))
 
 
-(ann ^:no-check raisable? [TaggedObject -> (Option [TaggedObject -> TaggedObject])])
+(ann ^:no-check raisable?
+     (IFn [TaggedInteger -> (Option [Int -> TaggedRational])]
+          [TaggedRational -> (Option  [TaggedRationalInternal -> TaggedReal])]
+          [TaggedReal -> (Option [Num -> TaggedComplex])]
+          [TaggedObject -> nil]))
 (defn- raisable? [x]
   (get_ :raise [(type-tag x)]))
 
 
-(ann raised-list [TaggedObject -> (ASeq TaggedObject)])
+(ann raised-list (IFn [TaggedInteger -> (ASeq (U TaggedInteger TaggedRational TaggedReal TaggedComplex))]
+                      [TaggedRational -> (ASeq (U TaggedRational TaggedReal TaggedComplex))]
+                      [TaggedReal -> (ASeq (U TaggedReal TaggedComplex))]
+                      [TaggedComplex -> (ASeq TaggedComplex)]
+                      [TaggedObject -> (ASeq TaggedObject)]))
 (defn- raised-list [x]
   (if-let [raise- (raisable? x)]
     (cons x (raised-list (raise- (contents x))))
-    (cons x ())))
+    (cons x nil)))
 
 
 (ann index (All [a b] (IFn [a (Seqable b) -> (Option Int)]
@@ -223,7 +293,17 @@
          (recur y (rest s) (inc i))))))
 
 
-(ann raise-up-to [TaggedObject Kw -> TaggedObject])
+(ann ^:no-check raise-up-to
+     (IFn [TaggedInteger IntegerTag -> TaggedInteger]
+          [TaggedInteger RationalTag -> TaggedRational]
+          [TaggedInteger RealTag -> TaggedReal]
+          [TaggedInteger ComplexTag -> TaggedComplex]
+          [TaggedRational RationalTag -> TaggedRational]
+          [TaggedRational RealTag -> TaggedReal]
+          [TaggedRational ComplexTag -> TaggedComplex]
+          [TaggedReal RealTag -> TaggedReal]
+          [TaggedReal ComplexTag -> TaggedComplex]
+          [TaggedComplex ComplexTag -> TaggedComplex]))
 (defn- raise-up-to [x t]
   (if (= (type-tag x) t)
     x
@@ -262,50 +342,195 @@
   "Q. 2.86"
   [op & args]
 ;  (println op args)
-  ((if (or (= op :raise)
-           (= op :project)
-           (= op :drop))
-     identity
-     drop_)
-    (apply-generic-2-84- op args)))
+  (let [ret (apply-generic-2-84- op args)]
+    (case op
+        :raise ret
+        :project ret
+        :drop ret
+        (drop_ ret))))
+
 
 (def apply-generic apply-generic-2-86)
 
-(typed/tc-ignore
+
+(ann coercion-table (IFn
+                     [(Val :lookup)
+                      -> [Kw (U Kw (Seqable Kw)) -> Any]]
+                     [(Val :insert!)
+                      -> [Kw (U Kw (Seqable Kw)) Any
+                          -> (LazySeq
+                              '[Kw
+                                (Seqable
+                                 '[(U Kw
+                                      (Seqable Kw))
+                                   Any])])]]))
 (def coercion-table (make-table))
+
+
+(ann get-coercion [Kw (U Kw (Seqable Kw)) -> Any])
 (def get-coercion (coercion-table :lookup))
+
+
+(ann put-coercion [Kw (U Kw (Seqable Kw)) Any
+                   -> (LazySeq
+                       '[Kw
+                         (Seqable
+                          '[(U Kw
+                               (Seqable Kw))
+                            Any])])])
 (def put-coercion (coercion-table :insert!))
 
+
+(ann ^:no-check real-part (IFn [TaggedComplex -> TaggedFloat]
+                               [TaggedRawComplex -> TaggedFloat]))
 (defn real-part [x] (apply-generic :real-part x))
+
+
+(ann ^:no-check imag-part (IFn [TaggedComplex -> TaggedFloat]
+                               [TaggedRawComplex -> TaggedFloat]))
 (defn imag-part [x] (apply-generic :imag-part x))
+
+
+(ann ^:no-check magnitude (IFn [TaggedComplex -> TaggedFloat]
+                               [TaggedRawComplex -> TaggedFloat]))
 (defn magnitude [x] (apply-generic :magnitude x))
+
+
+(ann ^:no-check angle (IFn [TaggedComplex -> TaggedFloat]
+                           [TaggedRawComplex -> TaggedFloat]))
 (defn angle [x] (apply-generic :angle x))
+
+
+(ann ^:no-check add (IFn [Int Int -> Int]
+                         [Num Num -> Num]
+                         [TaggedInteger TaggedInteger -> TaggedInteger]
+                         [(U TaggedInteger TaggedRational) (U TaggedInteger TaggedRational) -> (U TaggedInteger TaggedRational)]
+                         [TaggedFloat TaggedFloat -> TaggedFloat]
+                         [TaggedNumber TaggedNumber -> TaggedNumber]))
 (defn add [x y] (apply-generic :add x y))
+
+
+(ann ^:no-check sub (IFn [Int Int -> Int]
+                         [Num Num -> Num]
+                         [TaggedInteger TaggedInteger -> TaggedInteger]
+                         [(U TaggedInteger TaggedRational) (U TaggedInteger TaggedRational) -> (U TaggedInteger TaggedRational)]
+                         [TaggedFloat TaggedFloat -> TaggedFloat]
+                         [TaggedNumber TaggedNumber -> TaggedNumber]))
 (defn sub [x y] (apply-generic :sub x y))
+
+
+(ann ^:no-check mul (IFn [Int Int -> Int]
+                         [Num Num -> Num]
+                         [TaggedInteger TaggedInteger -> TaggedInteger]
+                         [(U TaggedInteger TaggedRational) (U TaggedInteger TaggedRational) -> (U TaggedInteger TaggedRational)]
+                         [TaggedFloat TaggedFloat -> TaggedFloat]
+                         [TaggedNumber TaggedNumber -> TaggedNumber]))
 (defn mul [x y] (apply-generic :mul x y))
+
+
+(ann ^:no-check negate (IFn [Int -> Int]
+                            [Num -> Num]
+                            [TaggedInteger -> TaggedInteger]
+                            [TaggedRational -> TaggedRational]
+                            [TaggedReal -> TaggedReal]
+                            [TaggedComplex -> TaggedComplex]))
 (defn negate [x] (apply-generic :negate x))
+
+
+(ann ^:no-check div (IFn [Num Num -> Num]
+                         [(U TaggedInteger TaggedRational) (U TaggedInteger TaggedRational) -> (U TaggedInteger TaggedRational)]
+                         [TaggedFloat TaggedFloat -> TaggedFloat]
+                         [TaggedNumber TaggedNumber -> TaggedNumber]))
 (defn div [x y] (apply-generic :div x y))
+
+
+(ann ^:no-check div-truncate (IFn [Num -> Int]
+                                  [(U TaggedInteger TaggedRational) (U TaggedInteger TaggedRational) -> TaggedInteger]))
 (defn div-truncate [x y] (apply-generic :div-truncate x y))
+
+
+(ann ^:no-check sin (IFn [Num -> Num]
+                         [TaggedFloat -> TaggedFloat]
+                         [TaggedComplex -> TaggedNumber]))
 (defn sin [x] (apply-generic :sin x))
+
+
+(ann ^:no-check cos (IFn [Num -> Num]
+                         [TaggedFloat -> TaggedFloat]
+                         [TaggedComplex -> TaggedNumber]))
 (defn cos [x] (apply-generic :cos x))
-(defn abs [x] (apply-generic :abs x))
+
+
+(ann ^:no-check sqrt (IFn [Num -> Num]
+                          [TaggedFloat -> TaggedFloat]
+                          [TaggedComplex -> TaggedNumber]))
 (defn sqrt [x] (apply-generic :sqrt x))
+
+
+(ann ^:no-check abs (IFn [Int -> Int]
+                         [Num -> Num]
+                         [TaggedInteger -> TaggedInteger]
+                         [TaggedRational -> TaggedRational]
+                         [TaggedReal -> TaggedReal]
+                         [TaggedComplex -> TaggedFloat]))
+(defn abs [x] (apply-generic :abs x))
+
+
+(ann ^:no-check atan2 (IFn [Num Num -> Num]
+                           [TaggedFloat TaggedFloat -> TaggedFloat]))
 (defn atan2 [x y] (apply-generic :atan2 x y))
+
+
+(ann ^:no-check lt? (IFn [Num Num -> Boolean]
+                         [TaggedFloat TaggedFloat -> Boolean]))
 (defn lt? [x y] (apply-generic :lt? x y))
+
+
+(ann ^:no-check gt? (IFn [Num Num -> Boolean]
+                         [TaggedFloat TaggedFloat -> Boolean]))
 (defn gt? [x y] (apply-generic :gt? x y))
+
+
+(ann ^:no-check rem_ (IFn [Int Int -> Int]
+                          [TaggedInteger TaggedInteger -> TaggedInteger]))
 (defn rem_ [x y] (apply-generic :rem_ x y))
-); typed/tc-ignore
-(ann ^:no-check equ? [TaggedObject TaggedObject -> Boolean])
+
+
+(ann ^:no-check equ? (IFn [Num Num -> Boolean]
+                          [TaggedNumber TaggedNumber -> Boolean]))
 (defn equ? [x y] (apply-generic :equ? x y))
+
+
 (ann ^:no-check =zero? [TaggedObject -> Boolean])
 (defn =zero? [x] (apply-generic :=zero? x))
-(ann raise [TaggedObject -> TaggedObject])
+
+
+(ann ^:no-check raise (IFn [TaggedInteger -> TaggedRational]
+                           [TaggedRational -> TaggedReal]
+                           [TaggedReal -> TaggedComplex]))
 (defn raise [x] (apply-generic :raise x))
+
+
 (ann project [TaggedObject -> TaggedObject])
 (defn project [x] (apply-generic :project x))
-(typed/tc-ignore
+
+
+(ann square (IFn [Int -> Int]
+                 [Num -> Num]
+                 [TaggedInteger -> TaggedInteger]
+                 [(U TaggedInteger TaggedRational) -> (U TaggedInteger TaggedRational)]
+                 [TaggedFloat -> TaggedFloat]
+                 [TaggedNumber -> TaggedNumber]))
 (defn square [x] (mul x x))
+
+
+(ann le? (IFn [Num Num -> Boolean]
+              [TaggedFloat TaggedFloat -> Boolean]))
 (defn le? [x y] (or (lt? x y) (equ? x y)))
+
+
+(ann gcd (IFn [Int Int -> Int]
+              [TaggedInteger TaggedInteger -> TaggedInteger]))
 (defn gcd
   {:test #(do (are [m n result] (= (gcd m n) result)
                    45 15 15
@@ -324,6 +549,8 @@
       large
       (recur (rem_ large small) small))))
 
+
+(typed/tc-ignore
 ; clojure number package
 (defn install-clojure-number-package []
   (let [tag #(attach-tag :clojure-number %)]
