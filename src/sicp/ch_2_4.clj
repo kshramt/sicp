@@ -28,6 +28,11 @@
 (set! *warn-on-reflection* false)
 
 
+ ; for inlined `rem`
+(typed/override-method clojure.lang.Numbers/remainder (IFn [Int Int -> Int]
+                                                           [Num Num -> Num]))
+
+
 (defalias LazySeq clojure.lang.LazySeq)
 
 
