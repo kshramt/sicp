@@ -599,34 +599,42 @@
 (def make-clojure-number (get_ :make :clojure-number))
 
 
-(typed/tc-ignore
 ; integer package
 (declare make-rational make-integer make-real)
+(ann install-integer-package [-> (Val :done)])
 (defn install-integer-package []
-  (let [tag #(attach-tag :integer %)]
-    (put :add [:integer :integer] #(tag (add %1 %2)))
-    (put :sub [:integer :integer] #(tag (sub %1 %2)))
-    (put :mul [:integer :integer] #(tag (mul %1 %2)))
-    (put :div [:integer :integer] #(make-rational (tag %1) (tag %2)))
-    (put :div-truncate [:integer :integer] #(tag (int (div %1 %2))))
-    (put :abs [:integer] #(tag (abs %)))
-    (put :negate [:integer] #(tag (negate %)))
-    (put :sqrt [:integer] #(sqrt (raise (tag %))))
-    (put :cos [:integer] #(cos (raise (tag %))))
-    (put :sin [:integer] #(sin (raise (tag %))))
+  (letfn> [tag :- [Int -> TaggedInteger]
+           (tag [x] (attach-tag :integer x))]
+    (put :add [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (add x y))))
+    (put :sub [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (sub x y))))
+    (put :mul [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (mul x y))))
+    (typed/tc-ignore
+    (put :div [:integer :integer] (typed/fn [x :- Int y :- Int] (make-rational (tag x) (tag y))))
+    ) ; typed/tc-ignore
+    (put :div-truncate [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (int (div x y)))))
+    ; `comp` cannot be applied here
+    (put :abs [:integer] (typed/fn [x :- Int] (tag (abs x))))
+    (put :negate [:integer] (typed/fn [x :- Int] (tag (negate x))))
+    (put :sqrt [:integer] (typed/fn [x :- Int] (sqrt (raise (tag x)))))
+    (put :cos [:integer] (typed/fn [x :- Int] (cos (raise (tag x)))))
+    (put :sin [:integer] (typed/fn [x :- Int] (sin (raise (tag x)))))
     (put :lt? [:integer :integer] lt?)
     (put :gt? [:integer :integer] gt?)
-    (put :rem_ [:integer :integer] #(tag (rem_ %1 %2)))
+    (put :rem_ [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (rem_ x y))))
     (put :equ? [:integer :integer] equ?)
     (put :=zero? [:integer] =zero?)
-    (put :raise [:integer] #(make-rational (tag %) (tag 1)))
-    (put :make :integer #(tag (int %))))
+    (typed/tc-ignore
+    (put :raise [:integer] (typed/fn [x :- Int] (make-rational (tag x) (tag 1))))
+    ) ; typed/tc-ignore
+    (put :make :integer (comp tag int)))
   :done)
 (install-integer-package)
+(ann ^:no-check make-integer [Num -> TaggedInteger])
 (def make-integer (get_ :make :integer))
-(def zero (make-integer 0))
+
 
 ; rational package
+(typed/tc-ignore
 (declare make-real)
 (defn install-rational-package []
   (let [tag #(attach-tag :rational %)
