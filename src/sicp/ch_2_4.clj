@@ -8,6 +8,7 @@
               ann-form
               defalias
               letfn>
+              loop
               Int Num
               Kw
               Sym
@@ -696,11 +697,9 @@
                                                   (denom y)))))
     (put :=zero? [:rational] (typed/fn [x :- TaggedRationalInternal]
                                (=zero? (numer x))))
-    (typed/tc-ignore
     (put :raise [:rational] (typed/fn [x :- TaggedRationalInternal]
                               (make-real (div (contents (numer x))
                                               (contents (denom x))))))
-    ) ; typed/tc-ignore
     (put :project [:rational] (typed/fn [x :- TaggedRationalInternal]
                                 (div-truncate (numer x) (denom x))))
     (put :make :rational (comp tag make-rat))
@@ -711,17 +710,17 @@
 (def make-rational (get_ :make :rational))
 
 
-(typed/tc-ignore
+(ann real->rational [Num -> '[Int Int]])
 (defn- real->rational
   {:test #(do (is (= (real->rational 3.2) [16 5]))
               (is (= (real->rational 0.25) [1 4])))}
   [x]
-  (letfn [(approx-equal [a b] (<= (abs- (- a b)) 1e-7))]
-    (loop [a 1
-           b 0
-           c (bigint x)
-           d 1
-           y x]
+  (let [approx-equal (typed/fn [a :- Num b :- Num] (<= (abs- (- a b)) 1e-7))]
+    (loop [a :- Int 1
+           b :- Int 0
+           c :- Int (bigint x)
+           d :- Int 1
+           y :- Num x]
       (if (approx-equal (/ c a) x)
         [c a]
         (let [y (/ 1 (- y (bigint y)))
@@ -732,34 +731,41 @@
                  c
                  y))))))
 
-; integer package
+
 (declare make-complex-from-real-imag)
+(ann install-real-package [-> (Val :done)])
 (defn install-real-package []
-  (let [tag #(attach-tag :real %)]
-    (put :add [:real :real] #(tag (add %1 %2)))
-    (put :sub [:real :real] #(tag (sub %1 %2)))
-    (put :mul [:real :real] #(tag (mul %1 %2)))
-    (put :div [:real :real] #(tag (div %1 %2)))
-    (put :abs [:real] #(tag (abs %)))
-    (put :negate [:real] #(tag (negate %)))
-    (put :sin [:real] #(tag (sin %)))
-    (put :cos [:real] #(tag (cos %)))
-    (put :sqrt [:real] #(tag (sqrt %)))
-    (put :atan2 [:real :real] #(tag (atan2 %1 %2)))
+  (let [tag (typed/fn [x :- Num] (attach-tag :real x))]
+    (put :add [:real :real] (typed/fn [x :- Num y :- Num] (tag (add x y))))
+    (put :sub [:real :real] (typed/fn [x :- Num y :- Num] (tag (sub x y))))
+    (put :mul [:real :real] (typed/fn [x :- Num y :- Num] (tag (mul x y))))
+    (put :div [:real :real] (typed/fn [x :- Num y :- Num] (tag (div x y))))
+    (put :abs [:real] (typed/fn [x :- Num] (tag (abs x))))
+    (put :negate [:real] (typed/fn [x :- Num] (tag (negate x))))
+    (put :sin [:real] (typed/fn [x :- Num] (tag (sin x))))
+    (put :cos [:real] (typed/fn [x :- Num] (tag (cos x))))
+    (put :sqrt [:real] (typed/fn [x :- Num] (tag (sqrt x))))
+    (put :atan2 [:real :real] (typed/fn [y :- Num x :- Num] (tag (atan2 y x))))
     (put :lt? [:real :real] lt?)
     (put :gt? [:real :real] gt?)
     (put :equ? [:real :real] equ?)
     (put :=zero? [:real] =zero?)
-    (put :raise [:real] #(make-complex-from-real-imag (tag %) (tag 0)))
-    (put :project [:real] #(let [[n d] (real->rational %)]
-                             (make-rational (make-integer n) (make-integer d))))
-    (put :make :real #(tag (double %))))
+    (typed/tc-ignore
+    (put :raise [:real] (typed/fn [x :- Num]
+                          (make-complex-from-real-imag (tag x) (tag 0))))
+    (put :project [:real] (typed/fn [x :- Num]
+                            (let [[n d] (real->rational x)]
+                              (make-rational (make-integer n)
+                                             (make-integer d)))))
+    ) ; typed/tc-ignore
+    (put :make :real (comp tag double)))
   :done)
 (install-real-package)
+(ann ^:no-check make-real [Num -> TaggedReal])
 (def make-real (get_ :make :real))
 
 
-; complex package
+(typed/tc-ignore
 (defn install-rectangular-package []
   (let [real-part first
         imag-part second
