@@ -608,9 +608,7 @@
     (put :add [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (add x y))))
     (put :sub [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (sub x y))))
     (put :mul [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (mul x y))))
-    (typed/tc-ignore
     (put :div [:integer :integer] (typed/fn [x :- Int y :- Int] (make-rational (tag x) (tag y))))
-    ) ; typed/tc-ignore
     (put :div-truncate [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (int (div x y)))))
     ; `comp` cannot be applied here
     (put :abs [:integer] (typed/fn [x :- Int] (tag (abs x))))
@@ -623,9 +621,7 @@
     (put :rem_ [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (rem_ x y))))
     (put :equ? [:integer :integer] equ?)
     (put :=zero? [:integer] =zero?)
-    (typed/tc-ignore
     (put :raise [:integer] (typed/fn [x :- Int] (make-rational (tag x) (tag 1))))
-    ) ; typed/tc-ignore
     (put :make :integer (comp tag int)))
   :done)
 (install-integer-package)
@@ -634,62 +630,88 @@
 
 
 ; rational package
-(typed/tc-ignore
 (declare make-real)
+(ann install-rational-package [-> (Val :done)])
 (defn install-rational-package []
-  (let [tag #(attach-tag :rational %)
-        numer first
-        denom second
-        make-rat (fn [n d]
+  (let [tag (typed/fn [x :- TaggedRationalInternal] (attach-tag :rational x))
+        ;; todo: `first` and `second` cannot be used due to a bug of `core.typed`
+        numer (typed/fn [x :- TaggedRationalInternal] (first x))
+        denom (typed/fn [x :- TaggedRationalInternal] (second x))
+        ;numer first
+        ;denom second
+        make-rat (typed/fn [n :- TaggedInteger d :- TaggedInteger]
                    (let [g (gcd n d)]
                      [(div-truncate n g) (div-truncate d g)]))]
-    (put :add [:rational :rational] (fn [x y]
+    (put :add [:rational :rational] (typed/fn [x :- TaggedRationalInternal
+                                               y :- TaggedRationalInternal]
                                       (tag (make-rat (add (mul (numer x)
                                                                (denom y))
                                                           (mul (denom x)
                                                                (numer y)))
                                                      (mul (denom x)
                                                           (denom y))))))
-    (put :sub [:rational :rational] (fn [x y]
+    (put :sub [:rational :rational] (typed/fn [x :- TaggedRationalInternal
+                                               y :- TaggedRationalInternal]
                                       (tag (make-rat (sub (mul (numer x)
                                                                (denom y))
                                                           (mul (denom x)
                                                              (numer y)))
                                                      (mul (denom x)
                                                           (denom y))))))
-    (put :mul [:rational :rational] (fn [x y]
+    (put :mul [:rational :rational] (typed/fn [x :- TaggedRationalInternal
+                                               y :- TaggedRationalInternal]
                                       (tag (make-rat (mul (numer x)
                                                           (numer y))
                                                      (mul (denom x)
                                                           (denom y))))))
-    (put :div [:rational :rational] (fn [x y]
+    (put :div [:rational :rational] (typed/fn [x :- TaggedRationalInternal
+                                               y :- TaggedRationalInternal]
                                       (tag (make-rat (mul (numer x)
                                                           (denom y))
                                                      (mul (denom x)
                                                           (numer y))))))
-    (put :negate [:rational] #(tag (make-rat (negate (numer %))
-                                             (denom %))))
-    (put :abs [:rational] (fn [x] (tag (make-rat (abs (numer x))
-                                                 (abs (denom x))))))
-    (put :sqrt [:rational] #(sqrt (raise (tag %))))
-    (put :cos [:rational] #(cos (raise (tag %))))
-    (put :sin [:rational] #(sin (raise (tag %))))
-    (put :lt? [:rational :rational] #(lt? (raise (tag %1)) (raise (tag %2))))
-    (put :gt? [:rational :rational] #(gt? (raise (tag %1)) (raise (tag %2))))
-    (put :equ? [:rational :rational] (fn [x y] (and (equ? (numer x)
-                                                          (numer y))
-                                                    (equ? (denom x)
-                                                          (denom y)))))
-    (put :=zero? [:rational] #(=zero? (div (numer %)
-                                          (denom %))))
-    (put :raise [:rational] #(make-real (div (contents (numer %))
-                                             (contents (denom %)))))
-    (put :project [:rational] #(div-truncate (numer %) (denom %)))
-    (put :make :rational #(tag (make-rat %1 %2))))
+    (put :negate [:rational] (typed/fn [x :- TaggedRationalInternal]
+                               (tag (make-rat (negate (numer x))
+                                              (denom x)))))
+    (put :abs [:rational] (typed/fn [x :- TaggedRationalInternal]
+                            (tag (make-rat (abs (numer x))
+                                           (abs (denom x))))))
+    (put :sqrt [:rational] (typed/fn [x :- TaggedRationalInternal]
+                             (sqrt (raise (tag x)))))
+    (put :cos [:rational] (typed/fn [x :- TaggedRationalInternal]
+                             (cos (raise (tag x)))))
+    (put :sin [:rational] (typed/fn [x :- TaggedRationalInternal]
+                             (sin (raise (tag x)))))
+    (put :lt? [:rational :rational] (typed/fn [x :- TaggedRationalInternal
+                                               y :- TaggedRationalInternal]
+                                      (lt? (raise (tag x)) (raise (tag y)))))
+    (put :gt? [:rational :rational] (typed/fn [x :- TaggedRationalInternal
+                                               y :- TaggedRationalInternal]
+                                      (gt? (raise (tag x)) (raise (tag y)))))
+    (put :equ? [:rational :rational] (typed/fn [x :- TaggedRationalInternal
+                                                y :- TaggedRationalInternal]
+                                       (and (equ? (numer x)
+                                                  (numer y))
+                                            (equ? (denom x)
+                                                  (denom y)))))
+    (put :=zero? [:rational] (typed/fn [x :- TaggedRationalInternal]
+                               (=zero? (numer x))))
+    (typed/tc-ignore
+    (put :raise [:rational] (typed/fn [x :- TaggedRationalInternal]
+                              (make-real (div (contents (numer x))
+                                              (contents (denom x))))))
+    ) ; typed/tc-ignore
+    (put :project [:rational] (typed/fn [x :- TaggedRationalInternal]
+                                (div-truncate (numer x) (denom x))))
+    (put :make :rational (comp tag make-rat))
+    )
   :done)
 (install-rational-package)
+(ann ^:no-check make-rational [TaggedInteger TaggedInteger -> TaggedRational])
 (def make-rational (get_ :make :rational))
 
+
+(typed/tc-ignore
 (defn- real->rational
   {:test #(do (is (= (real->rational 3.2) [16 5]))
               (is (= (real->rational 0.25) [1 4])))}
