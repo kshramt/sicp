@@ -489,7 +489,7 @@
 
 (ann ^:no-check atan2 (IFn [Num Num -> Num]
                            [TaggedFloat TaggedFloat -> TaggedFloat]))
-(defn atan2 [x y] (apply-generic :atan2 x y))
+(defn atan2 [y x] (apply-generic :atan2 y x))
 
 
 (ann ^:no-check lt? (IFn [Num Num -> Boolean]
