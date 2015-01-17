@@ -5,7 +5,9 @@
              :refer
              [
               ann
+              ann-form
               defalias
+              letfn>
               Int Num
               Kw
               Sym
@@ -28,6 +30,10 @@
 (set! *warn-on-reflection* false)
 
 
+(typed/override-method java.lang.Math/sin [Num -> Double])
+(typed/override-method java.lang.Math/cos [Num -> Double])
+(typed/override-method java.lang.Math/sqrt [Num -> Double])
+(typed/override-method java.lang.Math/atan2 [Num Num -> Double])
  ; for inlined `rem`
 (typed/override-method clojure.lang.Numbers/remainder (IFn [Int Int -> Int]
                                                            [Num Num -> Num]))
@@ -555,32 +561,45 @@
       (recur (rem_ large small) small))))
 
 
-(typed/tc-ignore
 ; clojure number package
+(ann install-clojure-number-package [-> (Val :done)])
 (defn install-clojure-number-package []
-  (let [tag #(attach-tag :clojure-number %)]
-    (put :add [:clojure-number :clojure-number] #(tag (+ %1 %2)))
-    (put :sub [:clojure-number :clojure-number] #(tag (- %1 %2)))
-    (put :mul [:clojure-number :clojure-number] #(tag (* %1 %2)))
-    (put :div [:clojure-number :clojure-number] #(tag (/ %1 %2)))
-    (put :div-truncate [:clojure-number :clojure-number] #(tag (int (div %1 %2))))
-    (put :negate [:clojure-number] #(tag (* -1 %)))
-    (put :abs [:clojure-number] #(tag (abs- %)))
-    (put :sin [:clojure-number] #(tag (Math/sin %)))
-    (put :cos [:clojure-number] #(tag (Math/cos %)))
-    (put :sqrt [:clojure-number] #(tag (Math/sqrt %)))
-    (put :atan2 [:clojure-number :clojure-number] #(tag (Math/atan2 %1 %2)))
+  (letfn> [tag :- (IFn [Int -> Int] [Num -> Num])
+           (tag [x] (attach-tag :clojure-number x))]
+    (put :add [:clojure-number :clojure-number]
+         (ann-form #(tag (+ %1 %2)) (IFn [Int Int -> Int] [Num Num -> Num])))
+    (put :sub [:clojure-number :clojure-number]
+         (ann-form #(tag (- %1 %2)) (IFn [Int Int -> Int] [Num Num -> Num])))
+    (put :mul [:clojure-number :clojure-number]
+         (ann-form #(tag (* %1 %2)) (IFn [Int Int -> Int] [Num Num -> Num])))
+    (put :div [:clojure-number :clojure-number]
+         (ann-form #(tag (/ %1 %2)) [Num Num -> Num]))
+    (put :div-truncate [:clojure-number :clojure-number]
+         (ann-form #(tag (int (div %1 %2))) [Num Num -> Int]))
+    (put :negate [:clojure-number]
+         (ann-form #(tag (* -1 %)) (IFn [Int -> Int] [Num -> Num])))
+    (put :abs [:clojure-number]
+         (ann-form #(tag (abs- %)) (IFn [Int -> Int] [Num -> Num])))
+    (put :sin [:clojure-number] (ann-form #(tag (Math/sin %)) [Num -> Num]))
+    (put :cos [:clojure-number] (ann-form #(tag (Math/cos %)) [Num -> Num]))
+    (put :sqrt [:clojure-number] (ann-form #(tag (Math/sqrt %)) [Num -> Num]))
+    (put :atan2 [:clojure-number :clojure-number]
+         (ann-form #(tag (Math/atan2 %1 %2)) [Num Num -> Num]))
     (put :lt? [:clojure-number :clojure-number] <)
     (put :gt? [:clojure-number :clojure-number] >)
-    (put :rem_ [:clojure-number :clojure-number] #(tag (rem %1 %2)))
-    (put :equ? [:clojure-number :clojure-number] #(== %1 %2))
-    (put :=zero? [:clojure-number] #(== % 0))
+    (put :rem_ [:clojure-number :clojure-number]
+         (ann-form #(tag (rem %1 %2)) [Int Int -> Int]))
+    (put :equ? [:clojure-number :clojure-number] ==)
+    (put :=zero? [:clojure-number] zero?)
     (put :make :clojure-number tag))
   :done)
 (install-clojure-number-package)
+(ann ^:no-check make-clojure-number (IFn [Int -> Int]
+                                         [Num -> Num]))
 (def make-clojure-number (get_ :make :clojure-number))
 
 
+(typed/tc-ignore
 ; integer package
 (declare make-rational make-integer make-real)
 (defn install-integer-package []
