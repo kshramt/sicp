@@ -443,9 +443,13 @@
 (ann ^:no-check negate (IFn [Int -> Int]
                             [Num -> Num]
                             [TaggedInteger -> TaggedInteger]
-                            [TaggedRational -> TaggedRational]
-                            [TaggedReal -> TaggedReal]
-                            [TaggedComplex -> TaggedComplex]))
+                            [TaggedRational -> (U TaggedInteger TaggedRational)]
+                            [TaggedReal -> TaggedFloat]
+                            [TaggedRectangularComplex -> TaggedRectangularComplex]
+                            [TaggedPolarComplex -> TaggedPolarComplex]
+                            [TaggedComplex -> TaggedNumber]
+                            [TaggedFloat -> TaggedFloat] ; xxx: realy necessary?
+                            ))
 (defn negate [x] (apply-generic :negate x))
 
 
@@ -749,14 +753,12 @@
     (put :gt? [:real :real] gt?)
     (put :equ? [:real :real] equ?)
     (put :=zero? [:real] =zero?)
-    (typed/tc-ignore
     (put :raise [:real] (typed/fn [x :- Num]
                           (make-complex-from-real-imag (tag x) (tag 0))))
     (put :project [:real] (typed/fn [x :- Num]
                             (let [[n d] (real->rational x)]
                               (make-rational (make-integer n)
                                              (make-integer d)))))
-    ) ; typed/tc-ignore
     (put :make :real (comp tag double)))
   :done)
 (install-real-package)
@@ -764,85 +766,114 @@
 (def make-real (get_ :make :real))
 
 
-(typed/tc-ignore
+(ann install-rectangular-package [-> (Val :done)])
 (defn install-rectangular-package []
-  (let [real-part first
-        imag-part second
-        make-from-real-imag (fn [r i] (attach-tag :rectangular [r i]))]
+  ;; todo: `first` and `second` cannot be used due to a bug of `core.typed`
+  (let [real-part (typed/fn [x :- TaggedRawComplexInternal] (first x))
+        imag-part (typed/fn [x :- TaggedRawComplexInternal] (second x))
+        make-from-real-imag (typed/fn [r :- TaggedFloat i :- TaggedFloat]
+                              (attach-tag :rectangular [r i]))]
     (put :real-part [:rectangular] real-part)
     (put :imag-part [:rectangular] imag-part)
-    (put :magnitude [:rectangular] #(sqrt (add (square (real-part %))
-                                               (square (imag-part %)))))
-    (put :angle [:rectangular] #(atan2 (imag-part %)
-                                       (real-part %)))
+    (put :magnitude [:rectangular] (typed/fn [x :- TaggedRawComplexInternal]
+                                     (sqrt (add (square (real-part x))
+                                                (square (imag-part x))))))
+    (put :angle [:rectangular] (typed/fn [x :- TaggedRawComplexInternal]
+                                 (atan2 (imag-part x)
+                                        (real-part x))))
     (put :make-from-real-imag :rectangular make-from-real-imag)
-    (put :make-from-mag-ang :rectangular (fn [x y]
+    (put :make-from-mag-ang :rectangular (typed/fn [x :- TaggedFloat y :- TaggedFloat]
                                            (make-from-real-imag (mul x (cos y))
                                                                 (mul x (sin y))))))
   :done)
 (install-rectangular-package)
 
+
+(ann install-polar-package [-> (Val :done)])
 (defn install-polar-package []
-  (let [magnitude first
-        angle second
-        make-from-mag-ang (fn [r t] (attach-tag :polar [r t]))]
+  ;; todo: `first` and `second` cannot be used due to a bug of `core.typed`
+  (let [magnitude (typed/fn [x :- TaggedRawComplexInternal] (first x))
+        angle (typed/fn [x :- TaggedRawComplexInternal] (second x))
+        make-from-mag-ang (typed/fn [r :- TaggedFloat t :- TaggedFloat]
+                            (attach-tag :polar [r t]))]
     (put :magnitude [:polar] magnitude)
     (put :angle [:polar] angle)
-    (put :real-part [:polar] #(mul (magnitude %)
-                                   (cos (angle %))))
-    (put :imag-part [:polar] #(mul (magnitude %)
-                                   (sin (angle %))))
+    (put :real-part [:polar] (typed/fn [x :- TaggedRawComplexInternal]
+                               (mul (magnitude x)
+                                    (cos (angle x)))))
+    (put :imag-part [:polar] (typed/fn [x :- TaggedRawComplexInternal]
+                               (mul (magnitude x)
+                                    (sin (angle x)))))
     (put :make-from-mag-ang :polar make-from-mag-ang)
-    (put :make-from-real-imag :polar #(make-from-mag-ang (sqrt (add (square %1)
-                                                                    (square %2)))
-                                                         (atan2 %2 %1))))
+    (put :make-from-real-imag :polar (typed/fn [x :- TaggedFloat
+                                                y :- TaggedFloat]
+                                       (make-from-mag-ang (sqrt (add (square x)
+                                                                     (square y)))
+                                                          (atan2 y x)))))
   :done)
 (install-polar-package)
 
+
+(ann install-complex-package [-> (Val :done)])
 (defn install-complex-package []
-  (let [tag #(attach-tag :complex %)
-        make-from-real-imag (get_ :make-from-real-imag :rectangular)
-        make-from-mag-ang (get_ :make-from-mag-ang :polar)]
-    (letfn [(add-complex [x y]
-              (make-from-real-imag (add (real-part x) (real-part y))
-                                   (add (imag-part x) (imag-part y))))
-            (sub-complex [x y]
-              (make-from-real-imag (sub (real-part x) (real-part y))
-                                   (sub (imag-part x) (imag-part y))))
-            (mul-complex [x y]
-              (make-from-mag-ang (mul (magnitude x) (magnitude y))
-                                 (add (angle x) (angle y))))
-            (div-complex [x y]
-              (make-from-mag-ang (div (magnitude x) (magnitude y))
-                                 (sub (angle x) (angle y))))]
-      (put :real-part [:complex] #(make-real (contents (real-part %))))
-      (put :imag-part [:complex] #(make-real (contents (imag-part %))))
-      (put :magnitude [:complex] #(make-real (contents (magnitude %))))
-      (put :angle [:complex] #(make-real (contents (angle %))))
-      (put :add [:complex :complex] #(tag (add-complex %1 %2)))
-      (put :sub [:complex :complex] #(tag (sub-complex %1 %2)))
-      (put :mul [:complex :complex] #(tag (mul-complex %1 %2)))
-      (put :div [:complex :complex] #(tag (div-complex %1 %2)))
+  (let [tag (typed/fn [x :- TaggedRawComplex] (attach-tag :complex x))
+        make-from-real-imag (ignore-with-unchecked-cast
+                             (get_ :make-from-real-imag :rectangular)
+                             [TaggedFloat TaggedFloat -> TaggedRectangularComplex])
+        make-from-mag-ang (ignore-with-unchecked-cast
+                           (get_ :make-from-mag-ang :polar)
+                           [TaggedFloat TaggedFloat -> TaggedPolarComplex])]
+    (let [add-complex (typed/fn [x :- TaggedRawComplex y :- TaggedRawComplex]
+                        (make-from-real-imag (add (real-part x) (real-part y))
+                                             (add (imag-part x) (imag-part y))))
+          sub-complex (typed/fn [x :- TaggedRawComplex y :- TaggedRawComplex]
+                        (make-from-real-imag (sub (real-part x) (real-part y))
+                                             (sub (imag-part x) (imag-part y))))
+          mul-complex (typed/fn [x :- TaggedRawComplex y :- TaggedRawComplex]
+                        (make-from-mag-ang (mul (magnitude x) (magnitude y))
+                                           (add (angle x) (angle y))))
+          div-complex (typed/fn [x :- TaggedRawComplex y :- TaggedRawComplex]
+                        (make-from-mag-ang (div (magnitude x) (magnitude y))
+                                           (sub (angle x) (angle y))))]
+      (put :real-part [:complex] real-part)
+      (put :imag-part [:complex] imag-part)
+      (put :magnitude [:complex] magnitude)
+      (put :angle [:complex] angle)
+      (put :add [:complex :complex] (comp tag add-complex))
+      (put :sub [:complex :complex] (comp tag sub-complex))
+      (put :mul [:complex :complex] (comp tag mul-complex))
+      (put :div [:complex :complex] (comp tag div-complex))
       (put :abs [:complex] magnitude)
-      (put :equ? [:complex :complex] (fn [x y] (and (equ? (real-part x)
-                                                          (real-part y))
-                                                    (equ? (imag-part x)
-                                                          (imag-part y)))))
-      (put :=zero? [:complex] #(and (=zero? (real-part %))
-                                    (=zero? (imag-part %))))
-      (put :negate [:complex] #(tag (make-from-real-imag (negate (real-part %)) (negate (imag-part %)))))
+      (put :equ? [:complex :complex] (typed/fn [x :- TaggedRawComplex y :- TaggedRawComplex]
+                                       (and (equ? (real-part x)
+                                                  (real-part y))
+                                            (equ? (imag-part x)
+                                                  (imag-part y)))))
+      (put :=zero? [:complex] (typed/fn [x :- TaggedRawComplex]
+                                (and (=zero? (real-part x))
+                                     (=zero? (imag-part x)))))
+      (put :negate [:complex] (typed/fn [x :- TaggedRawComplex]
+                                ; `negate` here requires `[TaggedFloat -> TaggedFloat]`
+                                (tag (make-from-real-imag (negate (real-part x))
+                                                          (negate (imag-part x))))))
       (put :project [:complex] real-part)
-      (put :make-from-real-imag :complex #(tag (make-from-real-imag %1 %2)))
-      (put :make-from-mag-ang :complex #(tag (make-from-mag-ang %1 %2))))))
+      (put :make-from-real-imag :complex (typed/fn [x :- TaggedFloat y :- TaggedFloat]
+                                           (tag (make-from-real-imag x y))))
+      (put :make-from-mag-ang :complex (typed/fn [x :- TaggedFloat y :- TaggedFloat]
+                                         (tag (make-from-mag-ang x y))))))
+  :done)
 (install-complex-package)
+(ann ^:no-check make-complex-from-real-imag [TaggedFloat TaggedFloat -> TaggedComplex])
 (def make-complex-from-real-imag (get_ :make-from-real-imag :complex))
+(ann ^:no-check make-complex-from-mag-ang [TaggedFloat TaggedFloat -> TaggedComplex])
 (def make-complex-from-mag-ang (get_ :make-from-mag-ang :complex))
 
 
-(put-coercion :clojure-number :complex #(make-complex-from-real-imag (contents %) 0))
+;; (put-coercion :clojure-number :complex #(make-complex-from-real-imag (contents %) 0))
 
 
 
+(typed/tc-ignore
 (deftest numeric-tower
   (is (equ? 1 1))
   (is (not (equ? 1 2)))
