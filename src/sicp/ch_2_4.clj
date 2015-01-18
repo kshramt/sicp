@@ -13,6 +13,7 @@
               Kw
               Sym
               Val
+              Var1
               Pred
               Option
               Seqable
@@ -38,6 +39,9 @@
  ; for inlined `rem`
 (typed/override-method clojure.lang.Numbers/remainder (IFn [Int Int -> Int]
                                                            [Num Num -> Num]))
+
+
+(ann ^:no-check clojure.test/test-var [(Var1 [-> nil]) -> nil])
 
 
 (defalias LazySeq clojure.lang.LazySeq)
@@ -872,8 +876,7 @@
 ;; (put-coercion :clojure-number :complex #(make-complex-from-real-imag (contents %) 0))
 
 
-
-(typed/tc-ignore
+(ann numeric-tower [-> nil])
 (deftest numeric-tower
   (is (equ? 1 1))
   (is (not (equ? 1 2)))
@@ -887,7 +890,6 @@
             (make-complex-from-real-imag (make-real 1.5) (make-real 0))))
   (is (equ? (drop_ (make-complex-from-real-imag (make-real 1) (make-real 0)))
             (make-integer 1))))
-); typed/tc-ignore
 
 
 ; 2.5.3 ----------------------------------------------------
