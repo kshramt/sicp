@@ -68,6 +68,9 @@
 (defalias TaggedObject (U Num Boolean '[Kw Any]))
 (defalias ClojureNumberTag (Val :clojure-number))
 (defalias BooleanTag (Val :boolean))
+(defalias TermInternal '[TaggedInteger TaggedNumber])
+(defalias TermTag (Val :term))
+(defalias Term '[TermTag TermInternal])
 
 
 (defmacro p- [x]
@@ -94,7 +97,8 @@
           [RealTag Num -> TaggedReal]
           [RectangularComplexTag TaggedRawComplexInternal -> TaggedRectangularComplex]
           [PolarComplexTag TaggedRawComplexInternal -> TaggedPolarComplex]
-          [ComplexTag TaggedRawComplex -> TaggedComplex]))
+          [ComplexTag TaggedRawComplex -> TaggedComplex]
+          [TermTag TermInternal -> Term]))
 (defn attach-tag [type-tag contents]
   (case type-tag
     :clojure-number contents
@@ -453,6 +457,8 @@
                             [TaggedPolarComplex -> TaggedPolarComplex]
                             [TaggedComplex -> TaggedNumber]
                             [TaggedFloat -> TaggedFloat] ; xxx: realy necessary?
+                            [TaggedNumber -> TaggedNumber] ; xxx: realy necessary?
+                            [Term -> Term]
                             ))
 (defn negate [x] (apply-generic :negate x))
 
@@ -903,27 +909,43 @@
 (defn same-variable? [x y] (and (variable? x) (variable? y) (= x y)))
 
 
-(ann coeff-term- (All [x] (IFn [(typed/HSequential [Any x Any *]) -> x :object {:path [(Nth 1)], :id 0}] [(Option (typed/I (clojure.lang.Seqable x) (typed/CountRange 0 1))) -> nil] [(typed/I (clojure.lang.Seqable x) (typed/CountRange 2)) -> x] [(Option (clojure.lang.Seqable x)) -> (Option x)])))
+(ann coeff-term- [TermInternal -> TaggedNumber])
 (def coeff-term- second)
-(ann order-term- (All [x] (IFn [(typed/HSequential [x Any *]) -> x :object {:path [(Nth 0)], :id 0}] [(Option (typed/EmptySeqable x)) -> nil] [(typed/NonEmptySeqable x) -> x] [(Option (clojure.lang.Seqable x)) -> (Option x)])))
+
+
+(ann order-term- [TermInternal -> TaggedInteger])
 (def order-term- first)
+
+
 (declare make-term)
-(typed/tc-ignore
 (ann install-term-package [-> (Val :done)])
 (defn install-term-package []
-   (letfn [(tag [t] (attach-tag :term t))]
+   (let [tag (typed/fn [x :- TermInternal] (attach-tag :term x))]
      (put :coeff [:term] coeff-term-)
      (put :order [:term] order-term-)
-     (put :negate [:term] #(make-term (order-term- %) (negate (coeff-term- %))))
-     (put :=zero? [:term] #(=zero? (coeff-term- %)))
-     (put :make :term (fn [o c] (tag [o c])))
-     :done))
+     (put :negate [:term] (typed/fn [x :- TermInternal]
+                            (make-term (order-term- x)
+                                       (negate (coeff-term- x)))))
+     (put :=zero? [:term] (comp =zero? coeff-term-))
+     (put :make :term (typed/fn [o :- TaggedInteger c :- TaggedNumber]
+                        (tag [o c]))))
+   :done)
 (install-term-package)
-(def make-term (get_ :make :term))
-(defn order [t] (apply-generic :order t))
-(defn coeff [t] (apply-generic :coeff t))
-(defn negate [x] (apply-generic :negate x))
 
+
+(ann ^:no-check make-term [TaggedInteger TaggedNumber -> Term])
+(def make-term (get_ :make :term))
+
+
+(ann ^:no-check order [Term -> TaggedInteger])
+(defn order [t] (apply-generic :order t))
+
+
+(ann ^:no-check coeff [Term -> TaggedNumber])
+(defn coeff [t] (apply-generic :coeff t))
+
+
+(typed/tc-ignore
 (defn empty-term-list? [l] (apply-generic :empty-term-list? l))
 (defn first-term [l] (apply-generic :first-term l))
 (defn rest-terms [l] (apply-generic :rest-terms l))
