@@ -16,6 +16,8 @@
               Pred
               Option
               Seqable
+              NonEmptySeqable
+              EmptySeqable
               ASeq
               Any
               All
@@ -70,6 +72,19 @@
 (defalias TermInternal '[TaggedInteger TaggedNumber])
 (defalias TermTag (Val :term))
 (defalias Term '[TermTag TermInternal])
+(defalias DenseTermListTag (Val :dense-term-list))
+
+(defalias NonEmptyDenseTermListInternal (NonEmptySeqable TaggedNumber))
+(defalias EmptyDenseTermListInternal (EmptySeqable TaggedNumber))
+(defalias DenseTermListInternal (U NonEmptyDenseTermListInternal
+                                   EmptyDenseTermListInternal))
+(defalias NonEmptyDenseTermList '[DenseTermListTag NonEmptyDenseTermListInternal])
+(defalias EmptyDenseTermList '[DenseTermListTag EmptyDenseTermListInternal])
+(defalias DenseTermList (U NonEmptyDenseTermList
+                           EmptyDenseTermList))
+(defalias NonEmptyTermList (U NonEmptyDenseTermList))
+(defalias EmptyTermList (U EmptyDenseTermList))
+(defalias TermList (U DenseTermList))
 
 
 (defmacro p- [x]
@@ -97,7 +112,9 @@
           [RectangularComplexTag TaggedRawComplexInternal -> TaggedRectangularComplex]
           [PolarComplexTag TaggedRawComplexInternal -> TaggedPolarComplex]
           [ComplexTag TaggedRawComplex -> TaggedComplex]
-          [TermTag TermInternal -> Term]))
+          [TermTag TermInternal -> Term]
+          [DenseTermListTag NonEmptyDenseTermListInternal -> NonEmptyDenseTermList]
+          [DenseTermListTag EmptyDenseTermListInternal -> EmptyDenseTermList]))
 (defn attach-tag [type-tag contents]
   (case type-tag
     :clojure-number contents
@@ -944,32 +961,68 @@
 (defn coeff [t] (apply-generic :coeff t))
 
 
-(typed/tc-ignore
+(ann ^:no-check empty-term-list? [TermList -> Boolean])
 (defn empty-term-list? [l] (apply-generic :empty-term-list? l))
+
+
+(ann ^:no-check first-term (IFn [NonEmptyTermList -> Term]
+                                [EmptyTermList -> nil]))
 (defn first-term [l] (apply-generic :first-term l))
+
+
+(ann ^:no-check rest-terms [TermList -> TermList])
 (defn rest-terms [l] (apply-generic :rest-terms l))
+
+
+(ann ^:no-check adjoin-term [Term TermList -> TermList])
 (defn adjoin-term [t l] (apply-generic :adjoin-term t l))
+
+
+(ann install-dense-term-list-package [-> (Val :done)])
 (defn install-dense-term-list-package []
-  (letfn [(tag [l] (attach-tag :dense-term-list l))]
-    (put :empty-term-list? [:dense-term-list] empty?)
-    (put :first-term [:dense-term-list] #(make-term (make-integer (dec (count %))) (first %))) ; todo: empty case
-    (put :rest-terms [:dense-term-list] #(tag (rest %)))
-    (put :negate [:dense-term-list] #(tag (map negate %)))
+  (let [tag (ann-form #(attach-tag :dense-term-list %)
+                      (IFn [NonEmptyDenseTermListInternal -> NonEmptyDenseTermList]
+                           [EmptyDenseTermListInternal -> EmptyDenseTermList]))
+        empty-term-list?-impl empty?
+        zero (make-integer 0)
+        one (make-integer 1)]
+    (put :empty-term-list? [:dense-term-list] empty-term-list?-impl)
+    (put :first-term [:dense-term-list] (ignore-with-unchecked-cast
+                                         #(when-let [s (seq %)]
+                                            (make-term (make-integer (dec (count s)))
+                                                       (first s)))
+                                         (IFn [NonEmptyDenseTermListInternal -> Term]
+                                              [EmptyDenseTermListInternal -> nil])))
+    (put :rest-terms [:dense-term-list] (ignore-with-unchecked-cast
+                                         (comp tag rest)
+                                         (IFn [EmptyDenseTermListInternal -> EmptyDenseTermList]
+                                              [NonEmptyDenseTermListInternal -> DenseTermList])))
+    (put :negate [:dense-term-list] (ignore-with-unchecked-cast
+                                     #(tag (map negate %))
+                                     (IFn [EmptyDenseTermListInternal -> EmptyDenseTermList]
+                                          [NonEmptyDenseTermListInternal -> NonEmptyDenseTermList])))
     (put :adjoin-term [:term :dense-term-list]
-         (fn [t l]
-           (tag (if (=zero? (coeff-term- t))
-                  l
-                  (cons (coeff-term- t)
-                        (concat
-                         (repeat
-                          (contents (sub (sub (order-term- t)
-                                              (make-integer 1))
-                                         (order (first-term (tag l)))))
-                                 (make-integer 0))
-                                l))))))
-    :done))
+         (ignore-with-unchecked-cast
+          (fn [t l]
+            (tag (if (=zero? (coeff-term- t))
+                   l
+                   (cons (coeff-term- t)
+                         (concat
+                          (repeat
+                           (contents
+                            (sub (sub (order-term- t)
+                                      (if (empty-term-list?-impl l)
+                                          (negate one)
+                                          (order (first-term (tag l)))))
+                                 one))
+                           zero)
+                          l)))))
+          (IFn [TermInternal DenseTermListInternal -> DenseTermList]))))
+  :done)
 (install-dense-term-list-package)
 
+
+(typed/tc-ignore
 (defn install-sparse-term-list-package []
   (letfn [(tag [l] (attach-tag :sparse-term-list l))
           (negate- [ts] (if (empty-term-list? ts)
