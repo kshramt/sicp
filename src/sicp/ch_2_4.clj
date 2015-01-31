@@ -8,7 +8,6 @@
               ann-form
               defalias
               letfn>
-              loop
               Int Num
               Kw
               Sym
@@ -729,11 +728,11 @@
               (is (= (real->rational 0.25) [1 4])))}
   [x]
   (let [approx-equal (typed/fn [a :- Num b :- Num] (<= (abs- (- a b)) 1e-7))]
-    (loop [a :- Int 1
-           b :- Int 0
-           c :- Int (bigint x)
-           d :- Int 1
-           y :- Num x]
+    (typed/loop [a :- Int 1
+                 b :- Int 0
+                 c :- Int (bigint x)
+                 d :- Int 1
+                 y :- Num x]
       (if (approx-equal (/ c a) x)
         [c a]
         (let [y (/ 1 (- y (bigint y)))
@@ -1054,7 +1053,7 @@
                                             ts (term-list p)]
                                         (make-poly v (negate ts))))))
     ; Q. 2.87
-    (put :=zero? [:polynomial] #(loop [l (term-list %)]
+    (put :=zero? [:polynomial] #(typed/loop [l (term-list %)]
                                   (or (empty-term-list? l)
                                       (and (=zero? (coeff (first-term l)))
                                            (recur (rest-terms l))))))
