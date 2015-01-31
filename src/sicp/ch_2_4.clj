@@ -72,8 +72,8 @@
 (defalias TermInternal '[TaggedInteger TaggedNumber])
 (defalias TermTag (Val :term))
 (defalias Term '[TermTag TermInternal])
-(defalias DenseTermListTag (Val :dense-term-list))
 
+(defalias DenseTermListTag (Val :dense-term-list))
 (defalias NonEmptyDenseTermListInternal (NonEmptySeqable TaggedNumber))
 (defalias EmptyDenseTermListInternal (EmptySeqable TaggedNumber))
 (defalias DenseTermListInternal (U NonEmptyDenseTermListInternal
@@ -82,9 +82,23 @@
 (defalias EmptyDenseTermList '[DenseTermListTag EmptyDenseTermListInternal])
 (defalias DenseTermList (U NonEmptyDenseTermList
                            EmptyDenseTermList))
-(defalias NonEmptyTermList (U NonEmptyDenseTermList))
-(defalias EmptyTermList (U EmptyDenseTermList))
-(defalias TermList (U DenseTermList))
+
+(defalias SparseTermListTag (Val :sparse-term-list))
+(defalias NonEmptySparseTermListInternal (NonEmptySeqable TermInternal))
+(defalias EmptySparseTermListInternal (EmptySeqable TermInternal))
+(defalias SparseTermListInternal (U NonEmptySparseTermListInternal
+                                    EmptySparseTermListInternal))
+(defalias NonEmptySparseTermList '[SparseTermListTag NonEmptySparseTermListInternal])
+(defalias EmptySparseTermList '[SparseTermListTag EmptySparseTermListInternal])
+(defalias SparseTermList (U NonEmptySparseTermList
+                            EmptySparseTermList))
+
+(defalias NonEmptyTermList (U NonEmptyDenseTermList
+                              NonEmptySparseTermList))
+(defalias EmptyTermList (U EmptyDenseTermList
+                           EmptySparseTermList))
+(defalias TermList (U DenseTermList
+                      SparseTermList))
 
 
 (defmacro p- [x]
@@ -114,7 +128,9 @@
           [ComplexTag TaggedRawComplex -> TaggedComplex]
           [TermTag TermInternal -> Term]
           [DenseTermListTag NonEmptyDenseTermListInternal -> NonEmptyDenseTermList]
-          [DenseTermListTag EmptyDenseTermListInternal -> EmptyDenseTermList]))
+          [DenseTermListTag EmptyDenseTermListInternal -> EmptyDenseTermList]
+          [SparseTermListTag NonEmptySparseTermListInternal -> NonEmptySparseTermList]
+          [SparseTermListTag EmptySparseTermListInternal -> EmptySparseTermList]))
 (defn attach-tag [type-tag contents]
   (case type-tag
     :clojure-number contents
@@ -475,6 +491,13 @@
                             [TaggedFloat -> TaggedFloat] ; xxx: realy necessary?
                             [TaggedNumber -> TaggedNumber] ; xxx: realy necessary?
                             [Term -> Term]
+                            [EmptyDenseTermList -> EmptyDenseTermList]
+                            [NonEmptyDenseTermList -> NonEmptyDenseTermList]
+                            [EmptySparseTermList -> EmptySparseTermList]
+                            [NonEmptySparseTermList -> NonEmptySparseTermList]
+                            [EmptyTermList -> EmptyTermList]
+                            [NonEmptyTermList -> NonEmptyTermList]
+                            [TermList -> TermList]
                             ))
 (defn negate [x] (apply-generic :negate x))
 
@@ -970,7 +993,8 @@
 (defn first-term [l] (apply-generic :first-term l))
 
 
-(ann ^:no-check rest-terms [TermList -> TermList])
+(ann ^:no-check rest-terms (IFn [DenseTermList -> DenseTermList]
+                                [SparseTermList -> SparseTermList]))
 (defn rest-terms [l] (apply-generic :rest-terms l))
 
 
@@ -987,16 +1011,12 @@
         zero (make-integer 0)
         one (make-integer 1)]
     (put :empty-term-list? [:dense-term-list] empty-term-list?-impl)
-    (put :first-term [:dense-term-list] (ignore-with-unchecked-cast
-                                         #(when-let [s (seq %)]
-                                            (make-term (make-integer (dec (count s)))
-                                                       (first s)))
-                                         (IFn [NonEmptyDenseTermListInternal -> Term]
-                                              [EmptyDenseTermListInternal -> nil])))
+    (put :first-term [:dense-term-list] (typed/fn [l :- NonEmptyDenseTermListInternal]
+                                          (make-term (make-integer (dec (count l)))
+                                                     (first l))))
     (put :rest-terms [:dense-term-list] (ignore-with-unchecked-cast
                                          (comp tag rest)
-                                         (IFn [EmptyDenseTermListInternal -> EmptyDenseTermList]
-                                              [NonEmptyDenseTermListInternal -> DenseTermList])))
+                                         [DenseTermListInternal -> DenseTermList]))
     (put :negate [:dense-term-list] (ignore-with-unchecked-cast
                                      #(tag (map negate %))
                                      (IFn [EmptyDenseTermListInternal -> EmptyDenseTermList]
@@ -1022,26 +1042,40 @@
 (install-dense-term-list-package)
 
 
-(typed/tc-ignore
+(ann install-dense-term-list-package [-> (Val :done)])
 (defn install-sparse-term-list-package []
-  (letfn [(tag [l] (attach-tag :sparse-term-list l))
-          (negate- [ts] (if (empty-term-list? ts)
-                          ts
-                          (adjoin-term (negate (first-term ts))
-                                       (negate- (rest-terms ts)))))]
-    (put :empty-term-list? [:sparse-term-list] empty?)
-    (put :first-term [:sparse-term-list] #(let [t (first %)]
-                                            (make-term (first t)
-                                                       (second t))))
-    (put :rest-terms [:sparse-term-list] #(tag (rest %)))
-    (put :negate [:sparse-term-list] #(negate- (tag %)))
-    (put :adjoin-term [:term :sparse-term-list] (fn [t l]
-                                                  (tag (if (=zero? (coeff-term- t))
-                                                         l
-                                                         (cons t l)))))
-    :done))
+  (let [empty-term-list?-impl empty?
+        tag (ann-form
+             (fn [l] (attach-tag :sparse-term-list l))
+             (IFn [EmptySparseTermListInternal -> EmptySparseTermList]
+                  [NonEmptySparseTermListInternal -> NonEmptySparseTermList]))]
+    (put :empty-term-list? [:sparse-term-list] empty-term-list?-impl)
+    (put :first-term [:sparse-term-list] (typed/fn [l :- NonEmptySparseTermListInternal]
+                                           (let [[o c] (first l)]
+                                             (make-term o c))))
+    (put :rest-terms [:sparse-term-list] (ignore-with-unchecked-cast
+                                          (comp tag rest)
+                                          [SparseTermListInternal -> SparseTermList]))
+    (put :negate [:sparse-term-list] (ignore-with-unchecked-cast
+                                      (fn [l]
+                                        (if (empty-term-list?-impl l)
+                                          (tag l)
+                                          (let [ts (tag l)]
+                                            (adjoin-term (negate (first-term ts))
+                                                         (negate (rest-terms ts))))))
+                                      (IFn [EmptySparseTermListInternal -> EmptySparseTermList]
+                                           [NonEmptySparseTermListInternal -> NonEmptySparseTermList])))
+    (put :adjoin-term [:term :sparse-term-list] (ignore-with-unchecked-cast
+                                                 (fn [t l]
+                                                   (tag (if (=zero? (coeff-term- t))
+                                                          l
+                                                          (cons t l))))
+                                                 [TermInternal SparseTermListInternal -> SparseTermList])))
+  :done)
 (install-sparse-term-list-package)
 
+
+(typed/tc-ignore
 (def the-empty-term-list [:sparse-term-list []])
 (defn install-polynomial-package []
   (letfn [(make-poly [v ts] [v ts])
