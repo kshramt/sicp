@@ -1152,8 +1152,16 @@
 
 (deftest polynomial-test
   (is (=zero? (make-polynomial 'x the-empty-term-list)))
-  (is (=zero? (sub [:polynomial ['x [:sparse-term-list [[(make-integer 2) (make-real 1)] [(make-integer 1) (make-real 1)]]]]]
-                   [:polynomial ['x [:sparse-term-list [[(make-integer 2) (make-integer 1)] [(make-integer 1) (make-complex-from-real-imag (make-real 1) (make-real 0))]]]]])))
+  (is (=zero? (sub [:polynomial
+                    ['x [:sparse-term-list [[(make-integer 2) (make-real 1)]
+                                            [(make-integer 1) (make-real 1)]]]]]
+                   [:polynomial
+                    ['x [:sparse-term-list [[(make-integer 2)
+                                             (make-integer 1)]
+                                            [(make-integer 1)
+                                             (make-complex-from-real-imag
+                                              (make-real 1)
+                                              (make-real 0))]]]]])))
   (is (=zero? (sub [:polynomial ['x [:sparse-term-list [[(make-integer 2) (make-real 1)] [(make-integer 1) (make-real 1)]]]]]
                    [:polynomial ['x [:dense-term-list [(make-integer 1) (make-complex-from-real-imag (make-real 1) (make-real 0)) (make-integer 0)]]]])))
   (is (= (adjoin-term [:term [(make-integer 8) (make-integer 1)]] [:dense-term-list [(make-integer 2) (make-integer 1) (make-integer 0)]])
