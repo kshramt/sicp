@@ -1085,78 +1085,91 @@
 
 
 (typed/tc-ignore
-(def the-empty-term-list [:sparse-term-list []])
 (defn install-polynomial-package []
-  (letfn [(make-poly [v ts] [v ts])
-          (variable [p] (first p))
-          (term-list [p] (second p))
-          (add-terms [l1 l2]
-            (cond
-             (empty-term-list? l1) l2
-             (empty-term-list? l2) l1
-             :else (let [t1 (first-term l1)
-                         t2 (first-term l2)]
-                     (cond
-                      (gt? (order t1) (order t2)) (adjoin-term t1 (add-terms (rest-terms l1) l2))
-                      (lt? (order t1) (order t2)) (adjoin-term t2 (add-terms l1 (rest-terms l2)))
-                      :else (adjoin-term (make-term (order t1) (add (coeff t1) (coeff t2)))
-                                         (add-terms (rest-terms l1) (rest-terms l2)))))))
-          (mul-term-by-all-terms [t1 l]
-            (if (empty-term-list? l)
-              the-empty-term-list
-              (let [t2 (first-term l)]
-                (adjoin-term (make-term (add (order t1) (order t2))
-                                        (mul (coeff t1) (coeff t2)))
-                             (mul-term-by-all-terms t1 (rest-terms l))))))
-          (mul-terms [l1 l2]
-            (if (empty-term-list? l1)
-              the-empty-term-list
-              (add-terms (mul-term-by-all-terms (first-term l1) l2)
-                         (mul-terms (rest-terms l1) l2))))
-          #_(div-terms [l1 l2]
-            (if (empty-term-list? l1)
-              [the-empty-term-list the-empty-term-list]
-              (let [t1 (first-term l1)
-                    t2 (first-term t2)]
-                (if (gt? (order t2) (order t1))
-                  [the-empty-term-list l1]
-                  (let [new-c (div (coeff t1) (coeff t2))
-                        new-o (- (order t1) (order t2))]
-                    (let [rest-of-result (),,,]
-                      ,,,,))))));HERO
-          (tag [p] (attach-tag :polynomial p))]
-    (put :add [:polynomial :polynomial]
-         (fn [a b]
-           (tag (if (same-variable? (variable a) (variable b))
-                  (make-poly (variable a)
-                             (add-terms (term-list a)
-                                        (term-list b)))
-                  (throw (Exception.
-                          (str "Polys not in same var " [a b])))))))
-    ; Q. 2.88
-    (put :sub [:polynomial :polynomial] #(add (tag %1) (negate (tag %2))))
-    (put :mul [:polynomial :polynomial]
-         (fn [a b]
-           (tag
-            (if (same-variable? (variable a) (variable b))
-              (make-poly (variable a)
-                         (mul-terms (term-list a)
-                                    (term-list b)))
-              (throw (Exception.
-                      (str "Polys not in same var " [a b])))))))
-    (put :negate [:polynomial] (fn [p]
-                                 (tag (let [v (variable p)
-                                            ts (term-list p)]
-                                        (make-poly v (negate ts))))))
-    ; Q. 2.87
-    (put :=zero? [:polynomial] #(typed/loop [l (term-list %)]
-                                  (or (empty-term-list? l)
-                                      (and (=zero? (coeff (first-term l)))
-                                           (recur (rest-terms l))))))
-    (put :make :polynomial (fn [v ts] (tag (make-poly v ts)))))
+  (let [variable first
+        term-list second]
+    (letfn [(make-poly [v ts] [v ts])
+            (add-terms [l1 l2]
+              (cond
+                (empty-term-list? l1) l2
+                (empty-term-list? l2) l1
+                :else (let [t1 (first-term l1)
+                            t2 (first-term l2)]
+                        (cond
+                          (gt? (order t1) (order t2)) (adjoin-term t1 (add-terms (rest-terms l1) l2))
+                          (lt? (order t1) (order t2)) (adjoin-term t2 (add-terms l1 (rest-terms l2)))
+                          :else (adjoin-term (make-term (order t1) (add (coeff t1) (coeff t2)))
+                                             (add-terms (rest-terms l1) (rest-terms l2)))))))
+            (sub-terms [l1 l2] (add-terms l1 (negate l2)))
+            (mul-term-by-all-terms [t1 l]
+              (if (empty-term-list? l)
+                the-empty-term-list
+                (let [t2 (first-term l)]
+                  (adjoin-term (make-term (add (order t1) (order t2))
+                                          (mul (coeff t1) (coeff t2)))
+                               (mul-term-by-all-terms t1 (rest-terms l))))))
+            (mul-terms [l1 l2]
+              (if (empty-term-list? l1)
+                the-empty-term-list
+                (add-terms (mul-term-by-all-terms (first-term l1) l2)
+                           (mul-terms (rest-terms l1) l2))))
+            (div-terms ; Q. 2.91
+              [l1 l2]
+              (if (empty-term-list? l1)
+                [the-empty-term-list the-empty-term-list]
+                (let [t1 (first-term l1)
+                      t2 (first-term l2)]
+                  (if (gt? (order t2) (order t1))
+                    [the-empty-term-list l1]
+                    (let [new-c (div (coeff t1) (coeff t2))
+                          new-o (sub (order t1) (order t2))
+                          quotient-t (make-term new-o new-c)
+                          [quotient remainder] (div-terms (sub-terms l1 (mul-term-by-all-terms quotient-t l2)) l2)]
+                      [(adjoin-term quotient-t quotient) remainder])))))
+            (tag [p] (attach-tag :polynomial p))]
+      (put :add [:polynomial :polynomial]
+           (fn [a b]
+             (tag (if (same-variable? (variable a) (variable b))
+                    (make-poly (variable a)
+                               (add-terms (term-list a)
+                                          (term-list b)))
+                    (throw (Exception.
+                            (str "Polys not in same var " [a b])))))))
+                                        ; Q. 2.88
+      (put :sub [:polynomial :polynomial] #(add (tag %1) (negate (tag %2))))
+      (put :mul [:polynomial :polynomial]
+           (fn [a b]
+             (tag
+              (if (same-variable? (variable a) (variable b))
+                (make-poly (variable a)
+                           (mul-terms (term-list a)
+                                      (term-list b)))
+                (throw (Exception.
+                        (str "Polys not in same var " [a b])))))))
+      (put :div-poly [:polynomial :polynomial] (fn [a b]
+                                                 (let [va (variable a)]
+                                                   (if (same-variable? va (variable b))
+                                                     (let [[quotient remainder] (div-terms (term-list a)
+                                                                                           (term-list b))]
+                                                       [(tag (make-poly va quotient))
+                                                        (tag (make-poly va remainder))])
+                                                      (throw (Exception.
+                                                              (str "Polys not in save var " [a b])))))))
+      (put :equ? [:polynomial :polynomial] #(=zero? (sub (tag %1) (tag %2))))
+      (put :negate [:polynomial] (fn [p]
+                                   (tag (let [v (variable p)
+                                              ts (term-list p)]
+                                          (make-poly v (negate ts))))))
+                                        ; Q. 2.87
+      (put :=zero? [:polynomial] #(loop [l (term-list %)]
+                                    (or (empty-term-list? l)
+                                        (and (=zero? (coeff (first-term l)))
+                                             (recur (rest-terms l))))))
+      (put :make :polynomial (fn [v ts] (tag (make-poly v ts))))))
   :done)
 (install-polynomial-package)
 (def make-polynomial (get_ :make :polynomial))
+(defn div-poly [a b] (apply-generic :div-poly a b))
 
 
 (deftest polynomial-test
@@ -1175,9 +1188,20 @@
                    [:polynomial ['x [:dense-term-list [(make-integer 1) (make-complex-from-real-imag (make-real 1) (make-real 0)) (make-integer 0)]]]])))
   (is (= (adjoin-term [:term [(make-integer 8) (make-integer 1)]] [:dense-term-list [(make-integer 2) (make-integer 1) (make-integer 0)]])
          [:dense-term-list [[:integer 1] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 2] [:integer 1] [:integer 0]]]))
-  ; xxx: some real test `equ?` or `=zero?`
-  (add (make-polynomial 'a (adjoin-term (make-term 2 3) the-empty-term-list))
-       (make-polynomial 'a (adjoin-term (make-term 2 3) the-empty-term-list))))
+  (is (=zero? (sub (add (make-polynomial 'x (adjoin-term (make-term (make-integer 2) (make-integer 3)) the-empty-term-list))
+                        (make-polynomial 'x (adjoin-term (make-term (make-integer 1) (make-integer 3)) the-empty-term-list)))
+                   [:polynomial ['x [:dense-term-list [(make-integer 3) (make-integer 3) (make-integer 0)]]]])))
+  (is (equ? (mul (make-polynomial 'x (adjoin-term (make-term (make-integer 2) (make-integer 3)) the-empty-term-list))
+                 (make-polynomial 'x (adjoin-term (make-term (make-integer 4) (make-integer 5)) the-empty-term-list)))
+            [:polynomial ['x [:dense-term-list [(make-integer 15) (make-integer 0) (make-integer 0)
+                                                (make-integer 0) (make-integer 0) (make-integer 0)
+                                                (make-integer 0)]]]]))
+  (let [[quotient remainder] (div-poly [:polynomial ['x [:dense-term-list [(make-integer 15) (make-integer 0) (make-integer 0)
+                                                                           (make-integer 0) (make-integer 0) (make-integer 0)
+                                                                           (make-integer 0)]]]]
+                                       (make-polynomial 'x (adjoin-term (make-term (make-integer 2) (make-integer 3)) the-empty-term-list)))]
+    (is (equ? quotient (make-polynomial 'x (adjoin-term (make-term (make-integer 4) (make-integer 5)) the-empty-term-list))))
+    (is (=zero? remainder))))
 
 
 ;(clojure.test/run-tests *ns*)
