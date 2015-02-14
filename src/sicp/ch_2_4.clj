@@ -999,6 +999,18 @@
 (defn adjoin-term [t l] (apply-generic :adjoin-term t l))
 
 
+(ann the-empty-term-list '[SparseTermListTag '[]])
+(def the-empty-term-list [:sparse-term-list []])
+
+
+(ann my-drop-while (All [a] [[Any -> Boolean] (Seqable a) -> (Option (Seqable a))]))
+(defn my-drop-while [pred coll]
+  (when-let [s (seq coll)]
+    (if (pred (first s))
+      (recur pred (rest s))
+      coll)))
+
+
 (ann install-dense-term-list-package [-> (Val :done)])
 (defn install-dense-term-list-package []
   (let [tag (ann-form #(attach-tag :dense-term-list %)
@@ -1012,7 +1024,7 @@
                                           (make-term (make-integer (dec (count l)))
                                                      (first l))))
     (put :rest-terms [:dense-term-list] (ignore-with-unchecked-cast
-                                         (comp tag rest)
+                                         #(tag (my-drop-while =zero? (rest %)))
                                          [DenseTermListInternal -> DenseTermList]))
     (put :negate [:dense-term-list] (ignore-with-unchecked-cast
                                      #(tag (map negate %))
