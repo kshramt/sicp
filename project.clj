@@ -4,7 +4,7 @@
   :dependencies [[org.clojure/clojure "1.7.0-alpha4"]
                  [org.clojure/tools.trace "0.7.6"]
                  [org.clojure/math.numeric-tower "0.0.4"]
-                 [org.clojure/core.typed "0.2.77"]]
+                 [org.clojure/core.typed "0.2.78"]]
   :min-lein-version "2.0.0"
   :description "SICP in Clojure"
   :global-vars {*warn-on-reflection* true}

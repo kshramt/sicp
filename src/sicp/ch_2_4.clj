@@ -688,11 +688,8 @@
 (ann install-rational-package [-> (Val :done)])
 (defn install-rational-package []
   (let [tag (typed/fn [x :- TaggedRationalInternal] (attach-tag :rational x))
-        ;; todo: `first` and `second` cannot be used due to a bug of `core.typed`
-        numer (typed/fn [x :- TaggedRationalInternal] (first x))
-        denom (typed/fn [x :- TaggedRationalInternal] (second x))
-        ;numer first
-        ;denom second
+        numer first
+        denom second
         make-rat (typed/fn [n :- TaggedInteger d :- TaggedInteger]
                    (let [g (gcd n d)]
                      [(div-truncate n g) (div-truncate d g)]))]
@@ -748,7 +745,9 @@
                                                   (numer y))
                                             (equ? (denom x)
                                                   (denom y)))))
-    (put :=zero? [:rational] (comp =zero? numer))
+    (put :=zero? [:rational] (ignore-with-unchecked-cast
+                              (comp =zero? numer)
+                              [TaggedRationalInternal -> Boolean]))
     (put :raise [:rational] (typed/fn [x :- TaggedRationalInternal]
                               (make-real (div (contents (numer x))
                                               (contents (denom x))))))
@@ -817,9 +816,8 @@
 
 (ann install-rectangular-package [-> (Val :done)])
 (defn install-rectangular-package []
-  ;; todo: `first` and `second` cannot be used due to a bug of `core.typed`
-  (let [real-part (typed/fn [x :- TaggedRawComplexInternal] (first x))
-        imag-part (typed/fn [x :- TaggedRawComplexInternal] (second x))
+  (let [real-part first
+        imag-part second
         make-from-real-imag (typed/fn [r :- TaggedFloat i :- TaggedFloat]
                               (attach-tag :rectangular [r i]))]
     (put :real-part [:rectangular] real-part)
@@ -840,9 +838,8 @@
 
 (ann install-polar-package [-> (Val :done)])
 (defn install-polar-package []
-  ;; todo: `first` and `second` cannot be used due to a bug of `core.typed`
-  (let [magnitude (typed/fn [x :- TaggedRawComplexInternal] (first x))
-        angle (typed/fn [x :- TaggedRawComplexInternal] (second x))
+  (let [magnitude first
+        angle second
         make-from-mag-ang (typed/fn [r :- TaggedFloat t :- TaggedFloat]
                             (attach-tag :polar [r t]))]
     (put :magnitude [:polar] magnitude)
