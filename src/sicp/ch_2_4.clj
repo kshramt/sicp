@@ -1003,10 +1003,10 @@
 (def the-empty-term-list [:sparse-term-list []])
 
 
-(ann my-drop-while (All [a] [[Any -> Boolean] (Seqable a) -> (Option (Seqable a))]))
+(ann my-drop-while (All [a] [[Any -> Boolean] (Seqable a) -> (Seqable a)]))
 (defn my-drop-while [pred coll]
-  (when-let [s (seq coll)]
-    (if (pred (first s))
+  (let [s (seq coll)]
+    (if (and s (pred (first s)))
       (recur pred (rest s))
       coll)))
 
