@@ -4,7 +4,7 @@
             [clojure.core.typed :refer [ann
                                         letfn>
                                         Int Num
-                                        Keyword
+                                        Kw
                                         Value
                                         IFn
                                         All
@@ -14,17 +14,17 @@
   (:gen-class))
 
 
-(ann ^:no-check clojure.test/run-tests [-> '{:type Keyword
+(ann ^:no-check clojure.test/run-tests [-> '{:type Kw
                                              :test Int
                                              :pass Int
                                              :fail Int
                                              :error Int}])
 
 
-(ann make-account [Num -> [Keyword -> [Num -> Num]]])
+(ann make-account [Num -> [Kw -> [Num -> Num]]])
 (defn make-account [balance]
   (let [local-balance (typed/atom :- Num balance)]
-    (typed/fn [m :- Keyword]
+    (typed/fn [m :- Kw]
       (case m
         :withdraw (typed/fn [amount :- Num]
                     (let [b @local-balance]
@@ -66,12 +66,12 @@
       fm)))
 
 
-(ann make-protected-account [Num String -> [Keyword -> [Num String -> Num]]])
+(ann make-protected-account [Num String -> [Kw -> [Num String -> Num]]])
 (defn make-protected-account
   "Q. 3.3"
   [balance password]
   (let [local-balance (typed/atom :- Num balance)]
-    (typed/fn [m :- Keyword]
+    (typed/fn [m :- Kw]
       (case m
         :withdraw (typed/fn [amount :- Num
                              pass :- String]
@@ -89,13 +89,13 @@
         (throw (Exception. (str "Unknown request: " m)))))))
 
 
-(ann make-protected-account-3-4 [Num String -> [Keyword -> [Num String -> Num]]])
+(ann make-protected-account-3-4 [Num String -> [Kw -> [Num String -> Num]]])
 (defn make-protected-account-3-4
   "Q. 3.4"
   [balance password]
   (let [local-balance (typed/atom :- Num balance)
         n-invalid-password (typed/atom :- Int 0)]
-    (typed/fn [m :- Keyword]
+    (typed/fn [m :- Kw]
       (case m
         :withdraw (typed/fn [amount :- Num
                              pass :- String]
@@ -164,13 +164,13 @@
      seed)))
 
 
-(ann make-joint [[Keyword -> [Num String -> Num]] String String ->
-                 [Keyword -> [Num String -> Num]]])
+(ann make-joint [[Kw -> [Num String -> Num]] String String ->
+                 [Kw -> [Num String -> Num]]])
 (defn make-joint
   "Q. 3.7"
   [acc pass pass-another]
   ((acc :deposit) 0 pass) ; check if `pass` is valid
-  (typed/fn [m :- Keyword]
+  (typed/fn [m :- Kw]
     (typed/fn [amount :- Num
                password :- String]
       (if (= password pass-another)
