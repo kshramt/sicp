@@ -187,4 +187,32 @@
 
 
 (typed/check-ns)
+; Q. 3.09: skip
+; Q. 3.10: skip
+; Q. 3.11: skip
+; Q. 3.12: skip
+; Q. 3.13: skip
+; Q. 3.14: `reverse`
+; Q. 3.15: skip
+
+;; Q: 3.16
+;; 3:
+;; pa -> qa
+;; pd -> ra
+
+;; 4:
+;; pa -> qa
+;; qa -> ra
+;; pd -> ra
+
+;; 7:
+;; pa -> qa
+;; pd -> qa
+;; qa -> ra
+;; qd -> ra
+
+;; ∞:
+;; pd -> qa
+;; qd -> ra
+;; rd -> pa
 (clojure.test/run-tests)
