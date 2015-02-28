@@ -616,10 +616,11 @@
 
 
 ; clojure number package
+(ann tag-clojure-number (IFn [Int -> Int] [Num -> Num]))
+(defn tag-clojure-number [x] (attach-tag :clojure-number x))
 (ann install-clojure-number-package [-> (Val :done)])
 (defn install-clojure-number-package []
-  (letfn> [tag :- (IFn [Int -> Int] [Num -> Num])
-           (tag [x] (attach-tag :clojure-number x))]
+  (let [tag tag-clojure-number]
     (put :add [:clojure-number :clojure-number]
          (ann-form #(tag (+ %1 %2)) (IFn [Int Int -> Int] [Num Num -> Num])))
     (put :sub [:clojure-number :clojure-number]
@@ -655,10 +656,11 @@
 
 ; integer package
 (declare make-rational make-integer make-real)
+(ann tag-integer [Int -> TaggedInteger])
+(defn tag-integer [x] (attach-tag :integer x))
 (ann install-integer-package [-> (Val :done)])
 (defn install-integer-package []
-  (letfn> [tag :- [Int -> TaggedInteger]
-           (tag [x] (attach-tag :integer x))]
+  (let [tag tag-integer]
     (put :add [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (add x y))))
     (put :sub [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (sub x y))))
     (put :mul [:integer :integer] (typed/fn [x :- Int y :- Int] (tag (mul x y))))
@@ -681,13 +683,17 @@
 (install-integer-package)
 (ann ^:no-check make-integer [Num -> TaggedInteger])
 (def make-integer (get_ :make :integer))
+(ann zero TaggedInteger)
+(def zero (make-integer 0))
 
 
 ; rational package
 (declare make-real)
+(ann tag-rational [TaggedRationalInternal -> TaggedRational])
+(defn tag-rational [x] (attach-tag :rational x))
 (ann install-rational-package [-> (Val :done)])
 (defn install-rational-package []
-  (let [tag (typed/fn [x :- TaggedRationalInternal] (attach-tag :rational x))
+  (let [tag tag-rational
         numer first
         denom second
         make-rat (typed/fn [n :- TaggedInteger d :- TaggedInteger]
@@ -784,9 +790,11 @@
 
 
 (declare make-complex-from-real-imag)
+(ann tag-real [Num -> TaggedReal])
+(defn tag-real [x] (attach-tag :real x))
 (ann install-real-package [-> (Val :done)])
 (defn install-real-package []
-  (let [tag (typed/fn [x :- Num] (attach-tag :real x))]
+  (let [tag tag-real]
     (put :add [:real :real] (typed/fn [x :- Num y :- Num] (tag (add x y))))
     (put :sub [:real :real] (typed/fn [x :- Num y :- Num] (tag (sub x y))))
     (put :mul [:real :real] (typed/fn [x :- Num y :- Num] (tag (mul x y))))
@@ -860,9 +868,11 @@
 (install-polar-package)
 
 
+(ann tag-complex [TaggedRawComplex -> TaggedComplex])
+(defn tag-complex [x] (attach-tag :complex x))
 (ann install-complex-package [-> (Val :done)])
 (defn install-complex-package []
-  (let [tag (typed/fn [x :- TaggedRawComplex] (attach-tag :complex x))
+  (let [tag tag-complex
         make-from-real-imag (ignore-with-unchecked-cast
                              (get_ :make-from-real-imag :rectangular)
                              [TaggedFloat TaggedFloat -> TaggedRectangularComplex])
@@ -954,9 +964,11 @@
 
 
 (declare make-term)
+(ann tag-term [TermInternal -> Term])
+(defn tag-term [x] (attach-tag :term x))
 (ann install-term-package [-> (Val :done)])
 (defn install-term-package []
-   (let [tag (typed/fn [x :- TermInternal] (attach-tag :term x))]
+   (let [tag tag-term]
      (put :coeff [:term] coeff-term-)
      (put :order [:term] order-term-)
      (put :negate [:term] (typed/fn [x :- TermInternal]
@@ -1011,13 +1023,13 @@
       coll)))
 
 
+(ann tag-dense-term-list (IFn [NonEmptyDenseTermListInternal -> NonEmptyDenseTermList]
+                              [EmptyDenseTermListInternal -> EmptyDenseTermList]))
+(defn tag-dense-term-list [x] (attach-tag :dense-term-list x))
 (ann install-dense-term-list-package [-> (Val :done)])
 (defn install-dense-term-list-package []
-  (let [tag (ann-form #(attach-tag :dense-term-list %)
-                      (IFn [NonEmptyDenseTermListInternal -> NonEmptyDenseTermList]
-                           [EmptyDenseTermListInternal -> EmptyDenseTermList]))
+  (let [tag tag-dense-term-list
         empty-term-list?-impl empty?
-        zero (make-integer 0)
         one (make-integer 1)]
     (put :empty-term-list? [:dense-term-list] empty-term-list?-impl)
     (put :first-term [:dense-term-list] (typed/fn [l :- NonEmptyDenseTermListInternal]
@@ -1051,13 +1063,13 @@
 (install-dense-term-list-package)
 
 
+(ann tag-sparse-term-list (IFn [EmptySparseTermListInternal -> EmptySparseTermList]
+                               [NonEmptySparseTermListInternal -> NonEmptySparseTermList]))
+(defn tag-sparse-term-list [x] (attach-tag :sparse-term-list x))
 (ann install-sparse-term-list-package [-> (Val :done)])
 (defn install-sparse-term-list-package []
   (let [empty-term-list?-impl empty?
-        tag (ann-form
-             (fn [l] (attach-tag :sparse-term-list l))
-             (IFn [EmptySparseTermListInternal -> EmptySparseTermList]
-                  [NonEmptySparseTermListInternal -> NonEmptySparseTermList]))]
+        tag tag-sparse-term-list]
     (put :empty-term-list? [:sparse-term-list] empty-term-list?-impl)
     (put :first-term [:sparse-term-list] (typed/fn [l :- NonEmptySparseTermListInternal]
                                            (let [[o c] (first l)]
@@ -1085,11 +1097,15 @@
 
 
 (typed/tc-ignore
+(defn to-term-list [x] (adjoin-term (make-term zero x) the-empty-term-list))
+(defn tag-polynomial [x] (attach-tag :polynomial x))
+(defn make-poly [v ts] [v ts])
+(defn to-polynomial [v x] (tag-polynomial (make-poly v (to-term-list x))))
 (defn install-polynomial-package []
   (let [variable first
-        term-list second]
-    (letfn [(make-poly [v ts] [v ts])
-            (add-terms [l1 l2]
+        term-list second
+        tag tag-polynomial]
+    (letfn [(add-terms [l1 l2]
               (cond
                 (empty-term-list? l1) l2
                 (empty-term-list? l2) l1
@@ -1125,27 +1141,28 @@
                           new-o (sub (order t1) (order t2))
                           quotient-t (make-term new-o new-c)
                           [quotient remainder] (div-terms (sub-terms l1 (mul-term-by-all-terms quotient-t l2)) l2)]
-                      [(adjoin-term quotient-t quotient) remainder])))))
-            (tag [p] (attach-tag :polynomial p))]
-      (put :add [:polynomial :polynomial]
-           (fn [a b]
-             (tag (if (same-variable? (variable a) (variable b))
-                    (make-poly (variable a)
-                               (add-terms (term-list a)
-                                          (term-list b)))
-                    (throw (Exception.
-                            (str "Polys not in same var " [a b])))))))
-                                        ; Q. 2.88
-      (put :sub [:polynomial :polynomial] #(add (tag %1) (negate (tag %2))))
-      (put :mul [:polynomial :polynomial]
-           (fn [a b]
-             (tag
-              (if (same-variable? (variable a) (variable b))
-                (make-poly (variable a)
-                           (mul-terms (term-list a)
-                                      (term-list b)))
-                (throw (Exception.
-                        (str "Polys not in same var " [a b])))))))
+                      [(adjoin-term quotient-t quotient) remainder])))))]
+      (doseq [[t make-t] [[:integer tag-integer]
+                          [:rational tag-rational]
+                          [:real tag-real]
+                          [:complex tag-complex]]
+              [kop op] [[:add add]
+                        [:mul mul]]]
+        (put kop [:polynomial t] (fn [p x] (op (tag p) (to-polynomial (variable p) (make-t x)))))
+        (put kop [t :polynomial] (fn [x p] (op (tag p) (make-t x)))))
+      (put :sub [:polynomial :polynomial] #(add (tag %1) (negate (tag %2)))) ; Q. 2.88
+      (doseq [[kop op] [[:add add-terms] ; Q. 2.92
+                        [:mul mul-terms]]]
+        (put kop [:polynomial :polynomial]
+             (fn [a b]
+               (tag (let [va (variable a)
+                          vb (variable b)]
+                      (if (and (variable? va) (variable? vb))
+                        (case (compare va vb)
+                          -1 (make-poly va (op (term-list a) (to-term-list (tag b))))
+                          0 (make-poly va (op (term-list a) (term-list b)))
+                          1 (make-poly vb (op (term-list b) (to-term-list (tag a)))))
+                        (throw (Exception. (str "Not variables: " [va vb])))))))))
       (put :div-poly [:polynomial :polynomial] (fn [a b]
                                                  (let [va (variable a)]
                                                    (if (same-variable? va (variable b))
@@ -1202,6 +1219,7 @@
                                        (make-polynomial 'x (adjoin-term (make-term (make-integer 2) (make-integer 3)) the-empty-term-list)))]
     (is (equ? quotient (make-polynomial 'x (adjoin-term (make-term (make-integer 4) (make-integer 5)) the-empty-term-list))))
     (is (=zero? remainder))))
+); typed/tc-ignore
 
 
 ;(clojure.test/run-tests *ns*)
