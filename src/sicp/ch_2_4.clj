@@ -1051,7 +1051,7 @@
 (install-dense-term-list-package)
 
 
-(ann install-dense-term-list-package [-> (Val :done)])
+(ann install-sparse-term-list-package [-> (Val :done)])
 (defn install-sparse-term-list-package []
   (let [empty-term-list?-impl empty?
         tag (ann-form
