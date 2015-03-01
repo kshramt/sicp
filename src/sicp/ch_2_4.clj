@@ -601,18 +601,14 @@
                    45 15 15
                    3 8 1
                    46 22 2
-                   -46 22 2
+                   -46 22 -2
                    46 -22 2
-                   -46 -22 2))}
+                   -46 -22 -2))}
 
   [m n]
-  (let [abs-m (abs m)
-        abs-n (abs n)
-        small (if (lt? abs-m abs-n) abs-m abs-n)
-        large (if (gt? abs-m abs-n) abs-m abs-n)]
-    (if (=zero? small)
-      large
-      (recur (rem_ large small) small))))
+  (if (=zero? n)
+    m
+    (gcd n (rem_ m n))))
 
 
 ; clojure number package
