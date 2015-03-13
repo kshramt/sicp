@@ -1104,6 +1104,7 @@
 (defn tag-polynomial [x] (attach-tag :polynomial x))
 (defn make-poly [v ts] [v ts])
 (defn to-polynomial [v x] (tag-polynomial (make-poly v (to-term-list x))))
+(declare div-poly)
 (defn install-polynomial-package []
   (let [variable first
         term-list second
@@ -1175,6 +1176,9 @@
                                                         (tag (make-poly va remainder))])
                                                       (throw (Exception.
                                                               (str "Polys not in save var " [a b])))))))
+      (put :rem_ [:polynomial :polynomial] #(second (div-poly (tag %1) (tag %2))))
+      (put :div [:polynomial :polynomial] #(make-rational (tag %1) (tag %2)))
+      (put :div-truncate [:polynomial :polynomial] (fn [a b] (first (div-poly (tag a) (tag b)))))
       (put :equ? [:polynomial :polynomial] #(=zero? (sub (tag %1) (tag %2))))
       (put :negate [:polynomial] (fn [p]
                                    (tag (let [v (variable p)
@@ -1228,6 +1232,13 @@
                                        (make-polynomial 'x [[(make-integer 2) (make-integer 3)]]))]
     (is (equ? quotient (make-polynomial 'x [[(make-integer 4) (make-integer 5)]])))
     (is (=zero? remainder))))
+
+
+(deftest q-2-94
+  (is (equ? (let [p1 (make-polynomial 'x [[4 1] [3 -1] [2 -2] [1 2]])
+                  p2 (make-polynomial 'x [[3 1] [1 -1]])]
+              (gcd p1 p2))
+            [:polynomial ['x [:sparse-term-list [[2 -1] [1 1]]]]])))
 ); typed/tc-ignore
 
 
