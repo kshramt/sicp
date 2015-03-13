@@ -296,6 +296,15 @@
   (get_ :project [(type-tag x)]))
 
 
+(ann ^:no-check raisable?
+     (IFn [TaggedInteger -> (Option [Int -> TaggedRational])]
+          [TaggedRational -> (Option  [TaggedRationalInternal -> TaggedReal])]
+          [TaggedReal -> (Option [Num -> TaggedComplex])]
+          [TaggedObject -> nil]))
+(defn- raisable? [x]
+  (get_ :raise [(type-tag x)]))
+
+
 (ann ^:no-check drop_ ; xxx:
      (IFn [TaggedComplex -> TaggedNumber]
           [TaggedReal -> TaggedFloat]
@@ -314,15 +323,6 @@
           x)
         x))
     x))
-
-
-(ann ^:no-check raisable?
-     (IFn [TaggedInteger -> (Option [Int -> TaggedRational])]
-          [TaggedRational -> (Option  [TaggedRationalInternal -> TaggedReal])]
-          [TaggedReal -> (Option [Num -> TaggedComplex])]
-          [TaggedObject -> nil]))
-(defn- raisable? [x]
-  (get_ :raise [(type-tag x)]))
 
 
 (ann raised-list (IFn [TaggedInteger -> (ASeq (U TaggedInteger TaggedRational TaggedReal TaggedComplex))]
