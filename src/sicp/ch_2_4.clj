@@ -116,6 +116,11 @@
      RETURN#))
 
 
+(ann flip (All [a b c] [[a b -> c] -> [b a -> c]]))
+(defn flip [f]
+  (fn [x y] (f y x)))
+
+
 (ann ^:no-check attach-tag
      (IFn [ClojureNumberTag Int -> Int]
           [ClojureNumberTag Num -> Num]
@@ -1178,7 +1183,13 @@
                                     (or (empty-term-list? l)
                                         (and (=zero? (coeff (first-term l)))
                                              (recur (rest-terms l))))))
-      (put :make :polynomial (fn [v ts] (tag (make-poly v ts))))))
+      (put :make :polynomial (fn [v ocs]
+                               (tag
+                                (make-poly v
+                                           (reduce (flip adjoin-term)
+                                                   the-empty-term-list
+                                                   (map (fn [[o c]] (make-term o c))
+                                                        (reverse ocs)))))))))
   :done)
 (install-polynomial-package)
 (def make-polynomial (get_ :make :polynomial))
@@ -1186,7 +1197,7 @@
 
 
 (deftest polynomial-test
-  (is (=zero? (make-polynomial 'x the-empty-term-list)))
+  (is (=zero? (make-polynomial 'x [])))
   (is (=zero? (sub [:polynomial
                     ['x [:sparse-term-list [[(make-integer 2) (make-real 1)]
                                             [(make-integer 1) (make-real 1)]]]]]
@@ -1201,19 +1212,19 @@
                    [:polynomial ['x [:dense-term-list [(make-integer 1) (make-complex-from-real-imag (make-real 1) (make-real 0)) (make-integer 0)]]]])))
   (is (= (adjoin-term [:term [(make-integer 8) (make-integer 1)]] [:dense-term-list [(make-integer 2) (make-integer 1) (make-integer 0)]])
          [:dense-term-list [[:integer 1] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 0] [:integer 2] [:integer 1] [:integer 0]]]))
-  (is (=zero? (sub (add (make-polynomial 'x (adjoin-term (make-term (make-integer 2) (make-integer 3)) the-empty-term-list))
-                        (make-polynomial 'x (adjoin-term (make-term (make-integer 1) (make-integer 3)) the-empty-term-list)))
+  (is (=zero? (sub (add (make-polynomial 'x [[(make-integer 2) (make-integer 3)]])
+                        (make-polynomial 'x [[(make-integer 1) (make-integer 3)]]))
                    [:polynomial ['x [:dense-term-list [(make-integer 3) (make-integer 3) (make-integer 0)]]]])))
-  (is (equ? (mul (make-polynomial 'x (adjoin-term (make-term (make-integer 2) (make-integer 3)) the-empty-term-list))
-                 (make-polynomial 'x (adjoin-term (make-term (make-integer 4) (make-integer 5)) the-empty-term-list)))
+  (is (equ? (mul (make-polynomial 'x [[(make-integer 2) (make-integer 3)]])
+                 (make-polynomial 'x [[(make-integer 4) (make-integer 5)]]))
             [:polynomial ['x [:dense-term-list [(make-integer 15) (make-integer 0) (make-integer 0)
                                                 (make-integer 0) (make-integer 0) (make-integer 0)
                                                 (make-integer 0)]]]]))
   (let [[quotient remainder] (div-poly [:polynomial ['x [:dense-term-list [(make-integer 15) (make-integer 0) (make-integer 0)
                                                                            (make-integer 0) (make-integer 0) (make-integer 0)
                                                                            (make-integer 0)]]]]
-                                       (make-polynomial 'x (adjoin-term (make-term (make-integer 2) (make-integer 3)) the-empty-term-list)))]
-    (is (equ? quotient (make-polynomial 'x (adjoin-term (make-term (make-integer 4) (make-integer 5)) the-empty-term-list))))
+                                       (make-polynomial 'x [[(make-integer 2) (make-integer 3)]]))]
+    (is (equ? quotient (make-polynomial 'x [[(make-integer 4) (make-integer 5)]])))
     (is (=zero? remainder))))
 ); typed/tc-ignore
 
