@@ -1239,6 +1239,16 @@
                   p2 (make-polynomial 'x [[3 1] [1 -1]])]
               (gcd p1 p2))
             [:polynomial ['x [:sparse-term-list [[2 -1] [1 1]]]]])))
+
+
+(deftest q-2-95
+  (is (equ? (let [p1 (make-polynomial 'x [[(make-integer 2) (make-integer 1)] [(make-integer 1) (make-integer -2)] [(make-integer 0) (make-integer 1)]])
+                  p2 (make-polynomial 'x [[(make-integer 2) (make-integer 11)] [(make-integer 0) (make-integer 7)]])
+                  p3 (make-polynomial 'x [[(make-integer 1) (make-integer 13)] [(make-integer 0) (make-integer 5)]])
+                  q1 (mul p1 p2)
+                  q2 (mul p1 p3)]
+              (gcd q1 q2))
+            [:polynomial ['x [:sparse-term-list [[[:integer 2] [:rational [[:integer 1458] [:integer 169]]]] [[:integer 1] [:rational [[:integer -2916] [:integer 169]]]] [[:integer 0] [:rational [[:integer 1458] [:integer 169]]]]]]]])))
 ); typed/tc-ignore
 
 
