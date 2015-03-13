@@ -284,7 +284,7 @@
       (throw (Exception. (str "no mtehod for these types: " op " " (apply list type-tags)))))))
 
 
-(declare equ? raise)
+(declare equ? raise project)
 
 
 (ann ^:no-check projectable?
@@ -315,9 +315,9 @@
           [Boolean -> Boolean]
           [TaggedObject -> TaggedObject]))
 (defn drop_ [x]
-  (if-let [project- (projectable? x)]
-    (let [xdown (project- (contents x))]
-      (if-let [raise- (raisable? xdown)]
+  (if (projectable? x)
+    (let [xdown (project x)]
+      (if (raisable? xdown)
         (if (equ? (raise xdown) x)
           (recur xdown)
           x)
@@ -366,8 +366,8 @@
 (defn- raise-up-to [x t]
   (if (= (type-tag x) t)
     x
-    (if-let [raise- (raisable? x)]
-      (recur (raise- (contents x)) t)
+    (if (raisable? x)
+      (recur (raise x) t)
       (throw (Exception. (str "Unable to raise " x " up to " t))))))
 
 
