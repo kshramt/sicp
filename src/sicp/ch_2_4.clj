@@ -308,8 +308,10 @@
 (defn drop_ [x]
   (if-let [project- (projectable? x)]
     (let [xdown (project- (contents x))]
-      (if (equ? (raise xdown) x)
-        (recur xdown)
+      (if-let [raise- (raisable? xdown)]
+        (if (equ? (raise xdown) x)
+          (recur xdown)
+          x)
         x))
     x))
 
