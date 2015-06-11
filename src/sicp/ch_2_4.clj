@@ -245,6 +245,7 @@
                    (case method
                      :lookup (fn [key-1 key-2] (lookup key-1 key-2 @local-table))
                      :insert! (fn [key-1 key-2 value] (reset! local-table (insert key-1 key-2 value @local-table)))
+                     ;; :debug (fn [] @local-table)
                      (throw (Exception. (str "unknown method:  " method)))))]
     dispatch))
 
@@ -1166,7 +1167,7 @@
                           -1 (make-poly va (op (term-list a) (to-term-list (tag b))))
                           0 (make-poly va (op (term-list a) (term-list b)))
                           1 (make-poly vb (op (term-list b) (to-term-list (tag a)))))
-                        (throw (Exception. (str "Not variables: " [va vb])))))))))
+                        (throw (Exception. (str "Not variables: " va "::" (type va) ", " vb "::" (type vb))))))))))
       (put :div-poly [:polynomial :polynomial] (fn [a b]
                                                  (let [va (variable a)]
                                                    (if (same-variable? va (variable b))
