@@ -284,7 +284,8 @@
                                                     5))) 4))
               (let [p1 (my-cons 1 2)
                     p2 (my-cons 1 p1)
-                    p3 (my-cons p1 p2)]
+                    p3 (my-cons p1 p2)
+                    _ (set-car! p2 p2)]
                 (is (= (count-pairs p3) 3))))}
   ([x] (car (count-pairs x (my-cons nil nil))))
   ([x counted]
