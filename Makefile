@@ -17,9 +17,19 @@ all:
 check: $(FILE_NAMES:%=src/sicp/%.clj.tested)
 
 
-src/sicp/%.clj.tested: src/sicp/%.clj
+src/sicp/%.clj.tested: src/sicp/%.clj.unit_tested src/sicp/%.clj.type_checked
+	touch $@
+
+
+src/sicp/%.clj.unit_tested: src/sicp/%.clj
 	readonly ns="$$(echo "$*" | sed -e 's/_/-/g')"
-	lein do test sicp."$$ns", typed check sicp."$$ns"
+	lein test sicp."$$ns"
+	touch $@
+
+
+src/sicp/%.clj.type_checked: src/sicp/%.clj
+	readonly ns="$$(echo "$*" | sed -e 's/_/-/g')"
+	lein typed check sicp."$$ns"
 	touch $@
 
 
