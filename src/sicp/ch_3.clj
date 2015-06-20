@@ -3,15 +3,28 @@
             [clojure.pprint]
             [clojure.core.typed :refer [ann
                                         letfn>
+                                        defalias
+                                        ann-record
+                                        ann-form
                                         Int Num
                                         Kw
+                                        Any
+                                        Atom1
+                                        Option
+                                        Pred
+                                        Seqable
                                         Value
+                                        Var1
                                         IFn
                                         All
+                                        U
                                         ] :as typed]
-                                        ;:verbose
-            )
-  (:gen-class))
+            [clojure.core.typed.unsafe
+             :refer
+             [
+              ignore-with-unchecked-cast
+              ]]
+            ))
 
 
 (ann ^:no-check clojure.test/run-tests [-> '{:type Kw
@@ -19,6 +32,7 @@
                                              :pass Int
                                              :fail Int
                                              :error Int}])
+(ann ^:no-check clojure.test/test-var [(Var1 [-> nil]) -> nil])
 
 
 (ann make-account [Num -> [Kw -> [Num -> Num]]])
@@ -186,7 +200,6 @@
     (reset! y (* @y x))))
 
 
-(typed/check-ns)
 ; Q. 3.09: skip
 ; Q. 3.10: skip
 ; Q. 3.11: skip
@@ -215,4 +228,73 @@
 ;; pd -> qa
 ;; qd -> ra
 ;; rd -> pa
-(clojure.test/run-tests)
+
+
+(typed/defprotocol IPair
+  (set-car! [p :- Pair x :- Any] :- Any)
+  (set-cdr! [p :- Pair x :- Any] :- Any)
+  (car [p :- Pair] :- Any)
+  (cdr [p :- Pair] :- Any)
+  (any? [p :- Pair pred :- [Any -> Boolean]] :- Boolean)
+  )
+
+(declare pair?)
+(ann-record Pair [_car :- (Atom1 Any)
+                  _cdr :- (Atom1 Any)])
+(defrecord Pair [_car _cdr]
+  IPair
+  (set-car! [self x] (reset! _car x))
+  (set-cdr! [self x] (reset! _cdr x))
+  (car [self] @_car)
+  (cdr [self] @_cdr)
+  (any? [self pred]
+    (or (pred (car self))
+        (let [tail (cdr self)]
+          (if (pair? tail)
+            (any? tail pred)
+            false))))
+  )
+
+(ann get-new-pair [-> Pair])
+(defn get-new-pair [] (->Pair (typed/atom :- Any nil) (typed/atom :- Any nil)))
+
+(ann my-cons [Any Any -> Pair])
+(defn my-cons [a b] (let [new (get-new-pair)]
+                      (set-car! new a)
+                      (set-cdr! new b)
+                      new))
+
+(ann pair? (Pred Pair))
+(defn pair? [x] (instance? Pair x))
+
+(ann test-any? [-> nil])
+(deftest test-any?
+  (is (any? (my-cons 2 (my-cons 4 (my-cons 6 (my-cons 1 (my-cons 7 nil))))) odd?))
+  (is (not (any? (my-cons 2 (my-cons 4 (my-cons 6 nil))) odd?)))
+  )
+
+
+(ann count-pairs (IFn [Any -> Int]
+                      [Any Pair -> Pair]))
+(defn count-pairs
+  "Q. 3.17"
+  {:test #(do (is (= (count-pairs (my-cons 1 2)) 1))
+              (is (= (count-pairs (my-cons (my-cons 1 2)
+                                           (my-cons (my-cons 3 4)
+                                                    5))) 4))
+              (let [p1 (my-cons 1 2)
+                    p2 (my-cons 1 p1)
+                    p3 (my-cons p1 p2)]
+                (is (= (count-pairs p3) 3))))}
+  ([x] (car (count-pairs x (my-cons nil nil))))
+  ([x counted]
+   (if (not (pair? x))
+     (my-cons 0 counted)
+     (if (any? counted #(= % x))
+       (my-cons 0 counted)
+       (let [na-counted (count-pairs (car x) (my-cons x counted))
+             nb-counted (count-pairs (cdr x) (ignore-with-unchecked-cast (cdr na-counted) Pair))]
+         (my-cons (+ (ignore-with-unchecked-cast (car na-counted) Int)
+                     (ignore-with-unchecked-cast (car nb-counted) Int)
+                     1)
+                  (cdr nb-counted)))))))
