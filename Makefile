@@ -14,11 +14,7 @@ FILE_NAMES := $(subst -,_,$(NAMES))
 
 .PHONY: all check
 all:
-check: $(FILE_NAMES:%=src/sicp/%.clj.tested)
-
-
-src/sicp/%.clj.tested: src/sicp/%.clj.unit_tested src/sicp/%.clj.type_checked
-	touch $@
+check: $(FILE_NAMES:%=src/sicp/%.clj.unit_tested) $(FILE_NAMES:%=src/sicp/%.clj.type_checked)
 
 
 src/sicp/%.clj.unit_tested: src/sicp/%.clj
