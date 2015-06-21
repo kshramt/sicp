@@ -310,3 +310,19 @@
                      (ignore-with-unchecked-cast (car nb-counted) Int)
                      1)
                   (cdr nb-counted)))))))
+
+
+(ann has-loop? (IFn [Pair -> Boolean]
+                    [Pair Pair -> Boolean]))
+(defn has-loop?
+  "Q 3.18"
+  {:test #(do (is (not (has-loop? (my-list 1 2 3))))
+              (is (has-loop? (let [l (my-list 1 2 3)
+                                   _ (set-cdr! (cdr (cdr l)) l)]
+                               l))))}
+  ([p] (has-loop? p (my-cons nil nil)))
+  ([p seen]
+   (or (any? seen #(= % p))
+       (let [b (cdr p)]
+         (and (pair? b)
+              (recur b (my-cons p seen)))))))
