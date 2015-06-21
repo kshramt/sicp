@@ -264,13 +264,24 @@
                       (set-cdr! new b)
                       new))
 
+(ann -my-list [(Option (Seqable Any)) -> (Option Pair)])
+(defn -my-list [xs]
+  (if-let [s (seq xs)]
+    (my-cons (first s) (-my-list (rest s)))
+    nil))
+
+(ann my-list [Any * -> (Option Pair)])
+(defn my-list [& xs]
+  (-my-list xs))
+
+
 (ann pair? (Pred Pair))
 (defn pair? [x] (instance? Pair x))
 
 (ann test-any? [-> nil])
 (deftest test-any?
-  (is (any? (my-cons 2 (my-cons 4 (my-cons 6 (my-cons 1 (my-cons 7 nil))))) odd?))
-  (is (not (any? (my-cons 2 (my-cons 4 (my-cons 6 nil))) odd?)))
+  (is (any? (my-list 2 4 6 1 7) odd?))
+  (is (not (any? (my-list 2 4 6) odd?)))
   )
 
 
