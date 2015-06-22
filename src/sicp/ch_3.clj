@@ -312,17 +312,38 @@
                   (cdr nb-counted)))))))
 
 
-(ann has-loop? (IFn [Pair -> Boolean]
-                    [Pair Pair -> Boolean]))
-(defn has-loop?
+(ann has-loop?-3-18 (IFn [Pair -> Boolean]
+                         [Pair Pair -> Boolean]))
+(defn has-loop?-3-18
   "Q 3.18"
-  {:test #(do (is (not (has-loop? (my-list 1 2 3))))
-              (is (has-loop? (let [l (my-list 1 2 3)
-                                   _ (set-cdr! (cdr (cdr l)) l)]
-                               l))))}
-  ([p] (has-loop? p (my-cons nil nil)))
+  {:test #(do (is (not (has-loop?-3-18 (my-list 1 2 3))))
+              (is (has-loop?-3-18 (let [l (my-list 1 2 3)
+                                        _ (set-cdr! (cdr (cdr l)) l)]
+                                    l))))}
+  ([p] (has-loop?-3-18 p (my-cons nil nil)))
   ([p seen]
    (or (any? seen #(= % p))
        (let [b (cdr p)]
          (and (pair? b)
               (recur b (my-cons p seen)))))))
+
+(ann has-loop?-3-19 (IFn [Any -> Boolean]
+                         [Any Pair -> Boolean]))
+(defn has-loop?-3-19
+  "Q 3.19"
+  {:test #(do (is (not (has-loop?-3-19 (my-list 1 2 3))))
+              (is (has-loop?-3-19 (let [l (my-list 1 2 3)
+                                        _ (set-cdr! (cdr (cdr l)) l)]
+                                    l))))}
+  ([p]
+   (and (pair? p)
+        (has-loop?-3-19 (cdr p) p)))
+  ([p seen]
+   (and (pair? p)
+        (or (= p seen)
+            (let [p (cdr p)]
+              (and (pair? p)
+                   (or (= p seen)
+                       (recur (cdr p) (cdr seen)))))))))
+
+; Q 3.20: skip
