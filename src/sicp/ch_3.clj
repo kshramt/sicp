@@ -347,3 +347,77 @@
                        (recur (cdr p) (cdr seen)))))))))
 
 ; Q 3.20: skip
+
+(ann front-ptr [Pair -> Pair])
+(defn front-ptr [queue]
+  (car queue))
+
+(ann rear-ptr [Pair -> Pair])
+(defn rear-ptr [queue]
+  (cdr queue))
+
+(ann set-front-ptr! [Pair Any -> Any])
+(defn set-front-ptr! [queue item]
+  (set-car! queue item))
+
+(ann set-rear-ptr! [Pair Any -> Any])
+(defn set-rear-ptr! [queue item]
+  (set-cdr! queue item))
+
+(ann empty-queue? [Pair -> Boolean])
+(defn empty-queue? [queue]
+  (nil? (front-ptr queue)))
+
+(ann make-queue [-> Pair])
+(defn make-queue []
+  (my-cons nil nil))
+
+(ann front-queue [Pair -> Any])
+(defn front-queue [queue]
+  (if (empty-queue? queue)
+    (throw (Exception. (str "FRONT called with an empty queue " queue)))
+    (car (front-ptr queue))))
+
+(ann insert-queue! [Pair Any -> Pair])
+(defn insert-queue! [queue item]
+  (let [new-pair (my-cons item nil)]
+    (if (empty-queue? queue)
+      (do (set-front-ptr! queue new-pair)
+          (set-rear-ptr! queue new-pair)
+          queue)
+      (do (set-cdr! (rear-ptr queue) new-pair)
+          (set-rear-ptr! queue new-pair)
+          queue))))
+
+(ann delete-queue! [Pair -> Pair])
+(defn delete-queue! [queue]
+  (if (empty-queue? queue)
+    (throw (Exception. (str "DELETE-QUEUE! called with an empty queue " queue)))
+    (do (set-front-ptr! queue (cdr (front-ptr queue)))
+        queue)))
+
+(ann print-my-list [Pair -> nil])
+(defn print-my-list [l]
+  (let [head (car l)
+        more (cdr l)]
+    (print (str head " "))
+    (if (pair? more)
+      (recur more)
+      (print "\n"))))
+
+(ann print-queue [Pair -> nil])
+(defn print-queue
+  "Q 3.21"
+  [queue]
+  (if (empty-queue? queue)
+    (print "\n")
+    (print-my-list (front-ptr queue))))
+
+(ann test-queue [-> nil])
+(deftest test-queue
+  (is (let [q (make-queue)]
+        (insert-queue! q 1)
+        (insert-queue! q 2)
+        (delete-queue! q)
+        (print-queue q)
+        q)))
