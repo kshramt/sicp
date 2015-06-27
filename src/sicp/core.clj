@@ -7,6 +7,9 @@
                                         Int Num
                                         Any
                                         All
+                                        EmptyCount
+                                        HSequential
+                                        NonEmptyCount
                                         Symbol
                                         Keyword
                                         Option
@@ -33,7 +36,11 @@
   (:gen-class))
 (set! *warn-on-reflection* false)
 
-(ann ^:no-check clojure.pprint/pprint [Any -> nil])
+(ann ^:no-check clojure.core/empty? (IFn [(Option (HSequential [Any *])) -> Boolean :filters {:then (is (U nil EmptyCount) 0), :else (is NonEmptyCount 0)}]
+                                         [(Option (Coll Any)) -> Boolean :filters {:then (is (U nil EmptyCount) 0), :else (is NonEmptyCount 0)}]
+                                         [(Seqable Any) -> Boolean :filters {:then (is EmptyCount 0), :else (is NonEmptyCount 0)}]
+                                         [(Option (Seqable Any)) -> Boolean :filters {:then (is (U nil EmptyCount) 0), :else (is NonEmptyCount 0)}]
+                                         ))
 (typed/override-method clojure.lang.Numbers/remainder (IFn [Int Int -> Int]
                                                           [Num Num -> Num]))
 (typed/override-method clojure.lang.Numbers/addP (IFn [Int Int -> Int]
@@ -1242,7 +1249,7 @@ Skip...
   (lazy-seq
    (rest coin-values)))
 
-(ann no-more? [(Seqable Int) -> Boolean])
+(ann no-more? [(Seqable Int) -> Boolean :filters {:then (is EmptyCount 0), :else (is NonEmptyCount 0)}])
 (defn no-more? [coin-values]
   (empty? coin-values))
 
@@ -1257,7 +1264,7 @@ Skip...
    :else (+ (cc' amount
                  (rest coin-values))
             (cc' (-' amount
-                     (first-denomination' (ignore-with-unchecked-cast coin-values (NonEmptySeqable Int))))
+                     (first-denomination' coin-values))
                  coin-values))))
 
 (ann filter_ (All [a] [[a -> Boolean] (Seqable a)
