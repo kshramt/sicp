@@ -421,3 +421,40 @@
         (delete-queue! q)
         (print-queue q)
         q)))
+
+(typed/tc-ignore
+(defn make-queue-3-22
+  "Q 3.22"
+  []
+  (let [_front-ptr (atom nil)
+        _rear-ptr (atom nil)]
+    (letfn [(front-ptr [] @_front-ptr)
+            (rear-ptr [] @_rear-ptr)
+            (set-front-ptr! [x] (reset! _front-ptr x))
+            (set-rear-ptr! [x] (reset! _rear-ptr x))
+            (empty-queue? [] (nil? (front-ptr)))
+            (dispatch [m]
+              (case m
+                :front-ptr front-ptr
+                :rear-ptr rear-ptr
+                :set-front-ptr! set-front-ptr!
+                :set-rear-ptr! set-rear-ptr!
+                :empty-queue? empty-queue?
+                :front-queue #(if (empty-queue?)
+                                (throw (Exception. (str "FRONT called with an empty queue" @_front-ptr)))
+                                (first (front-ptr)))
+                :insert-queue! (fn [queue item]
+                                 (let [new-pair (my-cons item nil)]
+                                   (do (set-front-ptr! queue new-pair)
+                                       (set-rear-ptr! queue new-pair)
+                                       queue)
+                                   (do (set-cdr! (rear-ptr queue) new-pair)
+                                       (set-rear-ptr! queue new-pair)
+                                       queue)))
+                :delete-queue! (fn [queue]
+                                 (if (empty-queue? queue)
+                                   (throw (Exception. (str "DELETE-QUEUE! called with an empty queue " queue)))
+                                   (do (set-front-ptr! queue (cdr (front-ptr queue)))
+                                       queue)))))]
+      dispatch)))
+); typed/tc-ignore
