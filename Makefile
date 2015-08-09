@@ -12,9 +12,11 @@ NAMES := core ch-2-4 ch-3
 FILE_NAMES := $(subst -,_,$(NAMES))
 
 
-.PHONY: all check
+.PHONY: all check type_check unit_test
 all:
-check: $(FILE_NAMES:%=src/sicp/%.clj.unit_tested) $(FILE_NAMES:%=src/sicp/%.clj.type_checked)
+check: type_check unit_test
+type_check: $(FILE_NAMES:%=src/sicp/%.clj.type_checked)
+unit_test: $(FILE_NAMES:%=src/sicp/%.clj.unit_tested)
 
 
 src/sicp/%.clj.unit_tested: src/sicp/%.clj
