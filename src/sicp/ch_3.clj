@@ -24,7 +24,20 @@
              [
               ignore-with-unchecked-cast
               ]]
-            ))
+            [sicp.pair
+             :refer [
+                     any?
+                     car
+                     cdr
+                     my-cons
+                     my-list
+                     pair?
+                     set-car!
+                     set-cdr!
+                     ]
+             ]
+            )
+  (:import [sicp.pair Pair]))
 
 
 (ann ^:no-check clojure.test/run-tests [-> '{:type Kw
@@ -228,61 +241,6 @@
 ;; pd -> qa
 ;; qd -> ra
 ;; rd -> pa
-
-
-(typed/defprotocol IPair
-  (set-car! [p :- Pair x :- Any] :- Any)
-  (set-cdr! [p :- Pair x :- Any] :- Any)
-  (car [p :- Pair] :- Any)
-  (cdr [p :- Pair] :- Any)
-  (any? [p :- Pair pred :- [Any -> Boolean]] :- Boolean)
-  )
-
-(declare pair?)
-(ann-record Pair [_car :- (Atom1 Any)
-                  _cdr :- (Atom1 Any)])
-(defrecord Pair [_car _cdr]
-  IPair
-  (set-car! [self x] (reset! _car x))
-  (set-cdr! [self x] (reset! _cdr x))
-  (car [self] @_car)
-  (cdr [self] @_cdr)
-  (any? [self pred]
-    (or (pred (car self))
-        (let [tail (cdr self)]
-          (if (pair? tail)
-            (any? tail pred)
-            false))))
-  )
-
-(ann get-new-pair [-> Pair])
-(defn get-new-pair [] (->Pair (typed/atom :- Any nil) (typed/atom :- Any nil)))
-
-(ann my-cons [Any Any -> Pair])
-(defn my-cons [a b] (let [new (get-new-pair)]
-                      (set-car! new a)
-                      (set-cdr! new b)
-                      new))
-
-(ann -my-list [(Option (Seqable Any)) -> (Option Pair)])
-(defn -my-list [xs]
-  (if-let [s (seq xs)]
-    (my-cons (first s) (-my-list (rest s)))
-    nil))
-
-(ann my-list [Any * -> (Option Pair)])
-(defn my-list [& xs]
-  (-my-list xs))
-
-
-(ann pair? (Pred Pair))
-(defn pair? [x] (instance? Pair x))
-
-(ann test-any? [-> nil])
-(deftest test-any?
-  (is (any? (my-list 2 4 6 1 7) odd?))
-  (is (not (any? (my-list 2 4 6) odd?)))
-  )
 
 
 (ann count-pairs (IFn [Any -> Int]
