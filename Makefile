@@ -8,7 +8,7 @@ export SHELLOPTS := errexit:noclobber
 PANDOC := pandoc
 PANDOC_FLAGS := --standalone --mathml --to=html5 --smart --self-contained
 
-NAMES := core ch-2-4 ch-3 pair deque
+NAMES := core ch-2-4 ch-3 pair deque table
 FILE_NAMES := $(subst -,_,$(NAMES))
 
 
@@ -22,6 +22,7 @@ unit_test: $(FILE_NAMES:%=src/sicp/%.clj.unit_tested)
 define suffix_loop_template =
 src/sicp/ch_3.clj.$(1): src/sicp/pair.clj
 src/sicp/deque.clj.$(1): src/sicp/pair.clj
+src/sicp/table.clj.$(1): src/sicp/pair.clj
 endef
 $(foreach suf,unit_tested type_checked, \
    $(eval $(call suffix_loop_template,$(suf))))

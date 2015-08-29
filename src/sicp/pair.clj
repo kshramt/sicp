@@ -41,6 +41,22 @@
 )
 
 
+(ann ^:no-check caar [Pair -> Any])
+(def caar (comp car car))
+
+
+(ann ^:no-check cadr [Pair -> Any])
+(def cadr (comp car cdr))
+
+
+(ann ^:no-check cdar [Pair -> Any])
+(def cdar (comp cdr car))
+
+
+(ann ^:no-check cddr [Pair -> Any])
+(def cddr (comp cdr cdr))
+
+
 (typed/defn get-new-pair [] :- Pair
   (->Pair (typed/atom :- Any nil)
           (typed/atom :- Any nil)))
