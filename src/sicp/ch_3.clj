@@ -13,7 +13,7 @@
                                         Option
                                         Pred
                                         Seqable
-                                        Value
+                                        Val
                                         Var1
                                         IFn
                                         All
@@ -74,15 +74,15 @@
 
 (ann ^:no-check make-monitored
      (All [a b]
-          [[a -> b] -> (IFn [(Value :how-many-calls?) -> Int]
-                            [(Value :reset-count) -> (Value 0)]
+          [[a -> b] -> (IFn [(Val :how-many-calls?) -> Int]
+                            [(Val :reset-count) -> (Val 0)]
                             [a -> b])]))
 (defn make-monitored
   "Q. 3.2"
   [f]
   (let [counter (typed/atom :- Int 0)]
-    (letfn> [fm :- (IFn [(Value :how-many-calls?) -> Int]
-                        [(Value :reset-count) -> (Value 0)]
+    (letfn> [fm :- (IFn [(Val :how-many-calls?) -> Int]
+                        [(Val :reset-count) -> (Val 0)]
                         [a -> b])
              (fm [x]
                  (case x
@@ -256,11 +256,13 @@
                     p3 (my-cons p1 p2)
                     _ (set-car! p2 p2)]
                 (is (= (count-pairs p3) 3))))}
-  ([x] (car (count-pairs x (my-cons nil nil))))
+  ([x] (ignore-with-unchecked-cast
+        (car (count-pairs x (my-cons nil nil)))
+        Int))
   ([x counted]
    (if (not (pair? x))
      (my-cons 0 counted)
-     (if (any? counted #(= % x))
+     (if (any? #(= % x) counted)
        (my-cons 0 counted)
        (let [na-counted (count-pairs (car x) (my-cons x counted))
              nb-counted (count-pairs (cdr x) (ignore-with-unchecked-cast (cdr na-counted) Pair))]
@@ -280,7 +282,7 @@
                                     l))))}
   ([p] (has-loop?-3-18 p (my-cons nil nil)))
   ([p seen]
-   (or (any? seen #(= % p))
+   (or (any? #(= % p) seen)
        (let [b (cdr p)]
          (and (pair? b)
               (recur b (my-cons p seen)))))))
@@ -302,17 +304,19 @@
             (let [p (cdr p)]
               (and (pair? p)
                    (or (= p seen)
-                       (recur (cdr p) (cdr seen)))))))))
+                       (recur (cdr p) (ignore-with-unchecked-cast
+                                       (cdr seen)
+                                       Pair)))))))))
 
 ; Q 3.20: skip
 
 (ann front-ptr [Pair -> Pair])
 (defn front-ptr [queue]
-  (car queue))
+  (ignore-with-unchecked-cast (car queue) Pair))
 
 (ann rear-ptr [Pair -> Pair])
 (defn rear-ptr [queue]
-  (cdr queue))
+  (ignore-with-unchecked-cast (cdr queue) Pair))
 
 (ann set-front-ptr! [Pair Any -> Any])
 (defn set-front-ptr! [queue item]
@@ -416,3 +420,5 @@
                                        queue)))))]
       dispatch)))
 ); typed/tc-ignore
+
+
