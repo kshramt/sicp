@@ -131,7 +131,7 @@
       (if (= front rear)
         (do (set-car! q nil)
             (set-cdr! q nil))
-        (let [new-front (cdr (ptrs-deque-node front DequeNode))]
+        (let [new-front (cdr (ptrs-deque-node front))]
           (set-car! q new-front)
           (set-car! (ptrs-deque-node new-front) nil))))))
 
@@ -153,8 +153,8 @@
 (deftest test-deque []
   (let [q (make-deque)]
     (front-insert-deque! q 1)
-    (is (front-deque q) 1)
+    (is (= (front-deque q) 1))
     (front-insert-deque! q 2)
-    (is (front-deque q) 2)
+    (is (= (front-deque q) 2))
     (front-delete-deque! q)
-    (is (front-deque q) 1)))
+    (is (= (front-deque q) 1))))
