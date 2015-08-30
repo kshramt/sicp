@@ -17,11 +17,6 @@
             ]
     :as typed
     ]
-   [clojure.core.typed.unsafe
-    :refer
-    [
-     ignore-with-unchecked-cast
-     ]]
    [sicp.pair
     :refer [
             any?
@@ -73,18 +68,18 @@
 
 
 (ann ^:no-check front-node-deque (IFn [EmptyDeque -> nil]
-                                        [NonEmptyDeque -> DequeNode]))
+                                      [NonEmptyDeque -> DequeNode]))
 (def front-node-deque car)
 
 
 (ann ^:no-check rear-node-deque (IFn [EmptyDeque -> nil]
-                                       [NonEmptyDeque -> DequeNode]))
+                                     [NonEmptyDeque -> DequeNode]))
 (def rear-node-deque cdr)
 
 
 (ann ^:no-check empty-deque? [Deque -> Boolean
                                 :filters {:then (is EmptyDeque 0)
-                                          :else (is NonEmptyDeque 0)}])
+                                          :else (! EmptyDeque 0)}])
 (def empty-deque? (comp nil? front-node-deque))
 
 
@@ -92,14 +87,14 @@
 (defn front-deque [q]
   (if (empty-deque? q)
     (throw (Exception. (str "front-deque called for empty deque")))
-    (val-deque-node (ignore-with-unchecked-cast (front-node-deque q) DequeNode))))
+    (val-deque-node (front-node-deque q))))
 
 
 (ann rear-deque [Deque -> Any])
 (defn rear-deque [q]
   (if (empty-deque? q)
     (throw (Exception. (str "rear-deque called for empty deque")))
-    (val-deque-node (ignore-with-unchecked-cast (rear-node-deque q) DequeNode))))
+    (val-deque-node (rear-node-deque q))))
 
 
 (ann front-insert-deque! [Deque Any -> NonEmptyDeque])
@@ -111,7 +106,7 @@
     (let [front (front-node-deque q)
           n (make-deque-node nil x front)]
       (set-car! q n)
-      (set-car! (ptrs-deque-node (ignore-with-unchecked-cast front DequeNode)) n)))
+      (set-car! (ptrs-deque-node front) n)))
   q)
 
 
@@ -124,7 +119,7 @@
     (let [rear (rear-node-deque q)
           n (make-deque-node rear x nil)]
       (set-cdr! q n)
-      (set-cdr! (ptrs-deque-node (ignore-with-unchecked-cast rear DequeNode)) n)))
+      (set-cdr! (ptrs-deque-node rear) n)))
   q)
 
 
@@ -136,9 +131,9 @@
       (if (= front rear)
         (do (set-car! q nil)
             (set-cdr! q nil))
-        (let [new-front (cdr (ptrs-deque-node (ignore-with-unchecked-cast front DequeNode)))]
+        (let [new-front (cdr (ptrs-deque-node front DequeNode))]
           (set-car! q new-front)
-          (set-car! (ptrs-deque-node (ignore-with-unchecked-cast new-front DequeNode)) nil))))))
+          (set-car! (ptrs-deque-node new-front) nil))))))
 
 
 (ann rear-delete-deque! [Deque -> Any])
@@ -149,9 +144,9 @@
       (if (= front rear)
         (do (set-car! q nil)
             (set-cdr! q nil))
-        (let [new-rear (car (ptrs-deque-node (ignore-with-unchecked-cast rear DequeNode)))]
+        (let [new-rear (car (ptrs-deque-node rear))]
           (set-cdr! q new-rear)
-          (set-cdr! (ptrs-deque-node (ignore-with-unchecked-cast new-rear DequeNode)) nil))))))
+          (set-cdr! (ptrs-deque-node new-rear) nil))))))
 
 
 (ann test-deque [-> nil])
