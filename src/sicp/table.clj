@@ -6,6 +6,7 @@
             Atom1
             Atom2
             IFn
+            Int
             Kw
             Option
             Pred
@@ -54,7 +55,7 @@
   "Q. 3.24"
   {:test #(let [t (make-table-3-24)]
             ((t :insert-proc) 1 2 3)
-            (is ((t :lookup-proc) 1 2) 3))}
+            (is (= ((t :lookup-proc) 1 2) 3)))}
   ([] (make-table-3-24 =))
   ([same-key?]
    (let [local-table (my-list :*table*)]
@@ -81,12 +82,13 @@
        dispatch))))
 
 
-(ann ^:no-check make-table-3-25 [-> Table])
+(ann ^:no-check make-table-3-25 (IFn [-> Table]
+                                     [[Any Any -> Boolean] -> Table]))
 (defn make-table-3-25
   "Q. 3.25"
   {:test #(let [t (make-table-3-25)]
             ((t :insert-proc) [1 2] 3)
-            (is ((t :lookup-proc) [1 2]) 3))}
+            (is (= ((t :lookup-proc) [1 2]) 3)))}
   ([] (make-table-3-25 =))
   ([same-key?]
    (let [local-table (my-list :*table*)]
@@ -106,3 +108,80 @@
                  :insert-proc insert!
                  :else (throw (Exception. (str "Unknown operation --TABLE " m)))))]
        dispatch))))
+
+
+(typed/defalias Tree [Kw -> [Any * -> Any]])
+
+
+(ann ^:no-check make-tree (IFn [-> Tree]
+                                [[Any Any -> Int] -> Tree]))
+(defn make-tree
+  ([] (make-tree compare))
+  ([compare-fn]
+   (let [local-tree (my-cons :*tree* nil)
+         kv-tree-node car
+         k-tree-node (comp car kv-tree-node)
+         v-tree-node (comp cdr kv-tree-node)
+         lr-tree-node cdr]
+     (letfn [(make-tree-node [k v]
+               (my-cons (my-cons k v) (my-cons nil nil)))
+             (set-k-tree-node! [n k]
+               (set-car! (kv-tree-node n) k))
+             (set-v-tree-node! [n v]
+               (set-cdr! (kv-tree-node n) v))
+             (insert-tree-node! [n k v]
+               (case (compare-fn (k-tree-node n) k)
+                 0
+                 (set-v-tree-node! n v)
+                 -1
+                 (let [lr (lr-tree-node n)]
+                   (if-let [l (car lr)]
+                     (recur l k v)
+                     (set-car! lr (make-tree-node k v))))
+                  1
+                  (let [lr (lr-tree-node n)]
+                    (if-let [r (cdr lr)]
+                      (recur r k v)
+                      (set-cdr! lr (make-tree-node k v))))
+                  (throw (Exception. (str "Invalid return value from compare-fn: "
+                                          (compare-fn (k-tree-node n) k))))))
+             (lookup-tree-node [n k]
+               (case (compare-fn (k-tree-node n) k)
+                 0
+                 (v-tree-node n)
+                 -1
+                 (when-let [l (car (lr-tree-node n))]
+                   (recur l k))
+                 1
+                 (when-let [r (cdr (lr-tree-node n))]
+                   (recur r k))
+                 (throw (Exception. (str "Invalid return value from compare-fn: "
+                                         (compare-fn (k-tree-node n) k))))))
+             (insert-tree [k v]
+               (if-let [n (cdr local-tree)]
+                 (insert-tree-node! n k v)
+                 (set-cdr! local-tree (make-tree-node k v))))
+             (lookup-tree [k]
+               (when-let [n (cdr local-tree)]
+                 (lookup-tree-node n k)))
+             (dispatch [m]
+               (case m
+                 :insert insert-tree
+                 :lookup lookup-tree
+                 (throw (Exception. (str "Invalid m: " m)))))]
+       dispatch))))
+
+
+(ann ^:no-check make-table-3-26 (IFn [-> Table]
+                                     [[Any Any -> Int] -> Table]))
+(defn make-table-3-26
+  "Q. 3.26"
+  {:test #(let [t (make-table-3-26)]
+            ((t :insert) [1 2] 3)
+            (is (= ((t :lookup) [1 2]) 3))
+            ((t :insert) [9 8] 7)
+            (is (nil? ((t :lookup) [:not])))
+            (is (= ((t :lookup) [9 8]) 7)))}
+  ([] (make-table-3-26 compare))
+  ([compare-fn]
+   (make-tree compare-fn)))
