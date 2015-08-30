@@ -6,6 +6,7 @@
             Atom1
             Atom2
             IFn
+            Kw
             Option
             Pred
             Seqable
@@ -14,6 +15,11 @@
             ]
     :as typed
     ]
+   [clojure.core.typed.unsafe
+    :refer
+    [
+     ignore-with-unchecked-cast
+     ]]
    [sicp.pair
     :refer [
             any?
@@ -30,17 +36,25 @@
   (:import [sicp.pair Pair]))
 
 
-(typed/tc-ignore ; typing dispatching fn is tedious
+(ann assoc-table (IFn [Pair Any -> Any]
+                      [Pair Any [Any Any -> Boolean] -> Any]))
 (defn- assoc-table
   ([records key] (assoc-table records key =))
   ([records key same-key?]
    (cond (nil? records) false
          (same-key? key (caar records)) (car records)
-         :else (recur (cdr records) key same-key?))))
+         :else (recur (ignore-with-unchecked-cast (cdr records) Pair) key same-key?))))
 
 
+(typed/defalias Table [-> [Kw -> [Any * -> Any]]])
+
+
+(ann ^:no-check make-table-3-24 [-> Table])
 (defn make-table-3-24
   "Q. 3.24"
+  {:test #(let [t (make-table-3-24)]
+            ((t :insert-proc) 1 2 3)
+            (is ((t :lookup-proc) 1 2) 3))}
   ([] (make-table-3-24 =))
   ([same-key?]
    (let [local-table (my-list :*table*)]
@@ -67,8 +81,28 @@
        dispatch))))
 
 
-(deftest test-make-table-3-24
-  (let [t (make-table-3-24)]
-    ((t :insert-proc) 1 2 3)
-    (is ((t :lookup-proc) 1 2) 3)))
-); typed/tc-ignore
+(ann ^:no-check make-table-3-25 [-> Table])
+(defn make-table-3-25
+  "Q. 3.25"
+  {:test #(let [t (make-table-3-25)]
+            ((t :insert-proc) [1 2] 3)
+            (is ((t :lookup-proc) [1 2]) 3))}
+  ([] (make-table-3-25 =))
+  ([same-key?]
+   (let [local-table (my-list :*table*)]
+     (letfn [(lookup [ks]
+               (when-let [record (assoc-table (cdr local-table) ks same-key?)]
+                 (cdr record)))
+             (insert! [ks v]
+               (if-let [record (assoc-table (cdr local-table) ks same-key?)]
+                   (set-cdr! record v)
+                   (set-cdr! local-table
+                             (my-cons (my-cons ks v)
+                                      (cdr local-table))))
+               :ok)
+             (dispatch [m]
+               (case m
+                 :lookup-proc lookup
+                 :insert-proc insert!
+                 :else (throw (Exception. (str "Unknown operation --TABLE " m)))))]
+       dispatch))))
