@@ -46,7 +46,7 @@
          :else (recur (ignore-with-unchecked-cast (cdr records) Pair) key same-key?))))
 
 
-(typed/defalias Table [-> [Kw -> [Any * -> Any]]])
+(typed/defalias Table [Kw -> [Any * -> Any]])
 
 
 (ann ^:no-check make-table-3-24 [-> Table])
