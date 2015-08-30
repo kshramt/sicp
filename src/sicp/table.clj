@@ -2,7 +2,8 @@
   (:require
    [clojure.test :refer [is are deftest]]
    [clojure.core.typed
-    :refer [Any
+    :refer [All
+            Any
             Atom1
             Atom2
             IFn
@@ -185,3 +186,44 @@
   ([] (make-table-3-26 compare))
   ([compare-fn]
    (make-tree compare-fn)))
+
+
+(ann ^:no-check my-memoize (All [a b] [[a -> b] -> [a -> b]]))
+(defn my-memoize
+  [f]
+  (let [table (make-table-3-26)]
+    (letfn [(lookup [x] ((table :lookup) x))
+            (insert! [x y] ((table :insert) x y))]
+      (fn [x]
+        (if-let [y-pre (lookup x)]
+          y-pre
+          (let [y (f x)]
+            (insert! x y)
+            y))))))
+
+
+(ann fib [Int -> Int])
+(defn fib [n]
+  (case n
+    0 0
+    1 1
+    (+ (fib (- n 1))
+       (fib (- n 2)))))
+
+
+(ann memo-fib [Int -> Int])
+(def memo-fib (my-memoize
+               (typed/fn [n :- Int] :- Int
+                 (case n
+                   0 0
+                   1 1
+                   (+ (memo-fib (- n 1))
+                      (memo-fib (- n 2)))))))
+
+(ann test-memo-fib [-> nil])
+(deftest test-memo-fib
+  (is (= (memo-fib 37)
+         (fib 37))))
+
+
+; Q. 3.27 skip
