@@ -97,3 +97,13 @@
   (is (any? odd? (my-list 2 4 6 1 7)))
   (is (not (any? odd? (my-list 2 4 6))))
   )
+
+
+(ann print-my-list [Pair -> nil])
+(defn print-my-list [l]
+  (let [head (car l)
+        more (cdr l)]
+    (print (str head " "))
+    (if (pair? more)
+      (recur more)
+      (print "\n"))))
