@@ -308,4 +308,65 @@
                                        (cdr seen)
                                        Pair)))))))))
 
-; Q 3.20: skip
+; Q. 3.20: skip
+
+
+; Q. 3.38
+; a
+; 50, 45, 40, 35
+
+(typed/tc-ignore ; 3.38-b
+
+(def balance-3-38 (atom 100))
+
+(def peter-memory (atom 0))
+(defn peter-out [] (reset! peter-memory @balance-3-38))
+(defn peter-in [] (reset! balance-3-38 (+ @peter-memory 10)))
+
+(def paul-memory (atom 0))
+(defn paul-out [] (reset! paul-memory @balance-3-38))
+(defn paul-in [] (reset! balance-3-38 (- @paul-memory 20)))
+
+(def mary-memory-1 (atom 0))
+(def mary-memory-2 (atom 0))
+(defn mary-out-1 [] (reset! mary-memory-1 @balance-3-38))
+(defn mary-out-2 [] (reset! mary-memory-2 @balance-3-38))
+(defn mary-in-a [] (reset! balance-3-38 (- @mary-memory-1 (/ @mary-memory-2 2))))
+(defn mary-in-b [] (reset! balance-3-38 (- @mary-memory-2 (/ @mary-memory-1 2))))
+
+(declare all-orders-2)
+(defn- all-orders-1 [xs ys zs]
+  (when-let [xs (seq xs)]
+    (let [x (first xs)]
+      (map #(cons x %) (all-orders-2 (rest xs) ys zs)))))
+
+(defn- all-orders-2 [xs ys zs]
+  (if (or (seq xs) (seq ys) (seq zs))
+    (concat (all-orders-1 xs ys zs)
+            (all-orders-1 ys xs zs)
+            (all-orders-1 zs xs ys))
+    [[(fn [] @balance-3-38)]]))
+
+(defn squash [fs]
+  (if (seq (rest fs))
+    (do ((first fs))
+        (recur (rest fs)))
+    ((first fs))))
+
+(defn try-all-par []
+  (map #(squash %)
+       (map #(cons (fn [] (reset! balance-3-38 100)) %)
+            (concat
+             (all-orders-2 [peter-out peter-in]
+                           [paul-out paul-in]
+                           [mary-out-1 mary-out-2 mary-in-a])
+             (all-orders-2 [peter-out peter-in]
+                           [paul-out paul-in]
+                           [mary-out-1 mary-out-2 mary-in-b])))))
+(defn q-3-38-b
+  "Q. 3.38-b
+  25 30 35 40 45 50 55 60 65 70 80 90 110"
+  []
+  (sort (apply list (set (try-all-par)))))
+
+) ; typed/tc-ignore
