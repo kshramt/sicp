@@ -8,7 +8,7 @@ export SHELLOPTS := errexit:noclobber
 PANDOC := pandoc
 PANDOC_FLAGS := --standalone --mathml --to=html5 --smart --self-contained
 
-NAMES := core ch-2-4 ch-3 pair deque table queue digital-circuit-simulator
+NAMES := core ch-2-4 ch-3 pair deque table queue digital-circuit-simulator constraint
 FILE_NAMES := $(subst -,_,$(NAMES))
 
 
@@ -24,7 +24,7 @@ src/sicp/ch_3.clj.$(1): src/sicp/pair.clj.$(1)
 src/sicp/deque.clj.$(1): src/sicp/pair.clj.$(1)
 src/sicp/table.clj.$(1): src/sicp/pair.clj.$(1)
 src/sicp/queue.clj.$(1): src/sicp/pair.clj.$(1)
-src/sicp/digital_circuit_simulator.clj.$(1): src/sicp/queue.clj src/sicp/util.clj.$(1)
+src/sicp/digital_circuit_simulator.clj.$(1): src/sicp/queue.clj
 endef
 $(foreach suf,unit_tested type_checked, \
    $(eval $(call suffix_loop_template,$(suf))))
