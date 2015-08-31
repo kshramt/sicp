@@ -67,6 +67,7 @@
     (set-car! new a)
     (set-cdr! new b)
     new))
+(ann cns [Any Any -> Pair])
 
 
 (ann -my-list [(Option (Seqable Any)) -> (Option Pair)])
@@ -78,6 +79,7 @@
 (ann my-list [Any * -> (Option Pair)])
 (defn my-list [& xs]
   (-my-list xs))
+(ann lst [Any * -> (Option Pair)])
 
 
 (ann pair? (Pred Pair))
