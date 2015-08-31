@@ -9,6 +9,7 @@
             IFn
             Int
             Kw
+            ASeq
             NonEmptySeqable
             Option
             Pred
@@ -398,16 +399,14 @@
   :ok)
 
 
-(ann binary-add [(NonEmptySeqable Signal) (NonEmptySeqable Signal) -> (NonEmptySeqable Signal)])
+(ann binary-add [(NonEmptySeqable Signal) (NonEmptySeqable Signal) -> (ASeq Signal)])
 (defn binary-add [xs ys]
-  {:test [(= (count xs) (count ys))]}
+  {:pre [(= (count xs) (count ys))]}
   (let [n (count xs)
         to-wires (typed/fn [x :- Signal] (let [w (make-wire)] (set-signal! w x) w))
-        bxs (map to-wires xs)
-        bys (map to-wires ys)
         ss (map (fn [_] (make-wire)) (range n))
         c (make-wire)]
-    (ripple-carry-adder bxs bys ss c)
+    (ignore-with-unchecked-cast (ripple-carry-adder (map to-wires xs) (map to-wires ys) ss c) Any)
     (propagate)
     (cons (get-signal c) (map get-signal ss))))
 
