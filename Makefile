@@ -24,7 +24,7 @@ src/sicp/ch_3.clj.$(1): src/sicp/pair.clj.$(1)
 src/sicp/deque.clj.$(1): src/sicp/pair.clj.$(1)
 src/sicp/table.clj.$(1): src/sicp/pair.clj.$(1)
 src/sicp/queue.clj.$(1): src/sicp/pair.clj.$(1)
-src/sicp/digital_circuit_simulator.clj.$(1): src/sicp/queue.clj
+src/sicp/digital_circuit_simulator.clj.$(1): src/sicp/queue.clj src/sicp/util.clj.$(1)
 endef
 $(foreach suf,unit_tested type_checked, \
    $(eval $(call suffix_loop_template,$(suf))))

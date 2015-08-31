@@ -48,15 +48,12 @@
             make-queue
             ]
     ]
+   [sicp.util
+    :refer [
+            p_
+            ]]
    )
   (:import [sicp.pair Pair]))
-
-
-(defmacro p_ [x]
-  `(let [x# ~x]
-     (println ~(str &form))
-     (clojure.pprint/pprint x#)
-     x#))
 
 
 (defalias Signal Int)
