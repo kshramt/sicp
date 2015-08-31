@@ -226,7 +226,7 @@
                                  (call-each @action-procedure))))
           accept-action-procedure! (typed/fn [proc :- Action]
                                      (reset! action-procedure (cons proc @action-procedure))
-                                     (proc))
+                                     (proc)) ; Q. 3.31 invoke the new connection
           dispatch (typed/fn [m :- Kw]
                      (case m
                        :get-signal @signal-value
