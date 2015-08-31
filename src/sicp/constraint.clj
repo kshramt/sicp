@@ -328,3 +328,6 @@
     (constant 2 two)
     (multiplier two c two-ave)
     (adder a b two-ave)))
+
+
+; Q. 3.34: `a` and `b` in multiplier should be different objects
