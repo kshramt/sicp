@@ -1,8 +1,20 @@
 (ns sicp.util
-  (:require [clojure.core.typed
-             :as typed]
-            [clojure.pprint])
+  (:require
+   [clojure.core.typed
+    :refer [
+            Num
+            ann
+            ]
+    :as typed]
+   [clojure.pprint]
+   [clojure.math.numeric-tower
+    ]
+   )
   )
+
+
+(ann ^:no-check sqrt [Num -> Num])
+(def sqrt clojure.math.numeric-tower/sqrt)
 
 
 (defmacro p_ [x]

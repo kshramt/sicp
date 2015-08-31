@@ -35,6 +35,7 @@
     :refer [
             p_
             pef
+            sqrt
             ]]
    ))
 
@@ -331,3 +332,42 @@
 
 
 ; Q. 3.34: `a` and `b` in multiplier should be different objects
+
+
+(ann squarer [(Connector Num) (Connector Num) -> Constraint])
+(defn squarer
+  "Q. 3.35"
+  {:test #(let [a (t-make-connector Num)
+                b (t-make-connector Num)]
+            (squarer a b)
+            (set-value! a 2 :user)
+            (is (get-value b) 4)
+            (forget-value! a :user)
+            (set-value! b 9 :user)
+            (is (get-value a) 3))}
+  [a b]
+  (letfn> [process-new-value :- [-> Any]
+           (process-new-value
+            []
+            (if (has-value? b)
+              (if (neg? (get-value b))
+                (throw (Exception. (str "square less than 0 -- squarer: "
+                                        (get-value b))))
+                (set-value! a (sqrt (get-value b)) me))
+              (set-value! b (let [va (get-value a)] (* va va)) me)))
+           process-forget-value :- [-> Any]
+           (process-forget-value
+            []
+            (forget-value! b me)
+            (forget-value! a me))
+           me :- Constraint
+           (me
+            [request]
+            (case request
+              :I-have-a-value (process-new-value)
+              :I-lost-my-value (process-forget-value)
+              (throw (Exception. (str "unknown request -- squarer: "
+                                      request)))))]
+    (connect a me)
+    (connect b me)
+    me))
