@@ -373,3 +373,51 @@
     me))
 
 ; Q 3.36 skip
+
+
+(ann c+ [(Connector Num) (Connector Num) -> (Connector Num)])
+(defn c+ [x y]
+  (let [z (t-make-connector Num)]
+    (adder x y z)
+    z))
+
+
+(ann c- [(Connector Num) (Connector Num) -> (Connector Num)])
+(defn c- [x y]
+  (let [z (t-make-connector Num)]
+    (adder y z x)
+    z))
+
+
+(ann c* [(Connector Num) (Connector Num) -> (Connector Num)])
+(defn c* [x y]
+  (let [z (t-make-connector Num)]
+    (multiplier x y z)
+    z))
+
+
+(ann c-div [(Connector Num) (Connector Num) -> (Connector Num)])
+(defn c-div [x y]
+  (let [z (t-make-connector Num)]
+    (multiplier y z x)
+    z))
+
+
+(ann cv [Num -> (Connector Num)])
+(defn cv [x]
+  (let [z (t-make-connector Num)]
+    (constant x z)
+    z))
+
+
+(ann celsius-fahrenheit-converter-3-37 [(Connector Num) -> (Connector Num)])
+(defn celsius-fahrenheit-converter-3-37
+  "Q. 3.37"
+  {:test #(let [celsius (t-make-connector Num)
+                fahrenheit (celsius-fahrenheit-converter-3-37 celsius)]
+            (set-value! fahrenheit 32 :user)
+            (is (= (get-value celsius) 0)))}
+  [celsius]
+  (c+ (c* (c-div (cv 9) (cv 5))
+          celsius)
+      (cv 32)))
