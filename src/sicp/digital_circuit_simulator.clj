@@ -426,7 +426,11 @@
   :done)
 
 
+; Q. 3.32: skip
+
+
 (typed/tc-ignore ; experiments
+
 
 (defn empty-agenda! []
   (propagate)
