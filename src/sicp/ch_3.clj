@@ -370,3 +370,12 @@
   (sort (set (try-all-par))))
 
 ) ; typed/tc-ignore
+
+; Q. 3.39 skip
+; Q. 3.40 skip
+; Q. 3.41 No
+; Q. 3.42 Yes
+; Q. 3.43 skip
+; Q. 3.44 No
+; Q. 3.45 Nesting the same serializer blocks execution.
+; Q. 3.46 skip
