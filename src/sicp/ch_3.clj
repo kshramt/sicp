@@ -367,6 +367,6 @@
   "Q. 3.38-b
   25 30 35 40 45 50 55 60 65 70 80 90 110"
   []
-  (sort (apply list (set (try-all-par)))))
+  (sort (set (try-all-par))))
 
 ) ; typed/tc-ignore
