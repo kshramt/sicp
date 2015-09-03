@@ -379,3 +379,90 @@
 ; Q. 3.44 No
 ; Q. 3.45 Nesting the same serializer blocks execution.
 ; Q. 3.46 skip
+
+
+(ann test-and-set! [(Atom1 Boolean) -> Boolean])
+(defn test-and-set! [cell]
+  (or @cell
+      (do (reset! cell true)
+          false)))
+
+(ann clear! [(Atom1 Boolean) -> false])
+(defn clear! [cell]
+  (reset! cell false))
+
+
+(ann make-mutex [-> [Kw -> Any]])
+(defn make-mutex []
+  (let [cell (typed/atom :- Boolean false)]
+    (typed/fn [m :- Kw]
+      (case m
+        :acquire
+        (when (test-and-set! cell)
+          (recur :acquire))
+        :release
+        (clear! cell)))))
+
+
+(ann make-serializer (All [a b] [-> [[a * -> b] -> [a * -> b]]]))
+(defn make-serializer []
+  (let [mutex (make-mutex)]
+    (typed/fn [p :- [a * -> b]]
+      (fn [& args]
+        (mutex :acquire)
+        (let [val (apply p args)]
+          (mutex :release)
+          val)))))
+
+
+(ann dec-or-zero [Int -> Int])
+(defn dec-or-zero [n]
+  (ignore-with-unchecked-cast (max (dec n) 0) Int))
+
+
+(ann make-semaphore-3-47-a [Int -> [Kw -> Any]])
+(defn make-semaphore-3-47-a
+  "Q. 3.47-a"
+  [n]
+  {:pre (pos? n)}
+  (let [mutex (make-mutex)
+        i (typed/atom :- Int 0)]
+    (typed/fn [m :- Kw]
+      (case m
+        :acquire
+        (do
+          (mutex :acquire)
+          (if (< @i n)
+            (do (swap! i inc)
+                (mutex :release))
+            (do (mutex :release)
+                ; theis :release is required to allow others to release the semaphore
+                (recur m))))
+        :release
+        (do (mutex :acquire)
+            (swap! i dec-or-zero)
+            (mutex :release))))))
+
+
+(ann make-semaphore-3-47-b [Int -> [Kw -> Any]])
+(defn make-semaphore-3-47-b
+  "Q. 3.47-b"
+  [n]
+  {:pre (pos? n)}
+  (let [cell (typed/atom :- Boolean false)
+        i (typed/atom :- Int 0)]
+    (typed/fn [m :- Kw]
+      (case m
+        :acquire
+        (if (test-and-set! cell)
+          (recur m)
+          (if (< @i n)
+            (do (swap! i inc)
+                (clear! cell))
+            (do (clear! cell)
+                (recur m))))
+        :release
+        (do (if (test-and-set! cell)
+              (recur m)
+              (do (swap! i dec-or-zero)
+                  (clear! cell))))))))
