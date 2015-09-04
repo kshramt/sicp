@@ -248,6 +248,12 @@
   (stream-map * s1 s2))
 
 
+(ann scale-stream (IFn [(Stream Int) Int -> (Stream Int)]
+                       [(Stream Num) Num -> (Stream Num)]))
+(defn scale-stream [stream factor]
+  (stream-map (partial * factor) stream))
+
+
 (ann stream-take (All [a] (IFn [(Option (Stream a)) Int -> (Option (Stream a))]
                                [(Option (Stream a)) Int Int -> (Option (Stream a))])))
 (defn stream-take
@@ -284,4 +290,31 @@
   (-partial-sums s))
 
 
+(ann ^:no-check merge-streams
+     (IFn [(Option (Stream Int)) (Option (Stream Int)) -> (Option (Stream Int))]
+          [(Option (Stream Num)) (Option (Stream Num)) -> (Option (Stream Num))]))
+(defn merge-streams
+  "Q. 3.56"
+  {:test #(let [s (cons-stream 1 (merge-streams
+                                  (scale-stream integers 2)
+                                  (merge-streams
+                                   (scale-stream integers 3)
+                                   (scale-stream integers 5))))]
+            (is (= (to-list (stream-take s 10))
+                   [1 2 3 4 5 6 8 9 10 12])))}
+  [s1 s2]
+  (cond
+    (stream-null? s1) s2
+    (stream-null? s2) s1
+    :else
+    (let [s1car (stream-car s1)
+          s2car (stream-car s2)]
+      (cond
+        (< s1car s2car)
+        (cons-stream s1car (merge-streams (stream-cdr s1) s2))
+        (> s1car s2car)
+        (cons-stream s2car (merge-streams s1 (stream-cdr s2)))
+        :else
+        (cons-stream s1car (merge-streams (stream-cdr s1)
+                                          (stream-cdr s2)))))))
 (clojure.test/run-tests)
