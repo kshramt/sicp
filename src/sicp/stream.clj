@@ -193,3 +193,6 @@
     (stream-ref x 7)))
 ; Q. 3.52 skip
 ) ; typed/tc-ignore
+
+
+; Q. 3.53 2^n
