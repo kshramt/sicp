@@ -4,9 +4,13 @@
    [clojure.core.typed
     :refer [All
             Any
+            ASeq
+            CountRange
+            ExactCount
             IFn
             Int
             Kw
+            NonEmptySeqable
             Num
             Option
             Seqable
@@ -42,17 +46,14 @@
             pef
             sqrt
             ]]
-   ))
+   )
+  (:import [sicp.pair Pair]))
 
 
-(typed/tc-ignore
-(def stream-null? nil?)
+(defalias Stream (TFn [[a :variance :covariant]] [-> nil]))
 
 
-(def the-empty-stream nil)
-
-
-(ann memo-proc (All [a] [[-> a] -> [-> a]]))
+(ann ^:no-check memo-proc (All [a] [[-> a] -> [-> a]]))
 (defn memo-proc [proc]
   (let [already-run? (typed/atom :- Boolean false)
         result (typed/atom :- a nil)]
@@ -68,20 +69,31 @@
   `(memo-proc (typed/fn [] ~exp)))
 
 
-(defn my-force [delayed-object]
-  (delayed-object))
-
-
-;(ann cons-stream (All [a] [a (Seqable a) -> (Stream a)]))
 (defmacro cons-stream [a b]
   `(my-cons ~a (my-delay ~b)))
 
 
-(ann stream-car (All [a] [(Stream a) -> a]))
+(ann ^:no-check stream-null? (All [a] [(Option (Stream a)) -> Boolean
+                                       :filters
+                                       {:then (! (Stream a) 0)
+                                        :else (is (Stream a) 0)}]))
+(def stream-null? nil?)
+
+
+(ann ^:no-check the-empty-stream nil)
+(def the-empty-stream nil)
+
+
+(ann my-force (All [a] [[-> a] -> a]))
+(defn my-force [delayed-object]
+  (delayed-object))
+
+
+(ann ^:no-check stream-car (All [a] [(Stream a) -> a]))
 (def stream-car car)
 
 
-(ann stream-cdr (All [a] [(Stream a) -> a]))
+(ann ^:no-check stream-cdr (All [a] [(Stream a) -> (Option (Stream a))]))
 (def stream-cdr (comp my-force cdr))
 
 
@@ -89,17 +101,24 @@
 (defn stream-ref [s n]
   (if (= n 0)
     (stream-car s)
-    (recur (stream-cdr s) (dec n))))
+    (let [more (stream-cdr s)]
+      (if (stream-null? more)
+        (throw (Exception. (str "out of bound: " n)))
+        (recur more (dec n))))))
 
 
+(ann ^:no-check make-stream (All [a] [a a * -> (Stream a)]))
 (defn make-stream [& xs]
-  (letfn [(impl [s]
-            (if-let [s (seq s)]
-              (cons-stream (first s)
-                           (impl (rest s)))))]
+  (let [impl (typed/fn imp [s :- (Seqable a)]
+               (if-let [s (seq s)]
+                 (cons-stream (first s)
+                              (imp (rest s)))
+                 nil))]
     (impl xs)))
 
 
+(ann ^:no-check to-list (All [a] (IFn [nil -> nil]
+                                      [(Stream a) -> (ASeq a)])))
 (defn to-list [stream]
   (if (stream-null? stream)
     nil
@@ -107,7 +126,7 @@
           (to-list (stream-cdr stream)))))
 
 
-(ann stream-map (All [c a b ...] [[a b ... b -> c] (Stream a) (Stream b) ... b -> (Stream c)]))
+(ann ^:no-check stream-map (All [c a b ...] [[a b ... b -> c] (Stream a) (Stream b) ... b -> (Stream c)]))
 (defn stream-map
   "Q. 3.50"
   {:test #(is (to-list
@@ -125,7 +144,7 @@
              (cons proc (map stream-cdr arguments))))))
 
 
-(ann stream-for-each (All [a b] [[a -> b] (Stream a) -> (Val :done)]))
+(ann stream-for-each (All [a b] [[a -> b] (Option (Stream a)) -> (Val :done)]))
 (defn stream-for-each [proc s]
   (if (stream-null? s)
     :done
@@ -138,7 +157,7 @@
   (stream-for-each println stream))
 
 
-(ann stream-filter [Int Int -> (Stream Int)])
+(ann ^:no-check stream-enumerate-interval [Int Int -> (Option (Stream Int))])
 (defn stream-enumerate-interval [lo hi]
   (if (> lo hi)
     the-empty-stream
@@ -147,7 +166,8 @@
      (stream-enumerate-interval (inc lo) hi))))
 
 
-(ann stream-filter (All [a] [[a -> Boolean] (Stream a) -> (Stream a)]))
+(ann ^:no-check stream-filter (All [a] (IFn [[a -> Boolean] nil -> nil]
+                                            [[a -> Boolean] (Stream a) -> (Stream a)])))
 (defn stream-filter [pred stream]
   (cond
     (stream-null? stream) the-empty-stream
@@ -157,6 +177,7 @@
     :else (recur pred (stream-cdr stream))))
 
 
+(typed/tc-ignore
 (defn q-3-51
   "Q. 3.51"
   []
@@ -164,6 +185,5 @@
     (stream-ref x 5)
     (println "")
     (stream-ref x 7)))
-
 ; Q. 3.52 skip
 ) ; typed/tc-ignore
