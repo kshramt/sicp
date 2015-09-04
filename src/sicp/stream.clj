@@ -195,4 +195,51 @@
 ) ; typed/tc-ignore
 
 
+(ann integers-starting-from [Int -> (Stream Int)])
+(defn integers-starting-from [n]
+  (cons-stream n (integers-starting-from (inc n))))
+
+
+(ann integers (Stream Int))
+(def integers (integers-starting-from 1))
+
+
+(ann ^:no-check divisible? [Int Int -> Boolean])
+(defn divisible? [x y]
+  (zero? (rem x y)))
+
+
+(ann sieve [(Stream Int) -> (Stream Int)])
+(defn sieve [stream]
+  (cons-stream
+   (stream-car stream)
+   (sieve (stream-filter
+           (typed/fn [n :- Int]
+             (not (divisible? n (stream-car stream))))
+           (ignore-with-unchecked-cast
+            (stream-cdr stream)
+            (Stream Int))))))
+
+
+(ann primes (Stream Int))
+(def primes (sieve (integers-starting-from 2)))
+
+
 ; Q. 3.53 2^n
+
+
+(ann add-streams (IFn [(Stream Int) (Stream Int) -> (Stream Int)]
+                      [(Stream Num) (Stream Num) -> (Stream Num)]))
+(defn add-streams [s1 s2]
+  (stream-map + s1 s2))
+
+
+(ann mul-streams (IFn [(Stream Int) (Stream Int) -> (Stream Int)]
+                      [(Stream Num) (Stream Num) -> (Stream Num)]))
+(defn mul-streams [s1 s2]
+  (stream-map * s1 s2))
+
+
+; Q. 3.54
+(ann factorials (Stream Int))
+(def factorials (cons-stream 1 (mul-streams (integers-starting-from 2) factorials)))
