@@ -8,7 +8,18 @@ export SHELLOPTS := errexit:noclobber
 PANDOC := pandoc
 PANDOC_FLAGS := --standalone --mathml --to=html5 --smart --self-contained
 
-NAMES := core ch-2-4 ch-3 pair deque table queue digital-circuit-simulator constraint
+NAMES := \
+   core \
+   ch-2-4 \
+   ch-3 \
+   pair \
+   deque \
+   table \
+   queue \
+   digital-circuit-simulator \
+   constraint \
+   stream
+
 FILE_NAMES := $(subst -,_,$(NAMES))
 
 
