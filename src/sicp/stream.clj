@@ -132,6 +132,14 @@
           (to-list (stream-cdr stream)))))
 
 
+(ann any (All [a] [[a -> Boolean] (Seqable a) -> Boolean]))
+(defn any [pred xs]
+  (if-let [s (seq xs)]
+    (or (pred (first s))
+        (recur pred (rest s)))
+    false))
+
+
 (ann ^:no-check stream-map (All [c a b ...] [[a b ... b -> c] (Stream a) (Stream b) ... b -> (Stream c)]))
 (defn stream-map
   "Q. 3.50"
@@ -142,7 +150,7 @@
                 (make-stream 9 8 7)))
               [10 10 10])}
   [proc & arguments]
-  (if (stream-null? (first arguments))
+  (if (any stream-null? arguments)
     the-empty-stream
     (cons-stream
       (apply proc (map stream-car arguments))
