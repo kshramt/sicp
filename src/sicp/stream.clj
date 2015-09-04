@@ -164,4 +164,6 @@
     (stream-ref x 5)
     (println "")
     (stream-ref x 7)))
+
+; Q. 3.52 skip
 ) ; typed/tc-ignore
