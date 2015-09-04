@@ -466,3 +466,52 @@
               (recur m)
               (do (swap! i dec-or-zero)
                   (clear! cell))))))))
+
+
+(typed/tc-ignore
+
+(let [local-id (typed/atom :- Int 0)]
+  (def gen-id
+    ((make-serializer)
+     (typed/fn []
+       (swap! local-id inc)))))
+
+
+(defn make-account [balance]
+  (let [balance (atom balance)]
+    (letfn [(withdraw [amount]
+              (if (>= balance amount)
+                (reset! balance (- @balance amount))
+                "insufficient funds"))
+            (depoist [amount]
+              (reset! balance (+ @balance amount)))]
+      (let [balance-serializer (make-serializer)
+            id (gen-id)]
+        (fn [m]
+          (case m
+            :withdraw withdraw
+            :depoist depoist
+            :balance @balance
+            :serializer balance-serializer
+            :id id
+            (throw (Exception. (str "unknown reset -- make-account: " m)))))))))
+
+
+(defn exchange [account1 account2]
+  (let [difference (- (account1 :balance)
+                      (account2 :balance))]
+    ((account1 :withdraw) difference)
+    ((account2 :deposit) difference)))
+
+
+(defn serialized-exchange
+  "Q. 3.48"
+  [account1 account2]
+  (let [serializer1 (account1 :serializer)
+        serializer2 (account2 :serializer)
+        exchange (if (< (account1 :id) (account2 :id))
+                   (serializer2 (serializer1 exchange))
+                   (serializer1 (serializer2 exchange)))]
+    (exchange account1 account2)))
+
+) ; typed/tc-ignore
