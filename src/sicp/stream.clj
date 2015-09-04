@@ -317,4 +317,12 @@
         :else
         (cons-stream s1car (merge-streams (stream-cdr s1)
                                           (stream-cdr s2)))))))
-(clojure.test/run-tests)
+
+
+(ann fibs (Stream Int))
+(def fibs (cons-stream 0
+                       (cons-stream 1
+                                    (add-streams (stream-cdr fibs)
+                                                 fibs))))
+
+; Q. 3.57 (max (- n 2) 0)
