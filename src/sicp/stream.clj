@@ -155,4 +155,13 @@
                                             (stream-filter pred
                                                            (stream-cdr stream)))
     :else (recur pred (stream-cdr stream))))
+
+
+(defn q-3-51
+  "Q. 3.51"
+  []
+  (let [x (stream-map println (stream-enumerate-interval 0 10))]
+    (stream-ref x 5)
+    (println "")
+    (stream-ref x 7)))
 ) ; typed/tc-ignore
