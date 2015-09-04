@@ -248,6 +248,40 @@
   (stream-map * s1 s2))
 
 
+(ann stream-take (All [a] (IFn [(Option (Stream a)) Int -> (Option (Stream a))]
+                               [(Option (Stream a)) Int Int -> (Option (Stream a))])))
+(defn stream-take
+  ([s n] (stream-take s n 1))
+  ([s n i]
+   (if (or (> i n) (stream-null? s))
+     the-empty-stream
+     (cons-stream (stream-car s)
+                  (stream-take (stream-cdr s)
+                               n
+                               (inc i))))))
+
 ; Q. 3.54
 (ann factorials (Stream Int))
 (def factorials (cons-stream 1 (mul-streams (integers-starting-from 2) factorials)))
+
+
+(defmacro -partial-sums [s]
+  `(let [s# ~s]
+     (var-get
+      (def name#
+         (cons-stream
+          (stream-car s#)
+          (add-streams name# (stream-cdr s#)))))))
+
+
+(ann ^:no-check partial-sums (IFn [(Stream Int) -> (Stream Int)]
+                                  [(Stream Num) -> (Stream Num)]))
+(defn partial-sums
+  "Q. 3.55"
+  {:test #(is (= (to-list (stream-take (partial-sums integers) 5))
+                 [1 3 6 10 15]))}
+  [s]
+  (-partial-sums s))
+
+
+(clojure.test/run-tests)
