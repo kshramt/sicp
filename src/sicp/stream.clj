@@ -50,6 +50,7 @@
   (:import [sicp.pair Pair]))
 
 
+
 (defalias Stream (TFn [[a :variance :covariant]] [-> nil]))
 
 
@@ -69,8 +70,13 @@
   `(memo-proc (typed/fn [] ~exp)))
 
 
+(ann ^:no-check my-cons-stream (All [a] [a Any -> (Stream a)]))
+(defn my-cons-stream [a b]
+  (my-cons a b))
+
+
 (defmacro cons-stream [a b]
-  `(my-cons ~a (my-delay ~b)))
+  `(my-cons-stream ~a (my-delay ~b)))
 
 
 (ann ^:no-check stream-null? (All [a] [(Option (Stream a)) -> Boolean
@@ -157,7 +163,7 @@
   (stream-for-each println stream))
 
 
-(ann ^:no-check stream-enumerate-interval [Int Int -> (Option (Stream Int))])
+(ann stream-enumerate-interval [Int Int -> (Option (Stream Int))])
 (defn stream-enumerate-interval [lo hi]
   (if (> lo hi)
     the-empty-stream
