@@ -9,7 +9,9 @@
             IFn
             Option
             Pred
+            Rec
             Seqable
+            TFn
             U
             Val
             Var1
@@ -17,6 +19,11 @@
             ]
     :as typed
     ]
+   [clojure.core.typed.unsafe
+    :refer
+    [
+     ignore-with-unchecked-cast
+     ]]
    [sicp.pair
     :refer [
             any?
@@ -29,22 +36,25 @@
             set-cdr!
             ]
     ]
+   [sicp.util
+    :refer [
+            p_
+            pef
+            ]]
    )
   (:import [sicp.pair Pair]))
 
 
-(defmacro pef
-  "print-env-form"
-  [form]
-  `(let [RETURN# ~form
-         _# (typed/print-env ~(str form))]
-     RETURN#))
-
-
-(typed/defalias EmptyDeque Pair)
-(typed/defalias NonEmptyDeque Pair)
-(typed/defalias Deque (U EmptyDeque NonEmptyDeque))
-(typed/defalias DequeNode Pair)
+(typed/defalias EmptyDeque (Pair nil Any))
+(typed/defalias DequeNode (TFn [[a :variance :covariant]]
+                               (Rec [this]
+                                    (Pair a
+                                          (Pair (Option this)
+                                                (Option this))))))
+(typed/defalias NonEmptyDeque (TFn [[a :variance :covariant]] (Pair (DequeNode a)
+                                                                    (DequeNode a))))
+(typed/defalias Deque (TFn [[a :variance :covariant]]
+                           (U EmptyDeque (NonEmptyDeque a))))
 
 
 (ann make-deque [-> EmptyDeque])
@@ -54,50 +64,51 @@
   (my-cons nil nil))
 
 
-(ann make-deque-node [(Option DequeNode) Any (Option DequeNode) -> DequeNode])
+(ann make-deque-node (All [a] [(Option (DequeNode a)) a (Option (DequeNode a)) -> (DequeNode a)]))
 (defn- make-deque-node [l x r]
   (my-cons x (my-cons l r)))
 
 
-(ann val-deque-node [DequeNode -> Any])
+(ann val-deque-node (All [a] [(DequeNode a) -> a]))
 (def val-deque-node car)
 
 
-(ann ^:no-check ptrs-deque-node [DequeNode -> Pair])
+(ann ^:no-check ptrs-deque-node (All [a] [(DequeNode a) -> (Pair (Option (DequeNode a))
+                                                                 (Option (DequeNode a)))]))
 (def ptrs-deque-node cdr)
 
 
-(ann ^:no-check front-node-deque (IFn [EmptyDeque -> nil]
-                                      [NonEmptyDeque -> DequeNode]))
+(ann ^:no-check front-node-deque (All [a] (IFn [EmptyDeque -> nil]
+                                               [(NonEmptyDeque a) -> (DequeNode a)])))
 (def front-node-deque car)
 
 
-(ann ^:no-check rear-node-deque (IFn [EmptyDeque -> nil]
-                                     [NonEmptyDeque -> DequeNode]))
+(ann ^:no-check rear-node-deque (All [a] (IFn [EmptyDeque -> nil]
+                                              [(NonEmptyDeque a) -> (DequeNode a)])))
 (def rear-node-deque cdr)
 
 
-(ann ^:no-check empty-deque? [Deque -> Boolean
-                                :filters {:then (is EmptyDeque 0)
-                                          :else (! EmptyDeque 0)}])
+(ann ^:no-check empty-deque? (All [a] [(Deque a) -> Boolean
+                                       :filters {:then (is EmptyDeque 0)
+                                                 :else (! EmptyDeque 0)}]))
 (def empty-deque? (comp nil? front-node-deque))
 
 
-(ann front-deque [Deque -> Any])
+(ann front-deque (All [a] [(NonEmptyDeque a) -> a]))
 (defn front-deque [q]
   (if (empty-deque? q)
     (throw (Exception. (str "front-deque called for empty deque")))
     (val-deque-node (front-node-deque q))))
 
 
-(ann rear-deque [Deque -> Any])
+(ann rear-deque (All [a] [(NonEmptyDeque a) -> a]))
 (defn rear-deque [q]
   (if (empty-deque? q)
     (throw (Exception. (str "rear-deque called for empty deque")))
     (val-deque-node (rear-node-deque q))))
 
 
-(ann front-insert-deque! [Deque Any -> NonEmptyDeque])
+(ann front-insert-deque! (All [a] [(Deque a) a -> Any]))
 (defn front-insert-deque! [q x]
   (if (empty-deque? q)
     (let [n (make-deque-node nil x nil)]
@@ -106,11 +117,10 @@
     (let [front (front-node-deque q)
           n (make-deque-node nil x front)]
       (set-car! q n)
-      (set-car! (ptrs-deque-node front) n)))
-  q)
+      (set-car! (ptrs-deque-node front) n))))
 
 
-(ann rear-insert-deque! [Deque Any -> NonEmptyDeque])
+(ann rear-insert-deque! (All [a] [(Deque a) a -> Any]))
 (defn rear-insert-deque! [q x]
   (if (empty-deque? q)
     (let [n (make-deque-node nil x nil)]
@@ -119,11 +129,10 @@
     (let [rear (rear-node-deque q)
           n (make-deque-node rear x nil)]
       (set-cdr! q n)
-      (set-cdr! (ptrs-deque-node rear) n)))
-  q)
+      (set-cdr! (ptrs-deque-node rear) n))))
 
 
-(ann front-delete-deque! [Deque -> Any])
+(ann front-delete-deque! (All [a] [(Deque a) -> Any]))
 (defn front-delete-deque! [q]
   (when (not (empty-deque? q))
     (let [front (front-node-deque q)
@@ -131,12 +140,14 @@
       (if (= front rear)
         (do (set-car! q nil)
             (set-cdr! q nil))
-        (let [new-front (cdr (ptrs-deque-node front))]
+        (let [new-front (ignore-with-unchecked-cast
+                         (cdr (ptrs-deque-node front))
+                         (DequeNode a))]
           (set-car! q new-front)
           (set-car! (ptrs-deque-node new-front) nil))))))
 
 
-(ann rear-delete-deque! [Deque -> Any])
+(ann rear-delete-deque! (All [a] [(Deque a) -> Any]))
 (defn rear-delete-deque! [q]
   (when (not (empty-deque? q))
     (let [front (front-node-deque q)
@@ -144,7 +155,9 @@
       (if (= front rear)
         (do (set-car! q nil)
             (set-cdr! q nil))
-        (let [new-rear (car (ptrs-deque-node rear))]
+        (let [new-rear (ignore-with-unchecked-cast
+                        (car (ptrs-deque-node rear))
+                        (DequeNode a))]
           (set-cdr! q new-rear)
           (set-cdr! (ptrs-deque-node new-rear) nil))))))
 

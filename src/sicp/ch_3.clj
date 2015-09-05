@@ -13,11 +13,13 @@
                                         Option
                                         Pred
                                         Seqable
+                                        TFn
                                         Val
                                         Var1
                                         IFn
                                         All
                                         U
+                                        Rec
                                         ] :as typed]
             [clojure.core.typed.unsafe
              :refer
@@ -26,6 +28,7 @@
               ]]
             [sicp.pair
              :refer [
+                     List
                      any?
                      car
                      cdr
@@ -36,6 +39,11 @@
                      set-cdr!
                      ]
              ]
+            [sicp.util
+             :refer [
+                     p_
+                     pef
+                     ]]
             )
   (:import [sicp.pair Pair]))
 
@@ -243,8 +251,17 @@
 ;; rd -> pa
 
 
-(ann count-pairs (IFn [Any -> Int]
-                      [Any Pair -> Pair]))
+(defalias NestedPair (TFn [[a :variance :covariant]]
+                          (Rec [this]
+                               (Pair (U this a)
+                                     (U this a)))))
+
+
+(ann count-pairs (All [a]
+                      (IFn [(U a (NestedPair a)) -> Int]
+                           [(U a (NestedPair a)) (Option (List (NestedPair a)))
+                            ->
+                            (Pair Int (Option (List (NestedPair a))))])))
 (defn count-pairs
   "Q. 3.17"
   {:test #(do (is (= (count-pairs (my-cons 1 2)) 1))
@@ -256,39 +273,42 @@
                     p3 (my-cons p1 p2)
                     _ (set-car! p2 p2)]
                 (is (= (count-pairs p3) 3))))}
-  ([x] (ignore-with-unchecked-cast
-        (car (count-pairs x (my-cons nil nil)))
-        Int))
+  ([x] (car (count-pairs x nil)))
   ([x counted]
    (if (not (pair? x))
      (my-cons 0 counted)
-     (if (any? #(= % x) counted)
+     (if (any? (typed/fn [c :- (Option (NestedPair a))] (= x c)) counted)
        (my-cons 0 counted)
        (let [na-counted (count-pairs (car x) (my-cons x counted))
-             nb-counted (count-pairs (cdr x) (ignore-with-unchecked-cast (cdr na-counted) Pair))]
-         (my-cons (+ (ignore-with-unchecked-cast (car na-counted) Int)
-                     (ignore-with-unchecked-cast (car nb-counted) Int)
+             nb-counted (count-pairs (cdr x) (cdr na-counted))]
+         (my-cons (+ (car na-counted)
+                     (car nb-counted)
                      1)
                   (cdr nb-counted)))))))
 
 
-(ann has-loop?-3-18 (IFn [Pair -> Boolean]
-                         [Pair Pair -> Boolean]))
+(ann ^:no-check ; avoid internal error
+     has-loop?-3-18 (All [a]
+                         (IFn [(List a) -> Boolean]
+                              [(List a) (Option (List (List a))) -> Boolean])))
 (defn has-loop?-3-18
   "Q 3.18"
   {:test #(do (is (not (has-loop?-3-18 (my-list 1 2 3))))
               (is (has-loop?-3-18 (let [l (my-list 1 2 3)
                                         _ (set-cdr! (cdr (cdr l)) l)]
                                     l))))}
-  ([p] (has-loop?-3-18 p (my-cons nil nil)))
+  ([p] (has-loop?-3-18 p nil))
   ([p seen]
-   (or (any? #(= % p) seen)
+   (or (any? (typed/fn [s :- (Option (List a))] (= p s)) seen)
        (let [b (cdr p)]
          (and (pair? b)
               (recur b (my-cons p seen)))))))
 
-(ann has-loop?-3-19 (IFn [Any -> Boolean]
-                         [Any Pair -> Boolean]))
+
+(ann ^:no-check ; avoid internal error
+     has-loop?-3-19 (All [a]
+                         (IFn [(List a) -> Boolean]
+                              [(List a) (List a) -> Boolean])))
 (defn has-loop?-3-19
   "Q 3.19"
   {:test #(do (is (not (has-loop?-3-19 (my-list 1 2 3))))
@@ -304,9 +324,7 @@
             (let [p (cdr p)]
               (and (pair? p)
                    (or (= p seen)
-                       (recur (cdr p) (ignore-with-unchecked-cast
-                                       (cdr seen)
-                                       Pair)))))))))
+                       (recur (cdr p) (cdr seen)))))))))
 
 ; Q. 3.20: skip
 

@@ -28,6 +28,7 @@
      ]]
    [sicp.pair
     :refer [
+            List
             any?
             car
             cdr
@@ -52,6 +53,7 @@
    [sicp.util
     :refer [
             p_
+            pef
             ]]
    )
   (:import [sicp.pair Pair]))
@@ -62,13 +64,13 @@
 (defalias Wire (IFn [(Val :get-signal) -> Signal]
                     [(Val :set-signal!) -> [Signal -> (Option (Val :done))]]
                     [(Val :add-action!) -> [Action -> Any]]))
-(defalias EmptyAgenda Pair)
-(defalias NonEmptyAgenda Pair)
-(defalias Agenda (U EmptyAgenda NonEmptyAgenda))
-(defalias Segment Pair)
-(defalias Segments Pair)
-(defalias ActionQueue Queue)
 (defalias Time Int)
+(defalias ActionQueue (Queue Action))
+(defalias Segment (Pair Time ActionQueue))
+(defalias Segments (List Segment))
+(defalias EmptyAgenda (Pair Time nil))
+(defalias NonEmptyAgenda (Pair Time Segments))
+(defalias Agenda (U EmptyAgenda NonEmptyAgenda))
 
 
 (ann make-segment [Time ActionQueue -> Segment])
@@ -97,7 +99,8 @@
 
 
 (ann ^:no-check segments (IFn [EmptyAgenda -> nil]
-                              [NonEmptyAgenda -> Segments]))
+                              [NonEmptyAgenda -> Segments]
+                              [Agenda -> (Option Segments)]))
 (def segments cdr)
 
 
@@ -164,7 +167,8 @@
       (set-segments! agenda (rest-segments agenda)))))
 
 
-(ann first-agenda-item [Agenda -> (Option Action)])
+(ann first-agenda-item (IFn [EmptyAgenda -> nil]
+                            [NonEmptyAgenda -> Action]))
 (defn first-agenda-item [agenda]
   (if (empty-agenda? agenda)
     (throw (Exception. (str "Agenda is empty -- first-agenda-item")))
@@ -198,12 +202,14 @@
 
 (ann propagate [-> (Val :done)])
 (defn propagate []
-  (if (empty-agenda? the-agenda)
-    :done
-    (do
-      ((first-agenda-item the-agenda))
-      (remove-first-agenda-item! the-agenda)
-      (recur))))
+  (let [impl (typed/fn [a :- Agenda]
+               (if (empty-agenda? a)
+                 :done
+                 (do
+                   ((first-agenda-item a))
+                   (remove-first-agenda-item! a)
+                   (recur a))))]
+    (impl the-agenda)))
 
 
 (ann call-each [(Seqable [-> Any]) -> (Val :done)])

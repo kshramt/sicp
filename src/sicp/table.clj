@@ -24,6 +24,7 @@
      ]]
    [sicp.pair
     :refer [
+            List
             any?
             car
             cdr
@@ -38,14 +39,15 @@
   (:import [sicp.pair Pair]))
 
 
-(ann assoc-table (IFn [Pair Any -> Any]
-                      [Pair Any [Any Any -> Boolean] -> Any]))
+(ann assoc-table (All [a b]
+                      (IFn [(List (Pair a b)) Any -> Any]
+                           [(List (Pair a b)) Any [Any Any -> Boolean] -> Any])))
 (defn- assoc-table
   ([records key] (assoc-table records key =))
   ([records key same-key?]
    (cond (nil? records) false
          (same-key? key (caar records)) (car records)
-         :else (recur (ignore-with-unchecked-cast (cdr records) Pair) key same-key?))))
+         :else (recur (cdr records) key same-key?))))
 
 
 (typed/defalias Table [Kw -> [Any * -> Any]])

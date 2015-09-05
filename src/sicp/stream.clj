@@ -13,6 +13,7 @@
             NonEmptySeqable
             Num
             Option
+            Rec
             Seqable
             TFn
             U
@@ -51,7 +52,7 @@
 
 
 
-(defalias Stream (TFn [[a :variance :covariant]] [-> nil]))
+(defalias Stream (TFn [[a :variance :covariant]] (Rec [this] (Pair a [-> (Option this)]))))
 
 
 (ann ^:no-check memo-proc (All [a] [[-> a] -> [-> a]]))
@@ -322,7 +323,9 @@
 (ann fibs (Stream Int))
 (def fibs (cons-stream 0
                        (cons-stream 1
-                                    (add-streams (stream-cdr fibs)
+                                    (add-streams (ignore-with-unchecked-cast
+                                                  (stream-cdr fibs)
+                                                  (Stream Int))
                                                  fibs))))
 
 ; Q. 3.57 (max (- n 2) 0)
