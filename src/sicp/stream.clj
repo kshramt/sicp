@@ -274,15 +274,6 @@
 (def factorials (cons-stream 1 (mul-streams (integers-starting-from 2) factorials)))
 
 
-(defmacro -partial-sums [s]
-  `(let [s# ~s]
-     (var-get
-      (def name#
-         (cons-stream
-          (stream-car s#)
-          (add-streams name# (stream-cdr s#)))))))
-
-
 (ann ^:no-check partial-sums (IFn [(Stream Int) -> (Stream Int)]
                                   [(Stream Num) -> (Stream Num)]))
 (defn partial-sums
@@ -290,7 +281,12 @@
   {:test #(is (= (to-list (stream-take (partial-sums integers) 5))
                  [1 3 6 10 15]))}
   [s]
-  (-partial-sums s))
+  (let [ret (cons-stream (stream-car s)
+                         nil)]
+    (set-cdr! ret (my-delay ; todo: better way?
+                   (add-streams ret
+                                (stream-cdr s))))
+    ret))
 
 
 (ann ^:no-check merge-streams
