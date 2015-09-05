@@ -375,12 +375,12 @@
                  [1 0 0 0 0 0 0 0 0 0]))}
   [s1 s2]
   (let [s1car (stream-car s1)
-        s2car (stream-car s2)
-        s1cdr (stream-cdr s1)
-        s2cdr (stream-cdr s2)]
+        s2car (stream-car s2)]
     (cons-stream (* s1car
                     s2car)
-                 (add-streams (add-streams (scale-stream s1cdr s2car)
-                                           (scale-stream s2cdr s1car))
-                              (cons-stream 0
-                                           (mul-series s1cdr s2cdr))))))
+                 (let [s1cdr (stream-cdr s1)
+                       s2cdr (stream-cdr s2)]
+                   (add-streams (add-streams (scale-stream s1cdr s2car)
+                                             (scale-stream s2cdr s1car))
+                                (cons-stream 0
+                                             (mul-series s1cdr s2cdr)))))))
