@@ -274,6 +274,19 @@
 (def factorials (cons-stream 1 (mul-streams (integers-starting-from 2) factorials)))
 
 
+(defmacro def-stream
+  ([name head body]
+   `(let [~name (cons-stream ~head nil)]
+      (set-cdr! ~name (my-delay
+                       ~body))
+      ~name))
+  ([name head body t]
+   `(let [~name (ignore-with-unchecked-cast (cons-stream ~head nil) ~t)]
+      (set-cdr! ~name (my-delay
+                       ~body))
+      ~name)))
+
+
 (ann ^:no-check partial-sums (IFn [(Stream Int) -> (Stream Int)]
                                   [(Stream Num) -> (Stream Num)]))
 (defn partial-sums
@@ -281,12 +294,9 @@
   {:test #(is (= (to-list (stream-take (partial-sums integers) 5))
                  [1 3 6 10 15]))}
   [s]
-  (let [ret (cons-stream (stream-car s)
-                         nil)]
-    (set-cdr! ret (my-delay ; todo: better way?
-                   (add-streams ret
-                                (stream-cdr s))))
-    ret))
+  (def-stream ret (stream-car s)
+    (add-streams ret
+                 (stream-cdr s))))
 
 
 (ann ^:no-check merge-streams
@@ -415,20 +425,14 @@
   {:test #(is (= (to-list (stream-take (invert-unit-series (make-stream 1 2 3)) 5))
                  [1 -2 1 4 -11]))}
   [s]
-  (let [ret (cons-stream 1 nil)]
-    (set-cdr! ret (my-delay
-                   (stream-cdr
-                    (cons-stream
-                     1
-                     (scale-stream
-                      (mul-series (stream-cdr s)
-                                  (ignore-with-unchecked-cast
-                                   ret
-                                   (Stream Num)))
-                      -1)))))
-    (ignore-with-unchecked-cast
-     ret
-     (Stream Num))))
+  (def-stream ret 1
+    (stream-cdr
+     (cons-stream
+      1
+      (scale-stream
+       (mul-series (stream-cdr s) ret)
+       -1)))
+    (Stream Num)))
 
 
 (ann div-series [(Stream Num) (Stream Num) -> (Stream Num)])
