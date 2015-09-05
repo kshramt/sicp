@@ -18,10 +18,7 @@
 (typed/override-method clojure.lang.Numbers/remainder (IFn [Int Int -> Int]
                                                            [Num Num -> Num]))
 (typed/override-method clojure.lang.Numbers/isNeg [Num -> Boolean])
-
-
-(ann ^:no-check sqrt [Num -> Num])
-(def sqrt clojure.math.numeric-tower/sqrt)
+(ann ^:no-check clojure.math.numeric-tower/sqrt [Num -> Num])
 
 
 (defmacro p_ [x]

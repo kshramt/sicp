@@ -31,11 +31,15 @@
     [
      ignore-with-unchecked-cast
      ]]
+   [clojure.math.numeric-tower
+    :refer
+    [
+     sqrt
+     ]]
    [sicp.util
     :refer [
             p_
             pef
-            sqrt
             ]]
    ))
 
