@@ -355,3 +355,33 @@
 (declare sine-series)
 (ann cosine-series (Stream Num))
 (def cosine-series (cons-stream 1 (scale-stream (integrate-series sine-series) -1)))
+
+
+(ann sine-series (Stream Num))
+(def sine-series (cons-stream 0 (integrate-series cosine-series)))
+
+
+(ann ^:no-check mul-series (IFn [(Stream Int) (Stream Int) -> (Stream Int)]
+                                [(Stream Num) (Stream Num)-> (Stream Num)]))
+(defn mul-series
+  "Q. 3.60"
+  {:test #(is (= (to-list
+                  (stream-take
+                   (add-streams
+                    (mul-series cosine-series
+                                cosine-series)
+                    (mul-series sine-series
+                                sine-series))
+                   10))
+                 [1 0 0 0 0 0 0 0 0 0]))}
+  [s1 s2]
+  (let [s1car (stream-car s1)
+        s2car (stream-car s2)
+        s1cdr (stream-cdr s1)
+        s2cdr (stream-cdr s2)]
+    (cons-stream (* s1car
+                    s2car)
+                 (add-streams (add-streams (scale-stream s1cdr s2car)
+                                           (scale-stream s2cdr s1car))
+                              (cons-stream 0
+                                           (mul-series s1cdr s2cdr))))))
