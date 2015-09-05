@@ -41,11 +41,15 @@
             set-cdr!
             ]
     ]
+   [clojure.math.numeric-tower
+    :refer
+    [
+     abs
+     ]]
    [sicp.util
     :refer [
             p_
             pef
-            sqrt
             ]]
    )
   (:import [sicp.pair Pair]))
@@ -142,6 +146,7 @@
 
 
 (ann ^:no-check stream-map (All [c a b ...] (IFn [[a * -> c] nil -> nil]
+                                                 [[a -> c] (Stream a) -> (Stream c)]
                                                  [[a b ... b -> c] (Stream a) (Stream b) ... b -> (Stream c)])))
 (defn stream-map
   "Q. 3.50"
@@ -453,4 +458,74 @@
          inv-den-0)))))
 
 
+(ann square (IFn [Int -> Int]
+                 [Num -> Num]))
+(defn square [x]
+  (* x x))
+
+
+(ann average [Num Num -> Num])
+(defn average [x y]
+  (/ (+ x y) 2))
+
+
+(ann sqrt-improve [Num Num -> Num])
+(defn sqrt-improve [guess x]
+  (average guess (/ x guess)))
+
+
+(ann sqrt-stream [Num -> (Stream Num)])
+(defn sqrt-stream [x]
+  (def-stream ret 1
+    (stream-map (typed/fn [guess :- Num] (sqrt-improve guess x))
+                ret)))
+
+
+(ann pi-summands [Int -> (Stream Num)])
+(defn pi-summands [n]
+  (cons-stream (/ 1 n)
+               (stream-map - (pi-summands (+ n 2)))))
+
+
+(ann pi-stream (Stream Num))
+(def pi-stream (scale-stream (partial-sums (pi-summands 1)) 4))
+
+
+(ann euler-transform [(Stream Num) -> (Stream Num)])
+(defn euler-transform [s]
+  (let [s0 (stream-ref s 0)
+        s1 (stream-ref s 1)
+        s2 (stream-ref s 2)]
+    (cons-stream (- s2 (/ (square (- s2 s1))
+                          (+ s0 (* -2 s1) s2)))
+                 (euler-transform (ignore-with-unchecked-cast
+                                   (stream-cdr s)
+                                   (Stream Num))))))
+
+
+(ann make-tableau [[(Stream Num) -> (Stream Num)] (Stream Num) -> (Stream (Stream Num))])
+(defn make-tableau [transform s]
+  (cons-stream s
+               (make-tableau transform
+                             (transform s))))
+
+(ann ^:no-check accelerated-sequence [[(Stream Num) -> (Stream Num)] (Stream Num) -> (Stream Num)])
+(defn accelerated-sequence [transform s]
+  (stream-map stream-car
+              (make-tableau transform s)))
+
+
 ; Q. 3.63 No
+
+
+(ann stream-limit [(Stream Num) Num -> Num])
+(defn stream-limit
+  "Q. 3.64"
+  [s tol]
+  (let [s1 (stream-ref s 0)
+        s2 (stream-ref s 1)]
+    (if (< (abs (- s1 s2)) tol)
+      s2
+      (recur (ignore-with-unchecked-cast
+              (stream-cdr s)
+              (Stream Num)) tol))))
