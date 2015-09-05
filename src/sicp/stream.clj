@@ -338,3 +338,20 @@
   (cons-stream
    (quot (* num radix) den)
    (expand (rem (* num radix) den) den radix)))
+
+
+(ann integrate-series [(Stream Num) -> (Stream Num)])
+(defn integrate-series
+  "Q. 3.59-a"
+  [s]
+  (stream-map (typed/fn [a :- Num k :- Num] (/ a k)) s integers))
+
+
+(ann exp-series (Stream Num))
+(def exp-series (cons-stream 1 (integrate-series exp-series)))
+
+
+; Q 3.59-b
+(declare sine-series)
+(ann cosine-series (Stream Num))
+(def cosine-series (cons-stream 1 (scale-stream (integrate-series sine-series) -1)))
