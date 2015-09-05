@@ -213,7 +213,7 @@
 (def integers (integers-starting-from 1))
 
 
-(ann ^:no-check divisible? [Int Int -> Boolean])
+(ann divisible? [Int Int -> Boolean])
 (defn divisible? [x y]
   (zero? (rem x y)))
 

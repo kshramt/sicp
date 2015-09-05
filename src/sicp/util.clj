@@ -2,6 +2,8 @@
   (:require
    [clojure.core.typed
     :refer [
+            IFn
+            Int
             Num
             ann
             ]
@@ -12,6 +14,9 @@
    )
   )
 
+
+(typed/override-method clojure.lang.Numbers/remainder (IFn [Int Int -> Int]
+                                                           [Num Num -> Num]))
 
 (ann ^:no-check sqrt [Num -> Num])
 (def sqrt clojure.math.numeric-tower/sqrt)
