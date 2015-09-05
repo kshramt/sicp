@@ -415,7 +415,7 @@
   {:test #(is (= (to-list (stream-take (invert-unit-series (make-stream 1 2 3)) 5))
                  [1 -2 1 4 -11]))}
   [s]
-  (let [ret (my-cons 1 nil)]
+  (let [ret (cons-stream 1 nil)]
     (set-cdr! ret (my-delay
                    (stream-cdr
                     (cons-stream
