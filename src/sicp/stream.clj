@@ -329,3 +329,12 @@
                                                  fibs))))
 
 ; Q. 3.57 (max (- n 2) 0)
+
+
+(ann expand [Int Int Int -> (Stream Int)])
+(defn expand
+  "Q. 3.58 (num/den)_radix"
+  [num den radix]
+  (cons-stream
+   (quot (* num radix) den)
+   (expand (rem (* num radix) den) den radix)))
