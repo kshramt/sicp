@@ -359,9 +359,27 @@
 (def sine-series (cons-stream 0 (integrate-series cosine-series)))
 
 
+(ann concat-streams (All [a] (IFn [nil nil -> nil]
+                                  [nil (Stream a) -> (Stream a)]
+                                  [(Stream a) nil -> (Stream a)]
+                                  [(Stream a) (Stream a) -> (Stream a)]
+                                  [(Option (Stream a)) (Option (Stream a)) -> (Option (Stream a))])))
+(defn ^:no-check concat-streams [s1 s2]
+  (if (stream-null? s1)
+    s2
+    (cons-stream (stream-car s1)
+                 (concat-streams (stream-cdr s1)
+                                 s2))))
+
+
+(ann stream-repeat (All [a] [a -> (Stream a)]))
+(defn stream-repeat [x]
+  (cons-stream x (stream-repeat x)))
+
+
 (ann ^:no-check
-     mul-series (IFn [(Stream Int) (Stream Int) -> (Stream Int)]
-                     [(Stream Num) (Stream Num)-> (Stream Num)]))
+     mul-series (IFn [(Option (Stream Int)) (Option (Stream Int)) -> (Stream Int)]
+                     [(Option (Stream Num)) (Option (Stream Num)) -> (Stream Num)]))
 (defn mul-series
   "Q. 3.60"
   {:test #(is (= (to-list
@@ -374,13 +392,40 @@
                    10))
                  [1 0 0 0 0 0 0 0 0 0]))}
   [s1 s2]
-  (let [s1car (stream-car s1)
-        s2car (stream-car s2)]
-    (cons-stream (* s1car
-                    s2car)
-                 (let [s1cdr (stream-cdr s1)
-                       s2cdr (stream-cdr s2)]
-                   (add-streams (add-streams (scale-stream s1cdr s2car)
-                                             (scale-stream s2cdr s1car))
-                                (cons-stream 0
-                                             (mul-series s1cdr s2cdr)))))))
+  (letfn> [impl :- (IFn [(Stream Int) (Stream Int) -> (Stream Int)]
+                        [(Stream Num) (Stream Num)-> (Stream Num)])
+           (impl [s1 s2]
+                 (let [s1car (stream-car s1)
+                       s2car (stream-car s2)]
+                   (cons-stream (* s1car
+                                   s2car)
+                                (let [s1cdr (stream-cdr s1)
+                                      s2cdr (stream-cdr s2)]
+                                  (add-streams (add-streams (scale-stream s1cdr s2car)
+                                                            (scale-stream s2cdr s1car))
+                                               (cons-stream 0
+                                                            (mul-series s1cdr s2cdr)))))))]
+    (impl (concat-streams s1 (stream-repeat 0))
+          (concat-streams s2 (stream-repeat 0)))))
+
+
+(ann invert-unit-series [(Stream Num) -> (Stream Num)])
+(defn invert-unit-series
+  "Q. 3.61"
+  {:test #(is (= (to-list (stream-take (invert-unit-series (make-stream 1 2 3)) 5))
+                 [1 -2 1 4 -11]))}
+  [s]
+  (let [ret (my-cons 1 nil)]
+    (set-cdr! ret (my-delay
+                   (stream-cdr
+                    (cons-stream
+                     1
+                     (scale-stream
+                      (mul-series (stream-cdr s)
+                                  (ignore-with-unchecked-cast
+                                   ret
+                                   (Stream Num)))
+                      -1)))))
+    (ignore-with-unchecked-cast
+     ret
+     (Stream Num))))
