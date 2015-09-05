@@ -451,3 +451,6 @@
                      (invert-unit-series
                       (scale-stream den inv-den-0)))
          inv-den-0)))))
+
+
+; Q. 3.63 No
