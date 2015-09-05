@@ -429,3 +429,21 @@
     (ignore-with-unchecked-cast
      ret
      (Stream Num))))
+
+
+(ann div-series [(Stream Num) (Stream Num) -> (Stream Num)])
+(defn div-series
+  "Q. 3.62"
+  {:test #(is (= (to-list
+                  (stream-take (div-series sine-series cosine-series) 12))
+                 [0 1 0 1/3 0 2/15 0 17/315 0 62/2835 0 1382/155925]))}
+  [num den]
+  (let [den-0 (stream-car den)]
+    (if (zero? den-0)
+      (throw (Exception. (str "den-0 should not be 0: " den)))
+      (let [inv-den-0 (/ 1 den-0)]
+        (scale-stream
+         (mul-series num
+                     (invert-unit-series
+                      (scale-stream den inv-den-0)))
+         inv-den-0)))))
