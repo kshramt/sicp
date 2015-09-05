@@ -30,6 +30,12 @@
              [
               ignore-with-unchecked-cast
               ]]
+            [sicp.util
+             :refer
+             [
+              p_
+              pef
+              ]]
             ;:verbose
             )
   (:import [clojure.lang LazySeq])
@@ -41,8 +47,6 @@
                                          [(Seqable Any) -> Boolean :filters {:then (is EmptyCount 0), :else (is NonEmptyCount 0)}]
                                          [(Option (Seqable Any)) -> Boolean :filters {:then (is (U nil EmptyCount) 0), :else (is NonEmptyCount 0)}]
                                          ))
-(typed/override-method clojure.lang.Numbers/remainder (IFn [Int Int -> Int]
-                                                          [Num Num -> Num]))
 (typed/override-method clojure.lang.Numbers/addP (IFn [Int Int -> Int]
                                                      [Num Num -> Num]))
 (typed/override-method clojure.lang.Numbers/minusP (IFn [Int * -> Int]
@@ -72,19 +76,6 @@
                                              :fail Int}])
 (ann ^:no-check clojure.math.numeric-tower/ceil [Num -> Num])
 (ann ^:no-check clojure.math.numeric-tower/sqrt [Num -> Num])
-
-(defmacro p_ [x]
-  `(let [x# ~x]
-     (println ~(str &form))
-     (clojure.pprint/pprint x#)
-     x#))
-
-(defmacro pef
-  "print-env-form"
-  [form]
-  `(let [RETURN# ~form
-         _# (typed/print-env ~(str form))]
-     RETURN#))
 
 (ann twice (IFn [Int -> Int]
                [Num -> Num]))
