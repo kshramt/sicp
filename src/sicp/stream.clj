@@ -141,7 +141,8 @@
     false))
 
 
-(ann ^:no-check stream-map (All [c a b ...] [[a b ... b -> c] (Stream a) (Stream b) ... b -> (Stream c)]))
+(ann ^:no-check stream-map (All [c a b ...] (IFn [[a * -> c] nil -> nil]
+                                                 [[a b ... b -> c] (Stream a) (Stream b) ... b -> (Stream c)])))
 (defn stream-map
   "Q. 3.50"
   {:test #(is (to-list
@@ -249,7 +250,8 @@
   (stream-map * s1 s2))
 
 
-(ann scale-stream (IFn [(Stream Int) Int -> (Stream Int)]
+(ann scale-stream (IFn [nil Num -> nil]
+                       [(Stream Int) Int -> (Stream Int)]
                        [(Stream Num) Num -> (Stream Num)]))
 (defn scale-stream [stream factor]
   (stream-map (partial * factor) stream))
@@ -361,8 +363,9 @@
 (def sine-series (cons-stream 0 (integrate-series cosine-series)))
 
 
-(ann ^:no-check mul-series (IFn [(Stream Int) (Stream Int) -> (Stream Int)]
-                                [(Stream Num) (Stream Num)-> (Stream Num)]))
+(ann ^:no-check
+     mul-series (IFn [(Stream Int) (Stream Int) -> (Stream Int)]
+                     [(Stream Num) (Stream Num)-> (Stream Num)]))
 (defn mul-series
   "Q. 3.60"
   {:test #(is (= (to-list
