@@ -173,7 +173,6 @@
           (IFn [[a -> c] nil -> nil]
                [[a -> c] (FiniteStream a) -> (FiniteStream c)]
                [[a -> c] (InfiniteStream a) -> (InfiniteStream c)]
-               [[a -> c] (Stream a) -> (Stream c)]
                [[a a -> c] (InfiniteStream a) (InfiniteStream a) -> (InfiniteStream c)]
                [[a b ... b -> c] (FiniteStream a) (FiniteStream b) ... b -> (FiniteStream c)]
                [[a b ... b -> c] (InfiniteStream a) (FiniteStream b) ... b -> (FiniteStream c)]
@@ -347,7 +346,7 @@
       ~name)))
 
 
-(ann partial-sums (IFn [(FiniteStream Int) -> (FiniteStream Int)]
+(ann ^:no-check partial-sums (IFn [(FiniteStream Int) -> (FiniteStream Int)]
                                   [(FiniteStream Num) -> (FiniteStream Num)]
                                   [(InfiniteStream Int) -> (InfiniteStream Int)]
                                   [(InfiniteStream Num) -> (InfiniteStream Num)]))
