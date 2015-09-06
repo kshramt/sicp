@@ -49,6 +49,7 @@
     :refer
     [
      abs
+     sqrt
      ]]
    [sicp.util
     :refer [
