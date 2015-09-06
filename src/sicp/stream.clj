@@ -174,6 +174,7 @@
                [[a -> c] (FiniteStream a) -> (FiniteStream c)]
                [[a -> c] (InfiniteStream a) -> (InfiniteStream c)]
                [[a -> c] (Stream a) -> (Stream c)]
+               [[a a -> c] (InfiniteStream a) (InfiniteStream a) -> (InfiniteStream c)]
                [[a b ... b -> c] (FiniteStream a) (FiniteStream b) ... b -> (FiniteStream c)]
                [[a b ... b -> c] (InfiniteStream a) (FiniteStream b) ... b -> (FiniteStream c)]
                [[a b ... b -> c] (FiniteStream a) (InfiniteStream b) ... b -> (FiniteStream c)]
@@ -779,5 +780,32 @@
                                                  (* 3 j)
                                                  (* 5 i j)))
                                             s s)))
+
+
+(ann ^:no-check ramanujan-number (InfiniteStream Int))
+(def ramanujan-number
+  "Q. 3.71"
+  (let [p-tri (typed/fn [p :- (Pair Int (Pair Int nil))]
+                (let  [i (car p)
+                       j (cadr p)]
+                  (+ (* i i i)
+                     (* j j j))))]
+    (stream-map
+     (typed/fn [pp :- (Pair (Pair Int (Pair Int nil))
+                            (Pair Int (Pair Int nil)))]
+       (p-tri (car pp)))
+     (stream-filter
+      (typed/fn [pp :- (Pair (Pair Int (Pair Int nil))
+                             (Pair Int (Pair Int nil)))]
+        (= (p-tri (car pp))
+           (p-tri (cdr pp))))
+      (let [s (weighted-pairs
+               (typed/fn [i :- Int j :- Int]
+                 (+ (* i i i)
+                    (* j j j)))
+               integers
+               integers)]
+        (stream-map my-cons s (stream-cdr s)))))))
+; (display-stream (stream-take ramanujan-number 6))
 
 
