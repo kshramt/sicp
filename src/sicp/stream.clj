@@ -676,3 +676,14 @@
          (stream-map (typed/fn [x :- b] (my-cons s0 x)) t-)
          (stream-map (typed/fn [x :- a] (my-cons x t0)) s-))
         (pairs-3-67 s- t-))))))
+
+
+; Q. 3.68 infinite recursive call
+;; (ann pairs-3-68 (All [a b] [(InfiniteStream a) (InfiniteStream b) -> (InfiniteStream (Pair a b))]))
+;; (defn pairs-3-68
+;;   [s t]
+;;   (stream-interleave
+;;    (stream-map (typed/fn [x :- b] (my-cons (stream-car s) x))
+;;                t)
+;;    (pairs-3-68 (stream-cdr s)
+;;                (stream-cdr t))))
