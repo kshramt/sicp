@@ -732,3 +732,52 @@
                          (triples integers integers integers)))
 
 
+(ann merge-weighted (All [a] [[a -> Num] (InfiniteStream a) (InfiniteStream a) -> (InfiniteStream a)]))
+(defn merge-weighted
+  [weight s1 s2]
+  (cond
+    (stream-null? s1) s2
+    (stream-null? s2) s1
+    :else_
+    (let [s1car (stream-car s1)
+          s2car (stream-car s2)
+          w1 (weight s1car)
+          w2 (weight s2car)]
+      (if (< w1 w2)
+        (cons-stream s1car (merge-weighted weight (stream-cdr s1) s2))
+        (cons-stream s2car (merge-weighted weight s1 (stream-cdr s2)))))))
+
+
+(ann weighted-pairs
+     (All [a b]
+          [[a b -> Num] (InfiniteStream a) (InfiniteStream b)
+           ->
+           (InfiniteStream (Pair a (Pair b nil)))]))
+(defn weighted-pairs [weight s t]
+  (let [s0 (stream-car s)
+        t0 (stream-car t)]
+    (cons-stream
+     (my-cons s0 (my-cons t0 nil))
+     (let [t- (stream-cdr t)]
+       (merge-weighted (typed/fn [p :- (Pair a (Pair b nil))] (weight (car p) (cadr p)))
+                       (stream-map (typed/fn [x :- b] (my-cons s0 (my-cons x nil))) t-)
+                       (weighted-pairs weight (stream-cdr s) t-))))))
+
+
+(ann q-3-70-a (InfiniteStream (Pair Int (Pair Int nil))))
+(def q-3-70-a "Q. 3.70-a" (weighted-pairs + integers integers))
+
+
+(ann q-3-70-b (InfiniteStream (Pair Int (Pair Int nil))))
+(def q-3-70-b "Q. 3.70-b" (let [s (stream-filter (typed/fn [x :- Int]
+                                                   (not (or (divisible? x 2)
+                                                            (divisible? x 3)
+                                                            (divisible? x 5))))
+                                                 integers)]
+                            (weighted-pairs (typed/fn [i :- Int j :- Int]
+                                              (+ (* 2 i)
+                                                 (* 3 j)
+                                                 (* 5 i j)))
+                                            s s)))
+
+
