@@ -35,6 +35,8 @@
             List
             any?
             car
+            cadr
+            cddr
             cdr
             my-cons
             my-list
@@ -644,13 +646,20 @@
                  (stream-interleave s2 (stream-cdr s1)))))
 
 
-(ann pairs (All [a] [(InfiniteStream a) (InfiniteStream a) -> (InfiniteStream (List a))]))
+(ann pairs (All [a b] [(InfiniteStream a) (InfiniteStream b) -> (InfiniteStream (Pair a (Pair b nil)))]))
 (defn pairs [s t]
   (cons-stream
-   (my-list (stream-car s)
-            (stream-car t))
+   (my-cons
+    (stream-car s)
+    (my-cons
+     (stream-car t)
+     nil))
    (stream-interleave
-    (stream-map (typed/fn [x :- a] (my-list (stream-car s) x))
+    (stream-map (typed/fn [x :- b] (my-cons
+                                    (stream-car s)
+                                    (my-cons
+                                     x
+                                     nil)))
                 (stream-cdr t))
     (pairs (stream-cdr s)
            (stream-cdr t)))))
@@ -662,20 +671,24 @@
 ; (100 . 100) 2^100 - 1
 
 
-(ann pairs-3-67 (All [a] [(InfiniteStream a) (InfiniteStream a) -> (InfiniteStream (List a))]))
+(ann pairs-3-67 (All [a b] [(InfiniteStream a) (InfiniteStream b) -> (InfiniteStream (Pair a (Pair b nil)))]))
 (defn pairs-3-67
   "Q. 3.67"
   [s t]
   (let [s0 (stream-car s)
         t0 (stream-car t)]
     (cons-stream
-     (my-list s0 t0)
+     (my-cons
+      s0
+      (my-cons
+       t0
+       nil))
      (let [s- (stream-cdr s)
            t- (stream-cdr t)]
        (stream-interleave
         (stream-interleave
-         (stream-map (typed/fn [x :- a] (my-list s0 x)) t-)
-         (stream-map (typed/fn [x :- a] (my-list x t0)) s-))
+         (stream-map (typed/fn [x :- b] (my-cons s0 (my-cons x nil))) t-)
+         (stream-map (typed/fn [x :- a] (my-cons x (my-cons t0 nil))) s-))
         (pairs-3-67 s- t-))))))
 
 
@@ -688,3 +701,34 @@
 ;;                t)
 ;;    (pairs-3-68 (stream-cdr s)
 ;;                (stream-cdr t))))
+
+
+(ann triples (All [a b c]
+                  [(InfiniteStream a) (InfiniteStream b) (InfiniteStream c)
+                   ->
+                   (InfiniteStream (Pair a (Pair b (Pair c nil))))]))
+(defn triples
+  "Q. 3.69"
+  [s t u]
+  (let [s0tu (stream-map (typed/fn [tu :- (Pair b (Pair c nil))]
+                          (my-cons (stream-car s)
+                                   tu))
+                        (pairs t u))]
+    (cons-stream
+     (stream-car s0tu)
+     (stream-interleave
+      (stream-cdr s0tu)
+      (triples (stream-cdr s)
+               (stream-cdr t)
+               (stream-cdr u))))))
+
+
+(ann pythagoras-triples (InfiniteStream (Pair Int (Pair Int (Pair Int nil)))))
+(def pythagoras-triples (stream-filter
+                         (typed/fn [l :- (Pair Int (Pair Int (Pair Int nil)))]
+                           (= (+ (square (car l))
+                                 (square (cadr l)))
+                              (square (car (cddr l)))))
+                         (triples integers integers integers)))
+
+
