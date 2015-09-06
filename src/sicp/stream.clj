@@ -876,11 +876,14 @@
 ; Q. 3.75 skip
 
 
-(ann smooth [(InfiniteStream Num) -> (InfiniteStream Int)])
+(ann smooth [(InfiniteStream Num) -> (InfiniteStream Num)])
 (defn smooth
   "Q. 3.76"
   [input-stream]
-  (stream-map (typed/fn [x y] (/ (+ x y) 2)) input-stream (stream-cdr input-stream)))
+  (stream-map
+   (typed/fn [x :- Num y :- Num] (/ (+ x y) 2))
+   input-stream
+   (stream-cdr input-stream)))
 
 
 (ann make-zero-crossings-3-76 [(InfiniteStream Num) -> (InfiniteStream Int)])
