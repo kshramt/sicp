@@ -870,3 +870,6 @@
   "Q. 3.74"
   [input-stream]
   (stream-map sign-change-detector input-stream (stream-cdr input-stream)))
+
+
+; Q. 3.75 skip
