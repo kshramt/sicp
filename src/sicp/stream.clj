@@ -809,3 +809,6 @@
 ; (display-stream (stream-take ramanujan-number 6))
 
 
+; Q. 3.72 skip
+
+
