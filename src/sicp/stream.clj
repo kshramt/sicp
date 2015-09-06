@@ -32,6 +32,7 @@
      ]]
    [sicp.pair
     :refer [
+            List
             any?
             car
             cdr
@@ -643,13 +644,13 @@
                  (stream-interleave s2 (stream-cdr s1)))))
 
 
-(ann pairs (All [a b] [(InfiniteStream a) (InfiniteStream b) -> (InfiniteStream (Pair a b))]))
+(ann pairs (All [a] [(InfiniteStream a) (InfiniteStream a) -> (InfiniteStream (List a))]))
 (defn pairs [s t]
   (cons-stream
-   (my-cons (stream-car s)
+   (my-list (stream-car s)
             (stream-car t))
    (stream-interleave
-    (stream-map (typed/fn [x :- b] (my-cons (stream-car s) x))
+    (stream-map (typed/fn [x :- a] (my-list (stream-car s) x))
                 (stream-cdr t))
     (pairs (stream-cdr s)
            (stream-cdr t)))))
@@ -661,20 +662,20 @@
 ; (100 . 100) 2^100 - 1
 
 
-(ann pairs-3-67 (All [a b] [(InfiniteStream a) (InfiniteStream b) -> (InfiniteStream (Pair a b))]))
+(ann pairs-3-67 (All [a] [(InfiniteStream a) (InfiniteStream a) -> (InfiniteStream (List a))]))
 (defn pairs-3-67
   "Q. 3.67"
   [s t]
   (let [s0 (stream-car s)
         t0 (stream-car t)]
     (cons-stream
-     (my-cons s0 t0)
+     (my-list s0 t0)
      (let [s- (stream-cdr s)
            t- (stream-cdr t)]
        (stream-interleave
         (stream-interleave
-         (stream-map (typed/fn [x :- b] (my-cons s0 x)) t-)
-         (stream-map (typed/fn [x :- a] (my-cons x t0)) s-))
+         (stream-map (typed/fn [x :- a] (my-list s0 x)) t-)
+         (stream-map (typed/fn [x :- a] (my-list x t0)) s-))
         (pairs-3-67 s- t-))))))
 
 
