@@ -7,6 +7,7 @@
             ASeq
             CountRange
             ExactCount
+            I
             IFn
             Int
             Kw
@@ -57,6 +58,10 @@
 
 
 (defalias Stream (TFn [[a :variance :covariant]] (Rec [this] (Pair a [-> (Option this)]))))
+(defalias Finite [-> false])
+(defalias Infinite [-> true])
+(defalias FiniteStream (TFn [[a :variance :covariant]] (I Finite (Stream a))))
+(defalias InfiniteStream (TFn [[a :variance :covariant]] (I Infinite (Stream a))))
 
 
 (ann ^:no-check memo-proc (All [a] [[-> a] -> [-> a]]))
@@ -75,7 +80,10 @@
   `(memo-proc (typed/fn [] ~exp)))
 
 
-(ann ^:no-check my-cons-stream (All [a] [a Any -> (Stream a)]))
+(ann ^:no-check my-cons-stream (All [a] (IFn [a [-> nil] -> (FiniteStream a)]
+                                             [a [-> (FiniteStream a)] -> (FiniteStream a)]
+                                             [a [-> (Option (FiniteStream a))] -> (FiniteStream a)] ; todo: remove me
+                                             [a [-> (InfiniteStream a)] -> (InfiniteStream a)])))
 (defn my-cons-stream [a b]
   (my-cons a b))
 
@@ -84,14 +92,18 @@
   `(my-cons-stream ~a (my-delay ~b)))
 
 
-(ann ^:no-check stream-null? (All [a] [(Option (Stream a)) -> Boolean
-                                       :filters
-                                       {:then (! (Stream a) 0)
-                                        :else (is (Stream a) 0)}]))
+(ann ^:no-check stream-null?
+     (All [a]
+          [(U nil (FiniteStream a) (InfiniteStream a))
+           ->
+           Boolean
+           :filters
+           {:then (is nil 0)
+            :else (! nil 0)}]))
 (def stream-null? nil?)
 
 
-(ann ^:no-check the-empty-stream nil)
+(ann the-empty-stream nil)
 (def the-empty-stream nil)
 
 
@@ -100,16 +112,20 @@
   (delayed-object))
 
 
-(ann ^:no-check stream-car (All [a] [(Stream a) -> a]))
+(ann ^:no-check stream-car (All [a] (IFn [(FiniteStream a) -> a]
+                                         [(InfiniteStream a) -> a])))
 (def stream-car car)
 
 
-(ann ^:no-check stream-cdr (All [a] [(Stream a) -> (Option (Stream a))]))
+(ann ^:no-check stream-cdr (All [a] (IFn [(FiniteStream a) -> (Option (FiniteStream a))]
+                                         [(InfiniteStream a) -> (InfiniteStream a)])))
 (def stream-cdr (comp my-force cdr))
 
 
-(ann stream-ref (All [a] [(Stream a) Int -> a]))
+(ann stream-ref (All [a] (IFn [(FiniteStream a) Int -> a]
+                              [(InfiniteStream a) Int -> a])))
 (defn stream-ref [s n]
+  {:pre (>= n 0)}
   (if (= n 0)
     (stream-car s)
     (let [more (stream-cdr s)]
@@ -118,7 +134,7 @@
         (recur more (dec n))))))
 
 
-(ann ^:no-check make-stream (All [a] [a a * -> (Stream a)]))
+(ann ^:no-check make-stream (All [a] [a a * -> (FiniteStream a)]))
 (defn make-stream [& xs]
   (let [impl (typed/fn imp [s :- (Seqable a)]
                (if-let [s (seq s)]
@@ -128,8 +144,10 @@
     (impl xs)))
 
 
-(ann ^:no-check to-list (All [a] (IFn [nil -> nil]
-                                      [(Stream a) -> (ASeq a)])))
+(ann to-list (All [a] (IFn [nil -> nil]
+                           [(FiniteStream a) -> (ASeq a)]
+                           [(Option (FiniteStream a)) -> (Option (ASeq a))] ; todo: remove me
+                           [(InfiniteStream a) -> (ASeq a)])))
 (defn to-list [stream]
   (if (stream-null? stream)
     nil
@@ -145,9 +163,15 @@
     false))
 
 
-(ann ^:no-check stream-map (All [c a b ...] (IFn [[a * -> c] nil -> nil]
-                                                 [[a -> c] (Stream a) -> (Stream c)]
-                                                 [[a b ... b -> c] (Stream a) (Stream b) ... b -> (Stream c)])))
+(ann ^:no-check stream-map
+     (All [c a b ...]
+          (IFn [[a -> c] nil -> nil]
+               [[a -> c] (FiniteStream a) -> (FiniteStream c)]
+               [[a -> c] (InfiniteStream a) -> (InfiniteStream c)]
+               [[a b ... b -> c] (FiniteStream a) (FiniteStream b) ... b -> (FiniteStream c)]
+               [[a b ... b -> c] (InfiniteStream a) (FiniteStream b) ... b -> (FiniteStream c)]
+               [[a b ... b -> c] (FiniteStream a) (InfiniteStream b) ... b -> (FiniteStream c)]
+               [[a b ... b -> c] (InfiniteStream a) (InfiniteStream b) ... b -> (InfiniteStream c)])))
 (defn stream-map
   "Q. 3.50"
   {:test #(is (to-list
@@ -165,20 +189,28 @@
              (cons proc (map stream-cdr arguments))))))
 
 
-(ann stream-for-each (All [a b] [[a -> b] (Option (Stream a)) -> (Val :done)]))
+(ann stream-for-each
+     (All [a]
+          (IFn [[a a * -> Any] nil -> (Val :done)]
+               [[a a * -> Any] (FiniteStream a) -> (Val :done)]
+               [[a a * -> Any] (Option (FiniteStream a)) -> (Val :done)] ; todo: remove me
+               [[a a * -> Any] (InfiniteStream a) -> (Val :done)])))
 (defn stream-for-each [proc s]
   (if (stream-null? s)
     :done
     (do (proc (stream-car s))
-        (recur proc (stream-cdr s)))))
+        ;(recur proc (stream-cdr (pef s))) ; todo: wait for core.type's bug fix
+        (stream-for-each proc (stream-cdr s)))))
 
 
-(ann display-stream (All [a] [(Stream a) -> (Val :done)]))
+(ann display-stream (All [a] (IFn [nil -> (Val :done)]
+                                  [(FiniteStream a) -> (Val :done)]
+                                  [(InfiniteStream a) -> (Val :done)])))
 (defn display-stream [stream]
   (stream-for-each println stream))
 
 
-(ann stream-enumerate-interval [Int Int -> (Option (Stream Int))])
+(ann stream-enumerate-interval [Int Int -> (Option (FiniteStream Int))])
 (defn stream-enumerate-interval [lo hi]
   (if (> lo hi)
     the-empty-stream
@@ -187,15 +219,20 @@
      (stream-enumerate-interval (inc lo) hi))))
 
 
-(ann ^:no-check stream-filter (All [a] (IFn [[a -> Boolean] nil -> nil]
-                                            [[a -> Boolean] (Stream a) -> (Stream a)])))
+(ann stream-filter
+     (All [a]
+          (IFn [[a -> Boolean] nil -> nil]
+               [[a -> Boolean] (FiniteStream a) -> (Option (FiniteStream a))]
+               [[a -> Boolean] (Option (FiniteStream a)) -> (Option (FiniteStream a))] ; todo: remove me
+               [[a -> Boolean] (InfiniteStream a) -> (InfiniteStream a)])))
 (defn stream-filter [pred stream]
   (cond
     (stream-null? stream) the-empty-stream
     (pred (stream-car stream)) (cons-stream (stream-car stream)
                                             (stream-filter pred
                                                            (stream-cdr stream)))
-    :else (recur pred (stream-cdr stream))))
+    :else ;(recur pred (stream-cdr stream)) ; todo: wait for core.type's bug fix
+    (stream-filter pred (stream-cdr stream))))
 
 
 (typed/tc-ignore
@@ -210,12 +247,12 @@
 ) ; typed/tc-ignore
 
 
-(ann integers-starting-from [Int -> (Stream Int)])
+(ann integers-starting-from [Int -> (InfiniteStream Int)])
 (defn integers-starting-from [n]
   (cons-stream n (integers-starting-from (inc n))))
 
 
-(ann integers (Stream Int))
+(ann integers (InfiniteStream Int))
 (def integers (integers-starting-from 1))
 
 
@@ -224,46 +261,57 @@
   (zero? (rem x y)))
 
 
-(ann sieve [(Stream Int) -> (Stream Int)])
+(ann sieve [(InfiniteStream Int) -> (InfiniteStream Int)])
 (defn sieve [stream]
   (cons-stream
    (stream-car stream)
    (sieve (stream-filter
            (typed/fn [n :- Int]
              (not (divisible? n (stream-car stream))))
-           (ignore-with-unchecked-cast
-            (stream-cdr stream)
-            (Stream Int))))))
+           (stream-cdr stream)))))
 
 
-(ann primes (Stream Int))
+(ann primes (InfiniteStream Int))
 (def primes (sieve (integers-starting-from 2)))
 
 
 ; Q. 3.53 2^n
 
 
-(ann add-streams (IFn [(Stream Int) (Stream Int) -> (Stream Int)]
-                      [(Stream Num) (Stream Num) -> (Stream Num)]))
+(ann add-streams (IFn [(FiniteStream Int) (FiniteStream Int) -> (FiniteStream Int)]
+                      [(FiniteStream Num) (FiniteStream Num) -> (FiniteStream Num)]
+                      [(InfiniteStream Int) (InfiniteStream Int) -> (InfiniteStream Int)]
+                      [(InfiniteStream Num) (InfiniteStream Num) -> (InfiniteStream Num)]))
 (defn add-streams [s1 s2]
   (stream-map + s1 s2))
 
 
-(ann mul-streams (IFn [(Stream Int) (Stream Int) -> (Stream Int)]
-                      [(Stream Num) (Stream Num) -> (Stream Num)]))
+(ann mul-streams (IFn [(FiniteStream Int) (FiniteStream Int) -> (FiniteStream Int)]
+                      [(FiniteStream Num) (FiniteStream Num) -> (FiniteStream Num)]
+                      [(InfiniteStream Int) (InfiniteStream Int) -> (InfiniteStream Int)]
+                      [(InfiniteStream Num) (InfiniteStream Num) -> (InfiniteStream Num)]))
 (defn mul-streams [s1 s2]
   (stream-map * s1 s2))
 
 
 (ann scale-stream (IFn [nil Num -> nil]
-                       [(Stream Int) Int -> (Stream Int)]
-                       [(Stream Num) Num -> (Stream Num)]))
+                       [(FiniteStream Int) Int -> (FiniteStream Int)]
+                       [(FiniteStream Num) Num -> (FiniteStream Num)]
+                       [(InfiniteStream Int) Int -> (InfiniteStream Int)]
+                       [(InfiniteStream Num) Num -> (InfiniteStream Num)]))
 (defn scale-stream [stream factor]
   (stream-map (partial * factor) stream))
 
 
-(ann stream-take (All [a] (IFn [(Option (Stream a)) Int -> (Option (Stream a))]
-                               [(Option (Stream a)) Int Int -> (Option (Stream a))])))
+(ann stream-take
+     (All [a]
+          (IFn [nil Int -> nil]
+               [(FiniteStream a) Int -> (Option (FiniteStream a))]
+               [(InfiniteStream a) Int -> (Option (FiniteStream a))]
+               [nil Int Int -> nil]
+               [(FiniteStream a) Int Int -> (Option (FiniteStream a))]
+               [(Option (FiniteStream a)) Int Int -> (Option (FiniteStream a))] ; todo: remove me
+               [(InfiniteStream a) Int Int -> (Option (FiniteStream a))])))
 (defn stream-take
   ([s n] (stream-take s n 1))
   ([s n i]
@@ -275,7 +323,7 @@
                                (inc i))))))
 
 ; Q. 3.54
-(ann factorials (Stream Int))
+(ann factorials (InfiniteStream Int))
 (def factorials (cons-stream 1 (mul-streams (integers-starting-from 2) factorials)))
 
 
@@ -292,8 +340,10 @@
       ~name)))
 
 
-(ann ^:no-check partial-sums (IFn [(Stream Int) -> (Stream Int)]
-                                  [(Stream Num) -> (Stream Num)]))
+(ann ^:no-check partial-sums (IFn [(FiniteStream Int) -> (FiniteStream Int)]
+                                  [(FiniteStream Num) -> (FiniteStream Num)]
+                                  [(InfiniteStream Int) -> (InfiniteStream Int)]
+                                  [(InfiniteStream Num) -> (InfiniteStream Num)]))
 (defn partial-sums
   "Q. 3.55"
   {:test #(is (= (to-list (stream-take (partial-sums integers) 5))
@@ -304,9 +354,40 @@
                  (stream-cdr s))))
 
 
-(ann ^:no-check merge-streams
-     (IFn [(Option (Stream Int)) (Option (Stream Int)) -> (Option (Stream Int))]
-          [(Option (Stream Num)) (Option (Stream Num)) -> (Option (Stream Num))]))
+(ann merge-streams
+     (IFn [nil nil -> nil]
+
+          [nil (FiniteStream Int) -> (FiniteStream Int)]
+          [(FiniteStream Int) nil -> (FiniteStream Int)]
+          [(FiniteStream Int) (FiniteStream Int) -> (FiniteStream Int)]
+          [nil (InfiniteStream Int) -> (InfiniteStream Int)]
+          [(InfiniteStream Int) nil -> (InfiniteStream Int)]
+          [(FiniteStream Int) (InfiniteStream Int) -> (InfiniteStream Int)]
+          [(InfiniteStream Int) (FiniteStream Int) -> (InfiniteStream Int)]
+          [(InfiniteStream Int) (InfiniteStream Int) -> (InfiniteStream Int)]
+
+          ; todo: delete me
+          [nil (Option (FiniteStream Int)) -> (Option (FiniteStream Int))]
+          [(Option (FiniteStream Int)) nil -> (Option (FiniteStream Int))]
+          [(Option (FiniteStream Int)) (Option (FiniteStream Int)) -> (Option (FiniteStream Int))]
+          [(Option (FiniteStream Int)) (InfiniteStream Int) -> (InfiniteStream Int)]
+          [(InfiniteStream Int) (Option (FiniteStream Int)) -> (InfiniteStream Int)]
+
+          [nil (FiniteStream Num) -> (FiniteStream Num)]
+          [(FiniteStream Num) nil -> (FiniteStream Num)]
+          [(FiniteStream Num) (FiniteStream Num) -> (FiniteStream Num)]
+          [nil (InfiniteStream Num) -> (InfiniteStream Num)]
+          [(InfiniteStream Num) nil -> (InfiniteStream Num)]
+          [(FiniteStream Num) (InfiniteStream Num) -> (InfiniteStream Num)]
+          [(InfiniteStream Num) (FiniteStream Num) -> (InfiniteStream Num)]
+          [(InfiniteStream Num) (InfiniteStream Num) -> (InfiniteStream Num)]
+
+          ; todo: delete me
+          [nil (Option (FiniteStream Num)) -> (Option (FiniteStream Num))]
+          [(Option (FiniteStream Num)) nil -> (Option (FiniteStream Num))]
+          [(Option (FiniteStream Num)) (Option (FiniteStream Num)) -> (Option (FiniteStream Num))]
+          [(Option (FiniteStream Num)) (InfiniteStream Num) -> (InfiniteStream Num)]
+          [(InfiniteStream Num) (Option (FiniteStream Num)) -> (InfiniteStream Num)]))
 (defn merge-streams
   "Q. 3.56"
   {:test #(let [s (cons-stream 1 (merge-streams
@@ -333,18 +414,16 @@
                                           (stream-cdr s2)))))))
 
 
-(ann fibs (Stream Int))
+(ann fibs (InfiniteStream Int))
 (def fibs (cons-stream 0
                        (cons-stream 1
-                                    (add-streams (ignore-with-unchecked-cast
-                                                  (stream-cdr fibs)
-                                                  (Stream Int))
+                                    (add-streams (stream-cdr fibs)
                                                  fibs))))
 
 ; Q. 3.57 (max (- n 2) 0)
 
 
-(ann expand [Int Int Int -> (Stream Int)])
+(ann expand [Int Int Int -> (InfiniteStream Int)])
 (defn expand
   "Q. 3.58 (num/den)_radix"
   [num den radix]
@@ -353,33 +432,40 @@
    (expand (rem (* num radix) den) den radix)))
 
 
-(ann integrate-series [(Stream Num) -> (Stream Num)])
+(ann integrate-series (IFn [(FiniteStream Num) -> (FiniteStream Num)]
+                           [(InfiniteStream Num) -> (InfiniteStream Num)]))
 (defn integrate-series
   "Q. 3.59-a"
   [s]
   (stream-map (typed/fn [a :- Num k :- Num] (/ a k)) s integers))
 
 
-(ann exp-series (Stream Num))
+(ann exp-series (InfiniteStream Num))
 (def exp-series (cons-stream 1 (integrate-series exp-series)))
 
 
 ; Q 3.59-b
 (declare sine-series)
-(ann cosine-series (Stream Num))
+(ann cosine-series (InfiniteStream Num))
 (def cosine-series (cons-stream 1 (scale-stream (integrate-series sine-series) -1)))
 
 
-(ann sine-series (Stream Num))
+(ann sine-series (InfiniteStream Num))
 (def sine-series (cons-stream 0 (integrate-series cosine-series)))
 
 
-(ann concat-streams (All [a] (IFn [nil nil -> nil]
-                                  [nil (Stream a) -> (Stream a)]
-                                  [(Stream a) nil -> (Stream a)]
-                                  [(Stream a) (Stream a) -> (Stream a)]
-                                  [(Option (Stream a)) (Option (Stream a)) -> (Option (Stream a))])))
-(defn ^:no-check concat-streams [s1 s2]
+(ann concat-streams
+     (All [a]
+          (IFn [nil nil -> nil]
+               [nil (FiniteStream a) -> (FiniteStream a)]
+               [(FiniteStream a) nil -> (FiniteStream a)]
+               [(FiniteStream a) (FiniteStream a) -> (FiniteStream a)]
+               [(Option (FiniteStream a)) nil -> (Option (FiniteStream a))] ; todo: remove me
+               [(Option (FiniteStream a)) (FiniteStream a) -> (FiniteStream a)] ; todo: remove me
+               [(Option (FiniteStream a)) (InfiniteStream a) -> (InfiniteStream a)]
+               [(InfiniteStream a) (Option (FiniteStream a)) -> (InfiniteStream a)]
+               [(InfiniteStream a) (InfiniteStream a) -> (InfiniteStream a)])))
+(defn concat-streams [s1 s2]
   (if (stream-null? s1)
     s2
     (cons-stream (stream-car s1)
@@ -387,14 +473,20 @@
                                  s2))))
 
 
-(ann stream-repeat (All [a] [a -> (Stream a)]))
+(ann stream-repeat (All [a] [a -> (InfiniteStream a)]))
 (defn stream-repeat [x]
   (cons-stream x (stream-repeat x)))
 
 
-(ann ^:no-check
-     mul-series (IFn [(Option (Stream Int)) (Option (Stream Int)) -> (Stream Int)]
-                     [(Option (Stream Num)) (Option (Stream Num)) -> (Stream Num)]))
+(ann mul-series
+     (IFn [(Option (FiniteStream Int)) (Option (FiniteStream Int)) -> (InfiniteStream Int)]
+          [(Option (FiniteStream Int)) (InfiniteStream Int) -> (InfiniteStream Int)]
+          [(InfiniteStream Int) (Option (FiniteStream Int)) -> (InfiniteStream Int)]
+          [(InfiniteStream Int) (InfiniteStream Int) -> (InfiniteStream Int)]
+          [(Option (FiniteStream Num)) (Option (FiniteStream Num)) -> (InfiniteStream Num)]
+          [(Option (FiniteStream Num)) (InfiniteStream Num) -> (InfiniteStream Num)]
+          [(InfiniteStream Num) (Option (FiniteStream Num)) -> (InfiniteStream Num)]
+          [(InfiniteStream Num) (InfiniteStream Num) -> (InfiniteStream Num)]))
 (defn mul-series
   "Q. 3.60"
   {:test #(is (= (to-list
@@ -407,8 +499,8 @@
                    10))
                  [1 0 0 0 0 0 0 0 0 0]))}
   [s1 s2]
-  (letfn> [impl :- (IFn [(Stream Int) (Stream Int) -> (Stream Int)]
-                        [(Stream Num) (Stream Num)-> (Stream Num)])
+  (letfn> [impl :- (IFn [(InfiniteStream Int) (InfiniteStream Int) -> (InfiniteStream Int)]
+                        [(InfiniteStream Num) (InfiniteStream Num)-> (InfiniteStream Num)])
            (impl [s1 s2]
                  (let [s1car (stream-car s1)
                        s2car (stream-car s2)]
@@ -424,7 +516,8 @@
           (concat-streams s2 (stream-repeat 0)))))
 
 
-(ann invert-unit-series [(Stream Num) -> (Stream Num)])
+(ann ^:no-check invert-unit-series (IFn [(FiniteStream Num) -> (InfiniteStream Num)]
+                                        [(InfiniteStream Num) -> (InfiniteStream Num)]))
 (defn invert-unit-series
   "Q. 3.61"
   {:test #(is (= (to-list (stream-take (invert-unit-series (make-stream 1 2 3)) 5))
@@ -436,11 +529,13 @@
       1
       (scale-stream
        (mul-series (stream-cdr s) ret)
-       -1)))
-    (Stream Num)))
+       -1)))))
 
 
-(ann div-series [(Stream Num) (Stream Num) -> (Stream Num)])
+(ann div-series (IFn [(FiniteStream Num) (FiniteStream Num) -> (InfiniteStream Num)]
+                     [(FiniteStream Num) (InfiniteStream Num) -> (InfiniteStream Num)]
+                     [(InfiniteStream Num) (FiniteStream Num) -> (InfiniteStream Num)]
+                     [(InfiniteStream Num) (InfiniteStream Num) -> (InfiniteStream Num)]))
 (defn div-series
   "Q. 3.62"
   {:test #(is (= (to-list
@@ -474,42 +569,47 @@
   (average guess (/ x guess)))
 
 
-(ann sqrt-stream [Num -> (Stream Num)])
+(ann ^:no-check sqrt-stream [Num -> (InfiniteStream Num)])
 (defn sqrt-stream [x]
   (def-stream ret 1
     (stream-map (typed/fn [guess :- Num] (sqrt-improve guess x))
                 ret)))
 
 
-(ann pi-summands [Int -> (Stream Num)])
+(ann pi-summands [Int -> (InfiniteStream Num)])
 (defn pi-summands [n]
   (cons-stream (/ 1 n)
                (stream-map - (pi-summands (+ n 2)))))
 
 
-(ann pi-stream (Stream Num))
+(ann pi-stream (InfiniteStream Num))
 (def pi-stream (scale-stream (partial-sums (pi-summands 1)) 4))
 
 
-(ann euler-transform [(Stream Num) -> (Stream Num)])
+(ann euler-transform [(InfiniteStream Num) -> (InfiniteStream Num)])
 (defn euler-transform [s]
   (let [s0 (stream-ref s 0)
         s1 (stream-ref s 1)
         s2 (stream-ref s 2)]
     (cons-stream (- s2 (/ (square (- s2 s1))
                           (+ s0 (* -2 s1) s2)))
-                 (euler-transform (ignore-with-unchecked-cast
-                                   (stream-cdr s)
-                                   (Stream Num))))))
+                 (euler-transform (stream-cdr s)))))
 
 
-(ann make-tableau [[(Stream Num) -> (Stream Num)] (Stream Num) -> (Stream (Stream Num))])
+(ann make-tableau [[(InfiniteStream Num) -> (InfiniteStream Num)]
+                   (InfiniteStream Num)
+                   ->
+                   (InfiniteStream (InfiniteStream Num))])
 (defn make-tableau [transform s]
   (cons-stream s
                (make-tableau transform
                              (transform s))))
 
-(ann ^:no-check accelerated-sequence [[(Stream Num) -> (Stream Num)] (Stream Num) -> (Stream Num)])
+
+(ann ^:no-check accelerated-sequence [[(InfiniteStream Num) -> (InfiniteStream Num)]
+                                      (InfiniteStream Num)
+                                      ->
+                                      (InfiniteStream Num)])
 (defn accelerated-sequence [transform s]
   (stream-map stream-car
               (make-tableau transform s)))
@@ -518,7 +618,7 @@
 ; Q. 3.63 No
 
 
-(ann stream-limit [(Stream Num) Num -> Num])
+(ann stream-limit [(InfiniteStream Num) Num -> Num])
 (defn stream-limit
   "Q. 3.64"
   [s tol]
@@ -526,6 +626,4 @@
         s2 (stream-ref s 1)]
     (if (< (abs (- s1 s2)) tol)
       s2
-      (recur (ignore-with-unchecked-cast
-              (stream-cdr s)
-              (Stream Num)) tol))))
+      (recur (stream-cdr s) tol))))
