@@ -360,26 +360,20 @@
 (ann merge-streams
      (IFn [nil nil -> nil]
 
-          [nil (FiniteStream Int) -> (FiniteStream Int)]
-          [(FiniteStream Int) nil -> (FiniteStream Int)]
-          [(FiniteStream Int) (FiniteStream Int) -> (FiniteStream Int)]
+          [(Option (FiniteStream Int)) (FiniteStream Int) -> (FiniteStream Int)]
+          [(FiniteStream Int) (Option (FiniteStream Int)) -> (FiniteStream Int)]
           [(Option (Stream Int)) (InfiniteStream Int) -> (InfiniteStream Int)]
           [(InfiniteStream Int) (Option (Stream Int)) -> (InfiniteStream Int)]
 
           ; todo: delete me
-          [nil (Option (FiniteStream Int)) -> (Option (FiniteStream Int))]
-          [(Option (FiniteStream Int)) nil -> (Option (FiniteStream Int))]
           [(Option (FiniteStream Int)) (Option (FiniteStream Int)) -> (Option (FiniteStream Int))]
 
-          [nil (FiniteStream Num) -> (FiniteStream Num)]
-          [(FiniteStream Num) nil -> (FiniteStream Num)]
-          [(FiniteStream Num) (FiniteStream Num) -> (FiniteStream Num)]
+          [(Option (FiniteStream Num)) (FiniteStream Num) -> (FiniteStream Num)]
+          [(FiniteStream Num) (Option (FiniteStream Num)) -> (FiniteStream Num)]
           [(Option (Stream Num)) (InfiniteStream Num) -> (InfiniteStream Num)]
           [(InfiniteStream Num) (Option (Stream Num)) -> (InfiniteStream Num)]
 
           ; todo: delete me
-          [nil (Option (FiniteStream Num)) -> (Option (FiniteStream Num))]
-          [(Option (FiniteStream Num)) nil -> (Option (FiniteStream Num))]
           [(Option (FiniteStream Num)) (Option (FiniteStream Num)) -> (Option (FiniteStream Num))]))
 (defn merge-streams
   "Q. 3.56"
@@ -450,11 +444,9 @@
 (ann concat-streams
      (All [a]
           (IFn [nil nil -> nil]
-               [nil (FiniteStream a) -> (FiniteStream a)]
-               [(FiniteStream a) nil -> (FiniteStream a)]
-               [(FiniteStream a) (FiniteStream a) -> (FiniteStream a)]
-               [(Option (FiniteStream a)) nil -> (Option (FiniteStream a))] ; todo: remove me
-               [(Option (FiniteStream a)) (FiniteStream a) -> (FiniteStream a)] ; todo: remove me
+               [(Option (FiniteStream a)) (FiniteStream a) -> (FiniteStream a)]
+               [(FiniteStream a) (Option (FiniteStream a)) -> (FiniteStream a)]
+               [(Option (FiniteStream a)) (Option (FiniteStream a)) -> (Option (FiniteStream a))] ; todo: remove me
                [(Option (Stream a)) (InfiniteStream a) -> (InfiniteStream a)]
                [(InfiniteStream a) (Option (Stream a)) -> (InfiniteStream a)]
                )))
