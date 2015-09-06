@@ -631,3 +631,9 @@
     (diff-ln2 (accelerated-sequence euler-transform ln2-stream))
     nil))
 ;(q-3-65)
+
+
+; Q. 3.66
+; (1 . 100) 198
+; (99 . 100) 2^99 + 2^98
+; (100 . 100) 2^100 - 1
