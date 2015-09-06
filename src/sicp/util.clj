@@ -18,6 +18,7 @@
 (typed/override-method clojure.lang.Numbers/remainder (IFn [Int Int -> Int]
                                                            [Num Num -> Num]))
 (typed/override-method clojure.lang.Numbers/isNeg [Num -> Boolean])
+(typed/override-method java.lang.Math/log [Num -> Double])
 (ann ^:no-check clojure.math.numeric-tower/sqrt [Num -> Num])
 
 

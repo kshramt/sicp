@@ -602,3 +602,32 @@
     (if (< (abs (- s1 s2)) tol)
       s2
       (recur (stream-cdr s) tol))))
+
+
+(ann ln2-summands [Int -> (InfiniteStream Num)])
+(defn ln2-summands [k]
+  (cons-stream (/ 1 k)
+               (stream-map - (ln2-summands (inc k)))))
+
+
+(ann l2-stream (InfiniteStream Num))
+(def ln2-stream (partial-sums (ln2-summands 1)))
+
+
+(ann q-3-51 [-> nil])
+(defn q-3-65
+  "Q. 3.65"
+  []
+  (let [diff-ln2 (typed/fn [s :- (InfiniteStream Num)]
+                   (display-stream
+                    (stream-take
+                     (stream-map
+                      (typed/fn [x :- Num] (- (Math/log 2) x))
+                      s)
+                     8))
+                   (println :done))]
+    (diff-ln2 ln2-stream)
+    (diff-ln2 (euler-transform ln2-stream))
+    (diff-ln2 (accelerated-sequence euler-transform ln2-stream))
+    nil))
+;(q-3-65)
