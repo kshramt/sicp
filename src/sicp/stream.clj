@@ -850,3 +850,23 @@
             (add-streams (scale-stream i r)
                          (integral (scale-stream i (/ 1 c)) v0 dt)))]
     circuit))
+
+
+(ann sign-change-detector [Num Num -> Int])
+(defn sign-change-detector [x y]
+  (let [xneg (neg? x)
+        yneg (neg? y)]
+    (if xneg
+      (if yneg
+        0
+        1)
+      (if yneg
+        -1
+        0))))
+
+
+(ann make-zero-crossings [(InfiniteStream Num) -> (InfiniteStream Int)])
+(defn make-zero-crossings
+  "Q. 3.74"
+  [input-stream]
+  (stream-map sign-change-detector input-stream (stream-cdr input-stream)))
