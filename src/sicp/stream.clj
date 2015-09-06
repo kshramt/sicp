@@ -347,7 +347,7 @@
       ~name)))
 
 
-(ann ^:no-check partial-sums (IFn [(FiniteStream Int) -> (FiniteStream Int)]
+(ann partial-sums (IFn [(FiniteStream Int) -> (FiniteStream Int)]
                                   [(FiniteStream Num) -> (FiniteStream Num)]
                                   [(InfiniteStream Int) -> (InfiniteStream Int)]
                                   [(InfiniteStream Num) -> (InfiniteStream Num)]))
