@@ -831,3 +831,22 @@
 ; Q. 3.72 skip
 
 
+(ann ^:no-check integral [(InfiniteStream Num) Num Num -> (InfiniteStream Num)])
+(defn integral [integrand initial-value dt]
+  (def-stream ret initial-value
+    (add-streams (scale-stream integrand dt)
+                 ret)))
+
+
+(ann rc [Num Num Num -> [(InfiniteStream Num) Num -> (InfiniteStream Num)]])
+(defn rc
+  "Q. 3.73"
+  {:test #(let [rc1 (rc 5 1 0.5)]
+            (rc1 sine-series 0))}
+  [r c dt]
+  (letfn> [circuit :- [(InfiniteStream Num) Num -> (InfiniteStream Num)]
+           (circuit
+            [i v0]
+            (add-streams (scale-stream i r)
+                         (integral (scale-stream i (/ 1 c)) v0 dt)))]
+    circuit))
