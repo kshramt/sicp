@@ -56,15 +56,15 @@
   (:import [sicp.pair Pair]))
 
 
-
-(defalias Stream (TFn [[a :variance :covariant]] (Rec [this] (Pair a [-> (Option this)]))))
+(defalias Delay (TFn [[a :variance :covariant]] [-> a]))
+(defalias Stream (TFn [[a :variance :covariant]] (Rec [this] (Pair a (Delay (Option this))))))
 (defalias Finite [-> false])
 (defalias Infinite [-> true])
 (defalias FiniteStream (TFn [[a :variance :covariant]] (I Finite (Stream a))))
 (defalias InfiniteStream (TFn [[a :variance :covariant]] (I Infinite (Stream a))))
 
 
-(ann ^:no-check memo-proc (All [a] [[-> a] -> [-> a]]))
+(ann ^:no-check memo-proc (All [a] [(Delay a) -> (Delay a)]))
 (defn memo-proc [proc]
   (let [already-run? (typed/atom :- Boolean false)
         result (typed/atom :- a nil)]
@@ -80,10 +80,10 @@
   `(memo-proc (typed/fn [] ~exp)))
 
 
-(ann ^:no-check my-cons-stream (All [a] (IFn [a [-> nil] -> (FiniteStream a)]
-                                             [a [-> (FiniteStream a)] -> (FiniteStream a)]
-                                             [a [-> (Option (FiniteStream a))] -> (FiniteStream a)] ; todo: remove me
-                                             [a [-> (InfiniteStream a)] -> (InfiniteStream a)])))
+(ann ^:no-check my-cons-stream (All [a] (IFn [a (Delay nil) -> (FiniteStream a)]
+                                             [a (Delay (FiniteStream a)) -> (FiniteStream a)]
+                                             [a (Delay (Option (FiniteStream a))) -> (FiniteStream a)] ; todo: remove me
+                                             [a (Delay (InfiniteStream a)) -> (InfiniteStream a)])))
 (defn my-cons-stream [a b]
   (my-cons a b))
 
@@ -107,7 +107,7 @@
 (def the-empty-stream nil)
 
 
-(ann my-force (All [a] [[-> a] -> a]))
+(ann my-force (All [a] [(Delay a) -> a]))
 (defn my-force [delayed-object]
   (delayed-object))
 
