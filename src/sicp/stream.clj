@@ -636,6 +636,26 @@
 ;(q-3-65)
 
 
+(ann prime? [Int -> Boolean])
+(defn prime?
+  {:test #(do
+            (is (not (prime? -1)))
+            (is (not (prime? 0)))
+            (is (not (prime? 1)))
+            (is (prime? 2))
+            (is (prime? 3))
+            (is (not (prime? 4)))
+            (is (prime? 5))
+            (is (not (prime? 6)))
+            (is (prime? 7))
+            (is (not (prime? 8))))}
+  [n]
+  (and (> n 1)
+       (or (= n 2)
+           (not
+            (any?
+             (partial divisible? n)
+             (stream-take primes (int (sqrt n))))))))
 
 
 (ann stream-interleave (All [a] [(InfiniteStream a) (InfiniteStream a) -> (InfiniteStream a)]))
