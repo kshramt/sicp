@@ -23,6 +23,9 @@ NAMES := \
 FILE_NAMES := $(subst -,_,$(NAMES))
 
 
+ns_of_file = $(subst _,-,$(1))
+
+
 .PHONY: all check type_check unit_test
 all:
 check: type_check unit_test
@@ -42,14 +45,12 @@ $(foreach suf,unit_tested type_checked, \
 
 
 src/sicp/%.clj.unit_tested: src/sicp/%.clj
-	readonly ns="$$(echo "$*" | sed -e 's/_/-/g')"
-	lein test sicp."$$ns"
+	lein test sicp.$(call ns_of_file,$*)
 	touch $@
 
 
 src/sicp/%.clj.type_checked: src/sicp/%.clj
-	readonly ns="$$(echo "$*" | sed -e 's/_/-/g')"
-	lein typed check sicp."$$ns"
+	lein typed check sicp.$(call ns_of_file,$*)
 	touch $@
 
 
