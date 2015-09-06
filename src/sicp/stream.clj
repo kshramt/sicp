@@ -633,7 +633,46 @@
 ;(q-3-65)
 
 
+
+
+(ann stream-interleave (All [a] [(InfiniteStream a) (InfiniteStream a) -> (InfiniteStream a)]))
+(defn stream-interleave [s1 s2]
+  (if (stream-null? s1)
+    s2
+    (cons-stream (stream-car s1)
+                 (stream-interleave s2 (stream-cdr s1)))))
+
+
+(ann pairs (All [a b] [(InfiniteStream a) (InfiniteStream b) -> (InfiniteStream (Pair a b))]))
+(defn pairs [s t]
+  (cons-stream
+   (my-cons (stream-car s)
+            (stream-car t))
+   (stream-interleave
+    (stream-map (typed/fn [x :- b] (my-cons (stream-car s) x))
+                (stream-cdr t))
+    (pairs (stream-cdr s)
+           (stream-cdr t)))))
+
+
 ; Q. 3.66
 ; (1 . 100) 198
 ; (99 . 100) 2^99 + 2^98
 ; (100 . 100) 2^100 - 1
+
+
+(ann pairs-3-67 (All [a b] [(InfiniteStream a) (InfiniteStream b) -> (InfiniteStream (Pair a b))]))
+(defn pairs-3-67
+  "Q. 3.67"
+  [s t]
+  (let [s0 (stream-car s)
+        t0 (stream-car t)]
+    (cons-stream
+     (my-cons s0 t0)
+     (let [s- (stream-cdr s)
+           t- (stream-cdr t)]
+       (stream-interleave
+        (stream-interleave
+         (stream-map (typed/fn [x :- b] (my-cons s0 x)) t-)
+         (stream-map (typed/fn [x :- a] (my-cons x t0)) s-))
+        (pairs-3-67 s- t-))))))
