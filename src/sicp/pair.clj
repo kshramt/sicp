@@ -67,20 +67,32 @@
 )
 
 
-(ann ^:no-check caar (All [a] [(Pair (Pair a Any) Any) -> a]))
-(def caar (comp car car))
+(ann caar (All [a] [(Pair (Pair a Any) Any) -> a]))
+(defn caar [p] (-> p car car))
 
 
-(ann ^:no-check cadr (All [a] [(Pair Any (Pair a Any)) -> a]))
-(def cadr (comp car cdr))
+(ann cadr (All [a] [(Pair Any (Pair a Any)) -> a]))
+(defn cadr [p] (-> p cdr car))
 
 
 (ann ^:no-check cdar (All [a] [(Pair (Pair Any a) Any) -> a]))
 (def cdar (comp cdr car))
 
 
-(ann ^:no-check cddr (All [a] [(Pair Any (Pair Any a)) -> a]))
-(def cddr (comp cdr cdr))
+(ann cddr (All [a] [(Pair Any (Pair Any a)) -> a]))
+(defn cddr [p] (-> p cdr cdr))
+
+
+(ann caadr (All [a] [(Pair Any (Pair (Pair a Any) Any)) -> a]))
+(defn caadr [p] (-> p cdr car car))
+
+
+(ann caddr (All [a] [(Pair Any (Pair Any (Pair a Any))) -> a]))
+(defn caddr [p] (-> p cdr cdr car))
+
+
+(ann cdadr (All [a] [(Pair Any (Pair (Pair Any a) Any)) -> a]))
+(defn cdadr [p] (-> p cdr car cdr))
 
 
 (typed/defn get-new-pair [] :- (Pair nil nil)
