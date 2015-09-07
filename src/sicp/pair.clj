@@ -71,6 +71,10 @@
 (defn caar [p] (-> p car car))
 
 
+(ann cadddr (All [a] [(Pair Any (Pair Any (Pair Any (Pair a Any)))) -> a]))
+(defn cadddr [p] (-> p cdr cdr cdr car))
+
+
 (ann cadr (All [a] [(Pair Any (Pair a Any)) -> a]))
 (defn cadr [p] (-> p cdr car))
 
@@ -93,6 +97,10 @@
 
 (ann cdadr (All [a] [(Pair Any (Pair (Pair Any a) Any)) -> a]))
 (defn cdadr [p] (-> p cdr car cdr))
+
+
+(ann cdddr (All [a] [(Pair Any (Pair Any (Pair Any a))) -> a]))
+(defn cdddr [p] (-> p cdr cdr cdr))
 
 
 (typed/defn get-new-pair [] :- (Pair nil nil)
