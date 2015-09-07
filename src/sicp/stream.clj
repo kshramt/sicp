@@ -888,3 +888,25 @@
 
 (ann make-zero-crossings-3-76 [(InfiniteStream Num) -> (InfiniteStream Int)])
 (def make-zero-crossings-3-76 "Q. 3.76" (comp make-zero-crossings smooth))
+
+
+; Q. 3.77 skip macro?
+
+
+(typed/tc-ignore
+
+
+;; (defn integral-delay [delayed-integrand initial-value dt]
+;;   (def-stream ret initial-value
+;;     (let [integrand (force delayed-integrand)]
+;;       (add-streams (scale-stream integrand dt)
+;;                    ret))))
+
+
+(defn solve-1st [f y0 dt]
+  (let [y (my-cons y0 nil)
+        dy (stream-map f y)]
+    (set-cdr! y (my-delay (integral dy y0 dt)))
+    y))
+
+) ; typed/tc-ignore
