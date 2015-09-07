@@ -12,6 +12,7 @@ NAMES := \
    core \
    ch-2-4 \
    ch-3 \
+   ch-4 \
    pair \
    deque \
    table \
