@@ -14,8 +14,10 @@
             NonEmptySeqable
             Num
             Option
+            Pred
             Rec
             Seqable
+            Symbol
             TFn
             U
             Val
@@ -65,6 +67,9 @@
             ]]
    )
   (:import [sicp.pair Pair]))
+
+
+(defalias Variable Symbol)
 
 
 (declare _eval)
@@ -331,7 +336,7 @@
   (tagged-list? exp 'quote))
 
 
-(ann ^:no-check variable? [Any * -> Any])
+(ann variable? (Pred Variable))
 (def variable? symbol?)
 
 
@@ -365,7 +370,7 @@
 (ann ^:no-check eval-if [Any * -> Any])
 (defn eval-if [exp env]
   (if (my-true? (_eval (if-predicate exp) env))
-    (_eval (if-consequent exp) eval)
+    (_eval (if-consequent exp) env)
     (_eval (if-alternative exp) env)))
 
 
