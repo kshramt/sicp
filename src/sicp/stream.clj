@@ -921,4 +921,15 @@
     (set-cdr! y (my-delay (stream-cdr (integral dy y0 dt))))
     y))
 
+
+(defn solve-2nd-3-79
+  "Q. 3.79"
+  [f dt y0 dy0]
+  (let [y (cons-stream y0 nil)
+        dy (cons-stream dy0 nil)
+        ddy (f y dy)]
+    (set-cdr! dy (my-delay (stream-cdr (integral ddy dy0 dt))))
+    (set-cdr! y (my-delay (stream-cdr (integral dy y0 dt))))
+    y))
+
 ) ; typed/tc-ignore
