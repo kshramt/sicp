@@ -79,8 +79,8 @@
 (defn cadr [p] (-> p cdr car))
 
 
-(ann ^:no-check cdar (All [a] [(Pair (Pair Any a) Any) -> a]))
-(def cdar (comp cdr car))
+(ann cdar (All [a] [(Pair (Pair Any a) Any) -> a]))
+(defn cdar [p] (-> p car cdr))
 
 
 (ann cddr (All [a] [(Pair Any (Pair Any a)) -> a]))
