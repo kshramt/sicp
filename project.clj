@@ -5,6 +5,7 @@
                  [org.clojure/tools.trace "0.7.8"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [org.clojure/core.typed "0.3.11"]]
+  :plugins [[lein-typed "0.3.5"]]
   :min-lein-version "2.0.0"
   :description "SICP in Clojure"
   :global-vars {*warn-on-reflection* true}

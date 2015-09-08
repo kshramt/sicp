@@ -1,0 +1,5 @@
+language: clojure
+sudo: false
+script:
+  - make --version
+  - make --keep-going check

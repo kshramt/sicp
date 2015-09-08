@@ -8,6 +8,8 @@ export SHELLOPTS := errexit:noclobber
 PANDOC := pandoc
 PANDOC_FLAGS := --standalone --mathml --to=html5 --smart --self-contained
 
+LEIN := lein
+
 NAMES := \
    core \
    ch-2-4 \
@@ -46,11 +48,11 @@ $(foreach suf,unit_tested type_checked, \
 
 
 src/sicp/%.clj.unit_tested: src/sicp/%.clj
-	lein test sicp.$(call ns_of_file,$*) && touch $@
+	$(LEIN) test sicp.$(call ns_of_file,$*) && touch $@
 
 
 src/sicp/%.clj.type_checked: src/sicp/%.clj
-	lein typed check sicp.$(call ns_of_file,$*) && touch $@
+	$(LEIN) typed check sicp.$(call ns_of_file,$*) && touch $@
 
 
 %.html: %.md

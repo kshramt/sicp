@@ -2,6 +2,8 @@
 
 SICP in Clojure with `clojure.core.typed`.
 
+[![Build Status](https://travis-ci.org/kshramt/sicp.svg?branch=master)](https://travis-ci.org/kshramt/sicp)
+
 ## Test
 
 ```bash
