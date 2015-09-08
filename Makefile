@@ -46,13 +46,11 @@ $(foreach suf,unit_tested type_checked, \
 
 
 src/sicp/%.clj.unit_tested: src/sicp/%.clj
-	lein test sicp.$(call ns_of_file,$*)
-	touch $@
+	lein test sicp.$(call ns_of_file,$*) && touch $@
 
 
 src/sicp/%.clj.type_checked: src/sicp/%.clj
-	lein typed check sicp.$(call ns_of_file,$*)
-	touch $@
+	lein typed check sicp.$(call ns_of_file,$*) && touch $@
 
 
 %.html: %.md
