@@ -49,6 +49,7 @@
     :refer
     [
      abs
+     gcd
      sqrt
      ]]
    [sicp.util
@@ -951,6 +952,40 @@
       (my-cons il vc))))
 
 
+(defn irand [_] (long (rand 832520231)))
+
+
+(def random-numbers (stream-map irand (stream-repeat nil)))
+
+
+(defn map-successsive-pairs [f s]
+  (cons-stream
+   (f (stream-car s) (stream-car (stream-cdr s)))
+   (map-successsive-pairs f (stream-cdr (stream-cdr s)))))
+
+
+(def cesaro-stream
+  (map-successsive-pairs
+   #(= (gcd %1 %2) 1)
+   random-numbers))
+
+
+(defn monte-carlo [experiment-stream passed failed]
+  (letfn [(nxt [passed failed]
+            (cons-stream
+             (/ passed (+ passed failed))
+             (monte-carlo
+              (stream-cdr experiment-stream) passed failed)))]
+    (if (stream-car experiment-stream)
+      (nxt (inc passed) failed)
+      (nxt passed (inc failed)))))
+
+
+(def pi (stream-map #(sqrt (if (zero? %) 0 (/ 6 %)))
+                    (monte-carlo cesaro-stream 0 0)))
+
+; Q. 3.81 skip
+; Q. 3.82 skip
 
 ) ; typed/tc-ignore
 (typed/tc-ignore
