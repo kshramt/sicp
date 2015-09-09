@@ -70,6 +70,11 @@
 
 
 (defalias Variable Symbol)
+(defalias Expr Any)
+(defalias Env Any)
+(defalias EvalDispatchTable
+  (IFn [(Val :lookup) -> [Symbol -> (Option [Expr Env -> Expr])]]
+       [(Val :insert!) -> [Symbol [Expr Env -> Expr] -> Any]]))
 
 
 (declare _eval)
@@ -393,6 +398,51 @@
       (cons l r))))
 
 
+(ann lookup (All [k v q] [(Option (Seqable '[k v])) q -> (Option v)]))
+(defn lookup
+  ([table key]
+   (when-let [table (seq table)]
+     (let [[k v] (first table)]
+       (if (= k key)
+         v
+         (recur (rest table) key))))))
+
+
+(ann insert (All [k v] [(Option (Seqable '[k v])) k v -> (ASeq '[k v])]))
+(defn insert [table key value]
+  (if-let [table (seq table)]
+    (let [[ k v :as kv] (first table)]
+      (if (= k key)
+        (cons [k value] (rest table))
+        (cons kv (insert (rest table) key value))))
+    (cons [key value] nil)))
+
+
+(ann ^:no-check make-table [-> EvalDispatchTable]) ; if I use `cond`, this ^:no-check is not needed
+(defn make-table
+  {:test #(let [table (make-table)]
+            (is (nil? ((table :lookup) :a)))
+            ((table :insert!) 'a 1)
+            (is (= ((table :lookup) 'a) 1)))}
+  []
+  (let [local-table (typed/atom :- (Option (ASeq '[Symbol [Expr Env -> Expr]])) nil)]
+    (letfn> [dispatch :- EvalDispatchTable
+             (dispatch [m]
+                       (case m
+
+                         :lookup
+                         (typed/fn
+                           [t :- Symbol]
+                           (lookup @local-table t))
+
+                         :insert!
+                         (typed/fn [t :- Symbol f :- [Expr Env -> Expr]]
+                           (swap! local-table insert t f))
+
+                         (throw (Exception. (str "unknown operation for table: " m)))))]
+      dispatch)))
+
+
 (ann ^:no-check list-of-values-4-1-rl [Any * -> Any])
 (defn list-of-values-4-1-rl
   "Q. 4.1"
@@ -415,6 +465,10 @@
                                       arguments
                                       (procedure-environment procedure)))
     :else (throw (Exception. (str "unknown procedure type -- _apply: " procedure)))))
+
+
+(ann eval-dispatch-table EvalDispatchTable)
+(def eval-dispatch-table (make-table))
 
 
 (ann ^:no-check _eval [Any * -> Any])
