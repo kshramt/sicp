@@ -988,5 +988,3 @@
 ; Q. 3.82 skip
 
 ) ; typed/tc-ignore
-(typed/tc-ignore
-) ; typed/tc-ignore
