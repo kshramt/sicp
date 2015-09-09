@@ -142,12 +142,12 @@
 
 (ann ^:no-check make-if [Any * -> Any])
 (defn make-if [predicate consequent alternative]
-  (my-list 'if predicate consequent alternative))
+  (list 'if predicate consequent alternative))
 
 
 (ann ^:no-check make-lambda [Any * -> Any])
 (defn make-lambda [parameters body]
-  (my-cons 'lambda (my-cons parameters body)))
+  (cons 'lambda (cons parameters body)))
 
 
 (ann ^:no-check tagged-list? [Any * -> Any])
@@ -378,8 +378,8 @@
 (defn list-of-values [exps env]
   (if (no-operands? exps)
     ()
-    (my-cons (_eval (first-operand exps) env)
-             (list-of-values (rest-operands exps) env))))
+    (cons (_eval (first-operand exps) env)
+          (list-of-values (rest-operands exps) env))))
 
 
 (ann ^:no-check _apply [Any * -> Any])
