@@ -382,6 +382,28 @@
           (list-of-values (rest-operands exps) env))))
 
 
+(ann ^:no-check list-of-values-4-1-lr [Any * -> Any])
+(defn list-of-values-4-1-lr
+  "Q. 4.1"
+  [exps env]
+  (if (no-operands? exps)
+    ()
+    (let [l (_eval (first-operand exps) env)
+          r (list-of-values-4-1-lr (rest-operands exps) env)]
+      (cons l r))))
+
+
+(ann ^:no-check list-of-values-4-1-rl [Any * -> Any])
+(defn list-of-values-4-1-rl
+  "Q. 4.1"
+  [exps env]
+  (if (no-operands? exps)
+    ()
+    (let [r (list-of-values-4-1-rl (rest-operands exps) env)
+          l (_eval (first-operand exps) env)]
+      (cons l r))))
+
+
 (ann ^:no-check _apply [Any * -> Any])
 (defn _apply [procedure arguments]
   (cond
