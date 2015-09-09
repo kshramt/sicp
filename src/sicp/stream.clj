@@ -933,6 +933,24 @@
     y))
 
 
+(defn rlc
+  "Q. 3.80"
+  {:test #(let [il-vc ((rlc 1 1 0.2 0.1) 0 10)]
+            il-vc)}
+  [r, l, c, dt]
+  (fn [vc0 il0]
+    (let [il (cons-stream il0 nil)
+          vc (integral (scale-stream il (- (/ 1 c))) vc0 dt)]
+      (set-cdr! il (my-delay
+                    (stream-cdr
+                     (integral
+                      (add-streams (scale-stream vc (/ 1 l))
+                                   (scale-stream il (- (/ r l))))
+                      il0
+                      dt))))
+      (my-cons il vc))))
+
+
 
 ) ; typed/tc-ignore
 (typed/tc-ignore
