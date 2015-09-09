@@ -392,7 +392,7 @@
                                       (procedure-parameters procedure)
                                       arguments
                                       (procedure-environment procedure)))
-    :else (throw (Exception. (str "unknown procedure type -- _applly: " procedure)))))
+    :else (throw (Exception. (str "unknown procedure type -- _apply: " procedure)))))
 
 
 (ann ^:no-check _eval [Any * -> Any])
