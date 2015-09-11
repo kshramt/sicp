@@ -70,11 +70,13 @@
 
 
 (defalias Variable Symbol)
-(defalias Expr Any)
+(defalias Expr (U Variable Any))
 (defalias Env Any)
+(defalias LookupEvalTable [Symbol -> (Option [Expr Env -> Expr])])
+(defalias InsertEvalTable [Symbol [Expr Env -> Expr] -> Any])
 (defalias EvalDispatchTable
-  (IFn [(Val :lookup) -> [Symbol -> (Option [Expr Env -> Expr])]]
-       [(Val :insert!) -> [Symbol [Expr Env -> Expr] -> Any]]))
+  (IFn [(Val :lookup) -> LookupEvalTable]
+       [(Val :insert!) -> InsertEvalTable]))
 
 
 (declare _eval)
@@ -216,7 +218,15 @@
 
 
 (ann ^:no-check cond->if [Any * -> Any])
-(defn cond->if [exp]
+(defn cond->if
+  {:test #(do
+            (is (= (cond->if '(cond ((ok) 1)
+                                    ((bad) 2)
+                                    (else 3)))
+                   '(if (ok) 1
+                        (if (bad) 2
+                            3)))))}
+  [exp]
   (expand-clauses (cond-clauses exp)))
 
 
@@ -467,27 +477,77 @@
     :else (throw (Exception. (str "unknown procedure type -- _apply: " procedure)))))
 
 
-(ann eval-dispatch-table EvalDispatchTable)
-(def eval-dispatch-table (make-table))
+(let [eval-dispatch-table (make-table)]
+  (ann lookup-eval-table LookupEvalTable)
+  (def lookup-eval-table (eval-dispatch-table :lookup))
+
+  (ann insert-eval-table! InsertEvalTable)
+  (def insert-eval-table! (eval-dispatch-table :insert!))
+  )
+
+
+(ann ^:no-check tag-of [Expr -> Symbol])
+(defn tag-of
+  {:test #(do (are [exp tag] (= (tag-of exp) tag)
+                1 'self-evaluating
+                "str" 'self-evaluating
+                'var 'variable
+                '(if cond then else) 'if)
+              (is (thrown? Exception (tag-of :kw))))}
+  [exp]
+  (cond
+    (sequential? exp) (or (first exp) 'application)
+    (variable? exp) 'variable
+    (self-evaluating? exp) 'self-evaluating
+    :else (throw (Exception. (str "unknown expression type -- tag-of: " exp)))))
 
 
 (ann ^:no-check _eval [Any * -> Any])
-(defn _eval [exp env]
-  (cond
-    (self-evaluating? exp) exp
-    (variable? exp) (lookup-variable-value exp env)
-    (quoted? exp) (text-of-quotation exp)
-    (assignment? exp) (eval-assignment exp env)
-    (definition? exp) (eval-definition exp env)
-    (if? exp) (eval-if exp env)
-    (lambda? exp) (make-procedure (lambda-parameters exp)
-                                  (lambda-body exp)
-                                  env)
-    (begin? exp) (eval-sequence (begin-actions exp) env)
-    (cond? exp) (recur (cond->if exp) env)
-    (application? exp) (_apply (_eval (operator exp) env)
-                               (list-of-values (operands exp) env))
-    :else (throw (Exception. (str "unknown expression type -- _eval: " exp)))))
+(defn _eval
+  "Q. 4.3"
+  {:test #(do (are [exp env val] (= (_eval exp env) val)
+                1 nil 1
+                "str" nil "str"
+                '(quote (a b)) nil '(a b)))}
+  [exp env]
+  (if-let [impl (lookup-eval-table (tag-of exp))]
+    (impl exp env)
+    (throw (Exception. (str "unknown expression type -- _eval: " exp)))))
+
+
+(insert-eval-table! 'self-evaluating
+                    (typed/fn [exp :- Expr env :- Env]
+                      exp))
+(insert-eval-table! 'variable
+                    (typed/fn [exp :- Expr env :- Env]
+                      (lookup-variable-value exp env)))
+(insert-eval-table! 'quote
+                    (typed/fn [exp :- Expr env :- Env]
+                      (text-of-quotation exp)))
+(insert-eval-table! 'set!
+                    (typed/fn [exp :- Expr env :- Env]
+                      (eval-assignment exp env)))
+(insert-eval-table! 'define
+                    (typed/fn [exp :- Expr env :- Env]
+                      (eval-definition exp env)))
+(insert-eval-table! 'if
+                    (typed/fn [exp :- Expr env :- Env]
+                      (eval-if exp env)))
+(insert-eval-table! 'lambda
+                    (typed/fn [exp :- Expr env :- Env]
+                      (make-procedure (lambda-parameters exp)
+                                      (lambda-body exp)
+                                      env)))
+(insert-eval-table! 'begin
+                    (typed/fn [exp :- Expr env :- Env]
+                      (eval-sequence (begin-actions exp) env)))
+(insert-eval-table! 'cond
+                    (typed/fn [exp :- Expr env :- Env]
+                      (_eval (cond->if exp) env)))
+(insert-eval-table! 'application
+                    (typed/fn [exp :- Expr env :- Env]
+                      (_apply (_eval (operator exp) env)
+                              (list-of-values (operands exp) env))))
 
 
 ;; Q. 4.2-a (define x 3) -> application
