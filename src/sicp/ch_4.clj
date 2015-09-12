@@ -49,6 +49,13 @@
 
 (declare _eval)
 
+
+(defn error
+  ([] (error ""))
+  ([msg] (error msg {}))
+  ([msg map] (throw (ex-info msg map))))
+
+
 (defn apply-primitive-procedure [& args]
   (throw (Exception. (str "NotImplemented"))))
 
@@ -558,21 +565,6 @@
   )
 
 
-(defn tag-of
-  {:test #(do (are [exp tag] (= (tag-of exp) tag)
-                1 'self-evaluating
-                "str" 'self-evaluating
-                'var 'variable
-                '(if cond then else) 'if)
-              (is (thrown? Exception (tag-of :kw))))}
-  [exp]
-  (cond
-    (sequential? exp) (or (first exp) 'application)
-    (variable? exp) 'variable
-    (self-evaluating? exp) 'self-evaluating
-    :else (throw (Exception. (str "unknown expression type -- tag-of: " exp)))))
-
-
 (defn _eval
   "Q. 4.3"
   {:test #(do (are [exp env val] (= (_eval exp env) val)
@@ -580,13 +572,16 @@
                 "str" nil "str"
                 '(quote (a b)) nil '(a b)))}
   [exp env]
-  (if-let [impl (lookup-eval-table (tag-of exp))]
-    (impl exp env)
-    (throw (Exception. (str "unknown expression type -- _eval: " exp)))))
+  (cond
+    (variable? exp) (lookup-variable-value exp env)
+    (self-evaluating? exp) exp
+    (sequential? exp) (if-let [impl (lookup-eval-table (first exp))]
+                        (impl exp env)
+                        (_apply (_eval (operator exp) env)
+                                (list-of-values (operands exp) env)))
+    :else (error (str "unknown expression type -- _eval: " exp))))
 
 
-(insert-eval-table! 'self-evaluating (fn [exp env] exp))
-(insert-eval-table! 'variable lookup-variable-value)
 (insert-eval-table! 'quote (fn [exp env] (text-of-quotation exp)))
 (insert-eval-table! 'set! eval-assignment)
 (insert-eval-table! 'define eval-definition)
@@ -596,8 +591,6 @@
                                                           env)))
 (insert-eval-table! 'begin (fn [exp env] (eval-sequence (begin-actions exp) env)))
 (insert-eval-table! 'cond (fn [exp env] (_eval (cond->if exp) env)))
-(insert-eval-table! 'application (fn [exp env] (_apply (_eval (operator exp) env)
-                                                       (list-of-values (operands exp) env))))
 (insert-eval-table! 'let (fn [exp env] (_eval (let->combination exp) env)))
 (insert-eval-table! 'let* (fn [exp env] (_eval (let*->nested-lets exp) env)))
 (insert-eval-table! 'and eval-and-derived)
