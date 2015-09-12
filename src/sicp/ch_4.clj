@@ -362,6 +362,29 @@
       dispatch)))
 
 
+(defn let->combination
+  "Q 4.6"
+  {:test #(do (are [in out] (= in out)
+                (let->combination '(let ()))
+                '((lambda ()))
+                (let->combination '(let ((a 1) (b 2)) (+ a b)))
+                '((lambda (a b) (+ a b)) 1 2)
+                (let->combination '(let ((a 1) (b 2)) (print a) (+ a b)))
+                '((lambda (a b) (print a) (+ a b)) 1 2)
+                )
+              (is (thrown? Exception (let->combination '(let))))
+              )}
+  [exp]
+  (if-let [args (next exp)]
+    (let [pairs (first args)
+          names (map first pairs)
+          vals (map second pairs)
+          body (rest args)]
+      (cons (make-lambda names body)
+            vals))
+    (throw (Exception. (str "No argumets are given for let: " exp)))))
+
+
 
 
 
@@ -425,6 +448,7 @@
 (insert-eval-table! 'cond (fn [exp env] (_eval (cond->if exp) env)))
 (insert-eval-table! 'application (fn [exp env] (_apply (_eval (operator exp) env)
                                                        (list-of-values (operands exp) env))))
+(insert-eval-table! 'let (fn [exp env] (_eval (let->combination exp) env)))
 
 
 ;; Q. 4.2-a (define x 3) -> application
