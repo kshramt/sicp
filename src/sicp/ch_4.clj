@@ -407,6 +407,99 @@
 
 
 
+(defn eval-and-special
+  "Q. 4.4"
+  {:test #(do
+            (is (= (eval-and-special '(and) nil) 'true)))}
+  [exp env]
+  (loop [s (operands exp)
+         ret 'true]
+    (if-let [s (seq s)]
+      (let [ret (_eval (first s) env)]
+        (if (my-true? ret)
+          (recur (rest s) ret)
+          'false))
+      ret)))
+
+
+(defn expand-and
+  "Q. 4.4"
+  {:test #(do
+            (are [in out] (= in out)
+              (expand-and '(and))
+              'true
+              (expand-and '(and 1))
+              '(let ((v ((lambda () 1))))
+                 (if v v false))
+              (expand-and '(and (a b) (c d)))
+              '(let ((v ((lambda () (a b)))))
+                 (if v
+                   (let ((v ((lambda () (c d)))))
+                     (if v v false))
+                   false))))}
+  [exp]
+  (if-let [args (operands exp)]
+    (letfn [(expand [s]
+              ['let [['v [(make-lambda [] [(first s)])]]]
+                 (if-let [more (next s)]
+                   (make-if 'v (expand more) 'false)
+                   (make-if 'v 'v 'false))])]
+      (expand args))
+    'true))
+
+
+(defn eval-and-derived
+  "Q. 4.4"
+  [exp env]
+  (_eval (expand-and exp) env))
+
+
+(defn eval-or-special
+  "Q. 4.4"
+  {:test #(do
+            (is (= (eval-or-special '(or) nil) 'false)))}
+  [exp env]
+  (loop [s (operands exp)]
+    (if-let [s (seq s)]
+      (let [ret (_eval (first s) env)]
+        (if (my-true? ret)
+          ret
+          (recur (rest s))))
+      'false)))
+
+
+(defn expand-or
+  "Q. 4.4"
+  {:test #(do
+            (are [in out] (= in out)
+              (expand-or '(or))
+              'false
+              (expand-or '(or 1))
+              '(let ((v ((lambda () 1))))
+                 (if v v false))
+              (expand-or '(or (a b) (c d)))
+              '(let ((v ((lambda () (a b)))))
+                 (if v
+                   v
+                   (let ((v ((lambda () (c d)))))
+                     (if v v false))))))}
+  [exp]
+  (if-let [args (operands exp)]
+    (letfn [(expand [s]
+              ['let [['v [(make-lambda [] [(first s)])]]]
+                 (if-let [more (next s)]
+                   (make-if 'v 'v (expand more))
+                   (make-if 'v 'v 'false))])]
+      (expand args))
+    'false))
+
+
+(defn eval-or-derived
+  "Q. 4.4"
+  [exp env]
+  (_eval (expand-or exp) env))
+
+
 (defn _apply [procedure arguments]
   (cond
     (primitive-procedure? procedure) (apply-primitive-procedure procedure arguments)
@@ -468,6 +561,8 @@
                                                        (list-of-values (operands exp) env))))
 (insert-eval-table! 'let (fn [exp env] (_eval (let->combination exp) env)))
 (insert-eval-table! 'let* (fn [exp env] (_eval (let*->nested-lets exp) env)))
+(insert-eval-table! 'and eval-and-derived)
+(insert-eval-table! 'or eval-or-derived)
 
 
 ;; Q. 4.2-a (define x 3) -> application
