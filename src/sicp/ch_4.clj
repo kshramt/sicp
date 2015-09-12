@@ -385,6 +385,25 @@
     (throw (Exception. (str "No argumets are given for let: " exp)))))
 
 
+(defn let*->nested-lets
+  "Q 4.7"
+  {:test #(do (are [in out] (= in out)
+                (let*->nested-lets '(let* ()))
+                '(let ())
+                (let*->nested-lets '(let* ((a 1) (a 2)) b c))
+                '(let ((a 1)) (let ((a 2)) (let () b c)))
+                )
+              (is (thrown? Exception (let*->nested-lets '(let))))
+              )}
+  [exp]
+  (if-let [args (next exp)]
+    (let [body (rest args)]
+      (letfn [(expand [pairs]
+                (if-let [pairs (seq pairs)]
+                  ['let [(first pairs)] (expand (rest pairs))]
+                  (cons 'let (cons [] body))))]
+        (expand (first args))))
+    (throw (Exception. (str "No argumets are given for let*: " exp)))))
 
 
 
@@ -449,6 +468,7 @@
 (insert-eval-table! 'application (fn [exp env] (_apply (_eval (operator exp) env)
                                                        (list-of-values (operands exp) env))))
 (insert-eval-table! 'let (fn [exp env] (_eval (let->combination exp) env)))
+(insert-eval-table! 'let* (fn [exp env] (_eval (let*->nested-lets exp) env)))
 
 
 ;; Q. 4.2-a (define x 3) -> application
