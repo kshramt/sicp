@@ -24,6 +24,8 @@ NAMES := \
    stream
 
 FILE_NAMES := $(subst -,_,$(NAMES))
+type_check_file_names := $(patsubst %,src/sicp/%.clj.type_checked,$(filter-out ch_4,$(FILE_NAMES)))
+unit_test_file_names = $(FILE_NAMES:%=src/sicp/%.clj.unit_tested)
 
 
 ns_of_file = $(subst _,-,$(1))
@@ -32,8 +34,8 @@ ns_of_file = $(subst _,-,$(1))
 .PHONY: all check type_check unit_test
 all:
 check: type_check unit_test
-type_check: $(FILE_NAMES:%=src/sicp/%.clj.type_checked)
-unit_test: $(FILE_NAMES:%=src/sicp/%.clj.unit_tested)
+type_check: $(type_check_file_names)
+unit_test: $(unit_test_file_names)
 
 
 define suffix_loop_template =

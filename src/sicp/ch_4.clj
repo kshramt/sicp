@@ -47,9 +47,6 @@
   (:import [sicp.pair Pair]))
 
 
-(typed/tc-ignore
-
-
 (declare _eval)
 
 (defn apply-primitive-procedure [& args]
@@ -506,4 +503,3 @@
     :else (throw (Exception. (str "unknown expression type -- _eval-4-2-b: " exp)))))
 
 
-) ; typed/tc-ignore
