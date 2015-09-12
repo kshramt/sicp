@@ -138,6 +138,10 @@
   (nil? (next s)))
 
 
+(defn make-let [pairs body]
+  (cons 'let (cons pairs body)))
+
+
 (defn sequence->exp [s]
   (when-let [s (seq s)]
     (if (last-exp? s)
@@ -399,8 +403,8 @@
     (let [body (rest args)]
       (letfn [(expand [pairs]
                 (if-let [pairs (seq pairs)]
-                  ['let [(first pairs)] (expand (rest pairs))]
-                  (cons 'let (cons [] body))))]
+                  (make-let [(first pairs)] [(expand (rest pairs))])
+                  (make-let [] body)))]
         (expand (first args))))
     (throw (Exception. (str "No argumets are given for let*: " exp)))))
 
@@ -440,10 +444,10 @@
   [exp]
   (if-let [args (operands exp)]
     (letfn [(expand [s]
-              ['let [['v [(make-lambda [] [(first s)])]]]
-                 (if-let [more (next s)]
-                   (make-if 'v (expand more) 'false)
-                   (make-if 'v 'v 'false))])]
+              (make-let [['v [(make-lambda [] [(first s)])]]]
+                        [(if-let [more (next s)]
+                           (make-if 'v (expand more) 'false)
+                           (make-if 'v 'v 'false))]))]
       (expand args))
     'true))
 
@@ -486,10 +490,10 @@
   [exp]
   (if-let [args (operands exp)]
     (letfn [(expand [s]
-              ['let [['v [(make-lambda [] [(first s)])]]]
-                 (if-let [more (next s)]
-                   (make-if 'v 'v (expand more))
-                   (make-if 'v 'v 'false))])]
+              (make-let [['v [(make-lambda [] [(first s)])]]]
+                        [(if-let [more (next s)]
+                           (make-if 'v 'v (expand more))
+                           (make-if 'v 'v 'false))]))]
       (expand args))
     'false))
 
