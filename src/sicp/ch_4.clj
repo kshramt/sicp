@@ -149,7 +149,9 @@
       (make-begin s))))
 
 
-(defn expand-clauses [clauses]
+(defn expand-clauses
+  "Q. 4.5"
+  [clauses]
   (if-let [clauses (seq clauses)]
     (let [head (first clauses)
           more (rest clauses)]
@@ -157,20 +159,41 @@
         (if (seq more)
           (throw (Exception. (str "else clause is not last -- cond->if: " clauses)))
           (sequence->exp (cond-actions head)))
-        (make-if (cond-predicate head)
-                 (sequence->exp (cond-actions head))
-                 (expand-clauses more))))
+        (if-let [actions (seq (cond-actions head))]
+          (let [pred (cond-predicate head)]
+            (if (= (first actions) '=>)
+              (make-let
+               [['v [(make-lambda [] [pred])]]]
+               [(make-if
+                 'v
+                 (if-let [f (second actions)]
+                   [f 'v]
+                   (throw (Exception.
+                           (str "f of pred => f not given -- cond->if: "
+                                clauses))))
+                 (expand-clauses more))])
+              (make-if (cond-predicate head)
+                       (sequence->exp (cond-actions head))
+                       (expand-clauses more))))
+          (throw (Exception. (str "no actions -- cond-> if: " clauses))))))
     'false))
 
 
 (defn cond->if
   {:test #(do
-            (is (= (cond->if '(cond ((ok) 1)
-                                    ((bad) 2)
-                                    (else 3)))
-                   '(if (ok) 1
-                        (if (bad) 2
-                            3)))))}
+            (are [in out] (= in out)
+              (cond->if '(cond ((ok) 1)
+                               ((bad) 2)
+                               (else 3)))
+              '(if (ok) 1
+                   (if (bad) 2
+                       3))
+              (cond->if '(cond ((assoc 'b '((a 1) (b 2))) => cadr)
+                               (else false)))
+              '(let ((v ((lambda () (assoc 'b '((a 1) (b 2)))))))
+                 (if v
+                   (cadr v)
+                   false))))}
   [exp]
   (expand-clauses (cond-clauses exp)))
 
