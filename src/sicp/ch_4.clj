@@ -387,7 +387,10 @@
 
 
 (defn let->combination
-  "Q 4.6"
+  "
+  Q 4.6
+  Q 4.8
+  "
   {:test #(do (are [in out] (= in out)
                 (let->combination '(let ()))
                 '((lambda ()))
@@ -397,17 +400,26 @@
                 '((lambda (a b) (+ a b)) 1 2)
                 (let->combination '(let ((a 1) (b 2)) (print a) (+ a b)))
                 '((lambda (a b) (print a) (+ a b)) 1 2)
+                (let->combination '(let impl ((a 1) (b 2)) (print a) (impl a b)))
+                '(let () (define (impl a b) (print a) (impl a b)) (impl 1 2))
                 )
               (is (thrown? Exception (let->combination '(let))))
               )}
   [exp]
   (if-let [args (next exp)]
-    (let [pairs (first args)
-          names (map first pairs)
-          vals (map second pairs)
-          body (rest args)]
-      (cons (make-lambda names body)
-            vals))
+    (if (variable? (first args))
+      (let [f (first args)
+            pairs (second args)
+            names (map first pairs)
+            vals (map second pairs)
+            body (rest (rest args))]
+        (make-let [] [(concat ['define (cons f names)] body) (cons f vals)]))
+      (let [pairs (first args)
+            names (map first pairs)
+            vals (map second pairs)
+            body (rest args)]
+        (cons (make-lambda names body)
+              vals)))
     (throw (Exception. (str "No argumets are given for let: " exp)))))
 
 
