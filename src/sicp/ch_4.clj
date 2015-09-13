@@ -108,8 +108,11 @@
   (throw (Exception. (str "NotImplemented"))))
 
 
-(defn make-if [predicate consequent alternative]
-  (list 'if predicate consequent alternative))
+(defn make-if
+  ([predicate consequent]
+   (list 'if predicate consequent))
+  ([predicate consequent alternative]
+   (list 'if predicate consequent alternative)))
 
 
 (defn make-lambda [parameters body]
