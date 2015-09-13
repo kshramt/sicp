@@ -26,6 +26,7 @@
             cdddr
             my-cons
             my-list
+            my-map
             pair?
             set-car!
             set-cdr!
@@ -70,19 +71,43 @@
 (def the-empty-environment nil)
 
 
-(defn make-frame [variable values]
-  (my-cons variable values))
+;; (defn make-frame [variable values]
+;;   (my-cons variable values))
 
 
-(def frame-variables car)
+;; (def frame-variables car)
 
 
-(def frame-values cdr)
+;; (def frame-values cdr)
 
 
-(defn add-binding-to-frame! [var val frame]
-  (set-car! frame (my-cons var (frame-variables frame)))
-  (set-cdr! frame (my-cons val (frame-values frame))))
+;; (defn add-binding-to-frame! [var val frame]
+;;   (set-car! frame (my-cons var (frame-variables frame)))
+;;   (set-cdr! frame (my-cons val (frame-values frame))))
+
+
+(defn make-frame
+  "Q. 4.11"
+  [vars vals]
+  (my-map cons vars vals))
+
+
+(defn frame-variables
+  "Q. 4.11"
+  [frame]
+  (my-map car frame))
+
+
+(defn frame-values
+  "Q. 4.11"
+  [frame]
+  (my-map cdr frame))
+
+
+(defn add-binding-to-frame!
+  "Q. 4.11"
+  [var val frame]
+  (my-cons (my-cons var val) frame))
 
 
 (defn extend-environment [vars vals base-env]

@@ -137,17 +137,74 @@
 
 
 (ann any? (All [a] [[a -> Boolean] (U Any (List a)) -> Boolean]))
-(defn any? [pred x]
+(defn any?
+  {:test #(do
+            (is (any? odd? (my-list 2 4 6 1 7)))
+            (is (not (any? odd? (my-list 2 4 6)))))}
+  [pred x]
   (and (pair? x)
        (or (pred (car x))
            (recur pred (cdr x)))))
 
 
-(ann test-any? [-> nil])
-(deftest test-any?
-  (is (any? odd? (my-list 2 4 6 1 7)))
-  (is (not (any? odd? (my-list 2 4 6))))
-  )
+(ann ^:no-check my-reverse
+     (All [a] (IFn [nil -> nil]
+                   [(List a) -> (List a)])))
+(defn my-reverse
+  {:test #(do
+            (are [in out] (= in out)
+              (my-reverse nil)
+              nil
+              (my-reverse (my-list 1))
+              (my-list 1)
+              (my-reverse (my-list 1 2))
+              (my-list 2 1)))}
+  [p]
+  (letfn [(impl [in out]
+            (if (nil? in)
+              out
+              (recur (cdr in)
+                     (my-cons (car in)
+                              out))))]
+    (impl p nil)))
+
+
+(ann ^:no-check
+     my-map (All [a b c]
+                 (IFn [[a -> b] nil -> nil]
+                      [[a -> b] (List a) -> (List b)]
+                      [[a b -> c] nil (List b) -> nil]
+                      [[a b -> c] (List a) nil -> nil]
+                      [[a b -> c] (List a) (List b) -> (List c)]
+                      )))
+(defn my-map
+  {:test #(do
+            (are [in out] (= in out)
+              (my-map inc nil)
+              nil
+              (my-map inc (my-list 1 2))
+              (my-list 2 3)
+              (my-map + (my-list 1 2) (my-list 3 4 5))
+              (my-list 4 6)))}
+  ([f p]
+   (letfn [(impl [p ret]
+             (if (nil? p)
+               ret
+               (recur (cdr p)
+                      (my-cons (f (car p))
+                               ret))))]
+     (my-reverse (impl p nil))))
+  ([f p1 p2]
+   (letfn [(impl [p1 p2 ret]
+             (if (or (nil? p1)
+                     (nil? p2))
+               ret
+               (recur (cdr p1)
+                      (cdr p2)
+                      (my-cons (f (car p1)
+                                  (car p2))
+                               ret))))]
+     (my-reverse (impl p1 p2 nil)))))
 
 
 (ann print-my-list [(List Any) -> nil])
