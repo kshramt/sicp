@@ -148,8 +148,11 @@
   (nil? (next s)))
 
 
-(defn make-let [pairs body]
-  (cons 'let (cons pairs body)))
+(defn make-let
+  ([pairs body]
+   (cons 'let (cons pairs body)))
+  ([name pairs body]
+   (concat ['let name pairs] body)))
 
 
 (defn sequence->exp [s]
