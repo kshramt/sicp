@@ -48,6 +48,8 @@
 
 
 (declare _eval)
+(def _true (symbol "true"))
+(def _false (symbol "false"))
 
 
 (defn error
@@ -189,7 +191,7 @@
                        (sequence->exp (cond-actions head))
                        (expand-clauses more))))
           (throw (Exception. (str "no actions -- cond-> if: " clauses))))))
-    'false))
+    _false))
 
 
 (defn cond->if
@@ -247,7 +249,7 @@
 (defn if-alternative [exp]
   (if (next (rest (rest exp)))
     (nth exp 3)
-    'false))
+    _false))
 
 
 (defn if-consequent [exp]
@@ -462,16 +464,24 @@
 (defn eval-and-special
   "Q. 4.4"
   {:test #(do
-            (is (= (eval-and-special '(and) nil) 'true)))}
+            (is (= (eval-and-special '(and) nil) _true)))}
   [exp env]
   (loop [s (operands exp)
-         ret 'true]
+         ret _true]
     (if-let [s (seq s)]
       (let [ret (_eval (first s) env)]
         (if (my-true? ret)
           (recur (rest s) ret)
-          'false))
+          _false))
       ret)))
+
+
+(defn wrap-by-lambda [xs]
+  (map (fn [fi v]
+         [(symbol (str "f" fi))
+          (make-lambda [] [v])])
+       (range)
+       xs))
 
 
 (defn expand-and
@@ -479,25 +489,29 @@
   {:test #(do
             (are [in out] (= in out)
               (expand-and '(and))
-              'true
+              _true
               (expand-and '(and 1))
-              '(let ((v ((lambda () 1))))
-                 (if v v false))
+              '(let ((f0 (lambda () 1)))
+                 (let ((v (f0)))
+                   (if v v)))
               (expand-and '(and (a b) (c d)))
-              '(let ((v ((lambda () (a b)))))
-                 (if v
-                   (let ((v ((lambda () (c d)))))
-                     (if v v false))
-                   false))))}
+              '(let ((f0 (lambda () (a b)))
+                     (f1 (lambda () (c d))))
+                 (let ((v (f0)))
+                   (if v
+                     (let ((v (f1)))
+                       (if v v)))))))}
   [exp]
   (if-let [args (operands exp)]
     (letfn [(expand [s]
-              (make-let [['v [(make-lambda [] [(first s)])]]]
-                        [(if-let [more (next s)]
-                           (make-if 'v (expand more) 'false)
-                           (make-if 'v 'v 'false))]))]
-      (expand args))
-    'true))
+              (make-let
+               [['v (first s)]]
+               [(if-let [more (next s)]
+                  (make-if 'v (expand more))
+                  (make-if 'v 'v))]))]
+      (let [fs (wrap-by-lambda args)]
+        (make-let fs [(expand (map (fn [kv] [(first kv)]) fs))])))
+    _true))
 
 
 (defn eval-and-derived
@@ -509,7 +523,7 @@
 (defn eval-or-special
   "Q. 4.4"
   {:test #(do
-            (is (= (eval-or-special '(or) nil) 'false)))}
+            (is (= (eval-or-special '(or) nil) _false)))}
   [exp env]
   (loop [s (operands exp)]
     (if-let [s (seq s)]
@@ -517,7 +531,7 @@
         (if (my-true? ret)
           ret
           (recur (rest s))))
-      'false)))
+      _false)))
 
 
 (defn expand-or
@@ -525,25 +539,29 @@
   {:test #(do
             (are [in out] (= in out)
               (expand-or '(or))
-              'false
+              _false
               (expand-or '(or 1))
-              '(let ((v ((lambda () 1))))
-                 (if v v false))
+              '(let ((f0 (lambda () 1)))
+                 (let ((v (f0)))
+                   (if v v)))
               (expand-or '(or (a b) (c d)))
-              '(let ((v ((lambda () (a b)))))
-                 (if v
-                   v
-                   (let ((v ((lambda () (c d)))))
-                     (if v v false))))))}
+              '(let ((f0 (lambda () (a b)))
+                     (f1 (lambda () (c d))))
+                 (let ((v (f0)))
+                   (if v v
+                     (let ((v (f1)))
+                       (if v v)))))))}
   [exp]
   (if-let [args (operands exp)]
     (letfn [(expand [s]
-              (make-let [['v [(make-lambda [] [(first s)])]]]
-                        [(if-let [more (next s)]
-                           (make-if 'v 'v (expand more))
-                           (make-if 'v 'v 'false))]))]
-      (expand args))
-    'false))
+              (make-let
+               [['v (first s)]]
+               [(if-let [more (next s)]
+                  (make-if 'v 'v (expand more))
+                  (make-if 'v 'v))]))]
+      (let [fs (wrap-by-lambda args)]
+        (make-let fs [(expand (map (fn [kv] [(first kv)]) fs))])))
+    _false))
 
 
 (defn eval-or-derived
