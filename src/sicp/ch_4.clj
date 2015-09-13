@@ -58,19 +58,104 @@
   ([msg map] (throw (ex-info msg map))))
 
 
-(defn apply-primitive-procedure [& args]
+; begin environment
+
+
+(def enclosing-environment cdr)
+
+
+(def first-frame car)
+
+
+(def the-empty-environment nil)
+
+
+(defn make-frame [variable values]
+  (my-cons variable values))
+
+
+(def frame-variables car)
+
+
+(def frame-values cdr)
+
+
+(defn add-binding-to-frame! [var val frame]
+  (set-car! frame (my-cons var (frame-variables frame)))
+  (set-cdr! frame (my-cons val (frame-values frame))))
+
+
+(defn extend-environment [vars vals base-env]
+  (if (= (count vars) (count vals))
+    (my-cons (make-frame vars vals) base-env)
+    (if (< (count vars) (count vals))
+      (error (str "Too many arguments supplied" vars vals))
+      (error (str "Too few arguments supplied" vars vals)))))
+
+
+(defn lookup-variable-value [var env]
+  (letfn [(env-loop [env]
+            (letfn [(scan [vars vals]
+                      (cond (nil? vars)
+                            (env-loop (enclosing-environment env))
+                            (= var (car vars))
+                            (car vals)
+                            :else
+                            (recur (cdr vars) (cdr vals))))]
+              (if (nil? env)
+                (error (str "Unbound variable" var))
+                (let [frame (first-frame env)]
+                  (scan (frame-variables frame)
+                        (frame-values frame))))))]
+    (env-loop env)))
+
+
+(defn set-variable-value! [var val env]
+  (letfn [(env-loop [env]
+            (letfn [(scan [vars vals]
+                      (cond (nil? vars)
+                            (env-loop (enclosing-environment env))
+                            (= var (car vars))
+                            (set-car! vals var)
+                            :else
+                            (recur (cdr vars) (cdr vals))))]
+              (if (nil? env)
+                (error (str "Unbound variable -- set!: " var))
+                (let [frame (first-frame env)]
+                  (scan (frame-variables frame)
+                        (frame-values frame))))))]
+    (env-loop env)))
+
+
+(defn define-variable! [var val env]
+  (let [frame (first-frame env)]
+    (letfn [(scan [vars vals]
+              (cond (nil? vars)
+                    (add-binding-to-frame! var val frame)
+                    (= var (car vars))
+                    (set-car! vals val)
+                    :else
+                    (recur (cdr vars) (cdr vals))))]
+      (scan (frame-variables frame)
+            (frame-values frame)))))
+
+
+; end environment
+
+(defn apply-primitive-procedure [proc args]
   (throw (Exception. (str "NotImplemented"))))
 
 
-(defn compound-procedure? [& args]
-  (throw (Exception. (str "NotImplemented"))))
+(defn tagged-list? [exp tag]
+  (and (sequential? exp)
+       (= (first exp) tag)))
 
 
-(defn define-variable! [& args]
-  (throw (Exception. (str "NotImplemented"))))
+(defn compound-procedure? [p]
+  (tagged-list? p 'procedure))
 
 
-(defn extend-environment [& args]
+(defn define-variable! [var value env]
   (throw (Exception. (str "NotImplemented"))))
 
 
@@ -78,36 +163,32 @@
   (throw (Exception. (str "NotImplemented"))))
 
 
-(defn lookup-variable-value [& args]
-  (throw (Exception. (str "NotImplemented"))))
-
-
-(defn make-procedure [& args]
-  (throw (Exception. (str "NotImplemented"))))
+(defn make-procedure [parameters body env]
+  ['procedure parameters body env])
 
 
 (defn primitive-procedure? [& args]
   (throw (Exception. (str "NotImplemented"))))
 
 
-(defn procedure-body [& args]
-  (throw (Exception. (str "NotImplemented"))))
+(defn procedure-body [p]
+  (nth p 2))
 
 
-(defn procedure-environment [& args]
-  (throw (Exception. (str "NotImplemented"))))
+(defn procedure-environment [p]
+  (nth p 3))
 
 
-(defn procedure-parameters [& args]
-  (throw (Exception. (str "NotImplemented"))))
+(defn procedure-parameters [p]
+  (second p))
 
 
-(defn set-variable-value! [& args]
-  (throw (Exception. (str "NotImplemented"))))
+(defn my-false? [x]
+  (= x _false))
 
 
-(defn my-true? [& args]
-  (throw (Exception. (str "NotImplemented"))))
+(defn my-true? [x]
+  (not (my-false? x)))
 
 
 (defn make-if
@@ -119,11 +200,6 @@
 
 (defn make-lambda [parameters body]
   (cons 'lambda (cons parameters body)))
-
-
-(defn tagged-list? [exp tag]
-  (and (sequential? exp)
-       (= (first exp) tag)))
 
 
 (def cond-actions rest)
