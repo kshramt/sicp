@@ -570,6 +570,32 @@
   (_eval (expand-or exp) env))
 
 
+(defn expand-while
+  "Q. 4.9"
+  {:test #(do
+            (are [in out] (= in out)
+              (expand-while '(while (> i 10) (print i) (set! i (- i 1))))
+              '(let ((pred (lambda () (> i 10)))
+                     (body (lambda () (print i) (set! i (- i 1)))))
+                 (let loop ()
+                      (if (pred)
+                        (begin (body)
+                               (loop))))))
+            (is (thrown? clojure.lang.ExceptionInfo (expand-while '(while))))
+            (is (thrown? clojure.lang.ExceptionInfo (expand-while '(while true)))))}
+  [exp]
+  (if (> (count exp) 2)
+    (let [[_ pred & body] exp]
+      (make-let [['pred (make-lambda [] [pred])]
+                 ['body (make-lambda [] body)]]
+                [(make-let 'loop
+                           []
+                           ['(if (pred)
+                               (begin (body)
+                                      (loop)))])]))
+    (error (str "(while pred op_1 op_2 ...)" exp))))
+
+
 (defn _apply [procedure arguments]
   (cond
     (primitive-procedure? procedure) (apply-primitive-procedure procedure arguments)
