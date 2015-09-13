@@ -645,6 +645,7 @@
 (insert-eval-table! 'let* (fn [exp env] (_eval (let*->nested-lets exp) env)))
 (insert-eval-table! 'and eval-and-derived)
 (insert-eval-table! 'or eval-or-derived)
+(insert-eval-table! 'while (fn [exp env] (_eval (expand-while exp) env))) ; Q. 4.10
 
 
 ;; Q. 4.2-a (define x 3) -> application
