@@ -16,10 +16,12 @@
             any?
             car
             caadr
+            caar
             cadr
             caddr
             cadddr
             cdadr
+            cdar
             cdr
             cddr
             cddr
@@ -63,53 +65,8 @@
 
 
 (def enclosing-environment cdr)
-
-
 (def first-frame car)
-
-
 (def the-empty-environment nil)
-
-
-;; (defn make-frame [variable values]
-;;   (my-cons variable values))
-
-
-;; (def frame-variables car)
-
-
-;; (def frame-values cdr)
-
-
-;; (defn add-binding-to-frame! [var val frame]
-;;   (set-car! frame (my-cons var (frame-variables frame)))
-;;   (set-cdr! frame (my-cons val (frame-values frame))))
-
-
-(defn make-frame
-  "Q. 4.11"
-  [vars vals]
-  (my-map cons vars vals))
-
-
-(defn frame-variables
-  "Q. 4.11"
-  [frame]
-  (my-map car frame))
-
-
-(defn frame-values
-  "Q. 4.11"
-  [frame]
-  (my-map cdr frame))
-
-
-(defn add-binding-to-frame!
-  "Q. 4.11"
-  [var val frame]
-  (my-cons (my-cons var val) frame))
-
-
 (defn extend-environment [vars vals base-env]
   (if (= (count vars) (count vals))
     (my-cons (make-frame vars vals) base-env)
@@ -117,52 +74,93 @@
       (error (str "Too many arguments supplied" vars vals))
       (error (str "Too few arguments supplied" vars vals)))))
 
+(defn make-frame "Q. 4.11" [vars vals] (my-map my-cons vars vals))
+(defn frame-variables "Q. 4.11" [frame] (my-map car frame))
+(defn frame-values "Q. 4.11" [frame] (my-map cdr frame))
+(defn add-binding-to-first-frame! [var val env]
+  (set-car! env (my-cons (my-cons var val) (first-frame env))))
 
-(defn lookup-variable-value [var env]
-  (letfn [(env-loop [env]
-            (letfn [(scan [vars vals]
-                      (cond (nil? vars)
-                            (env-loop (enclosing-environment env))
-                            (= var (car vars))
-                            (car vals)
-                            :else
-                            (recur (cdr vars) (cdr vals))))]
-              (if (nil? env)
-                (error (str "Unbound variable" var))
-                (let [frame (first-frame env)]
-                  (scan (frame-variables frame)
-                        (frame-values frame))))))]
-    (env-loop env)))
+(defn lookup-frame
+  "Q. 4.12"
+  {:test #(do
+            (is (nil? (lookup-frame (make-frame (my-list 1 3)
+                                                (my-list 2 4))
+                                    5)))
+            (is (= (lookup-frame (make-frame (my-list 1 3)
+                                             (my-list 2 4))
+                                 3)
+                   (my-list (my-cons 3 4)))))}
+  [frame var]
+  (cond
+    (nil? frame) nil
+    (= var (caar frame)) frame
+    :else (recur (cdr frame) var)))
 
+(defn lookup-env
+  "Q. 4.12"
+  {:test #(do
+            (is (nil? (lookup-env (my-list (make-frame (my-list 1 2)
+                                                       (my-list 3 4)))
+                                  5)))
+            (is (= (lookup-env (my-list (make-frame (my-list 1 2)
+                                                    (my-list 3 4)))
+                               2)
+                   (my-list (my-cons 2 4)))))}
+  [env var]
+  (if (nil? env)
+    nil
+    (or (lookup-frame (first-frame env) var)
+        (recur (enclosing-environment env) var))))
 
-(defn set-variable-value! [var val env]
-  (letfn [(env-loop [env]
-            (letfn [(scan [vars vals]
-                      (cond (nil? vars)
-                            (env-loop (enclosing-environment env))
-                            (= var (car vars))
-                            (set-car! vals var)
-                            :else
-                            (recur (cdr vars) (cdr vals))))]
-              (if (nil? env)
-                (error (str "Unbound variable -- set!: " var))
-                (let [frame (first-frame env)]
-                  (scan (frame-variables frame)
-                        (frame-values frame))))))]
-    (env-loop env)))
+(defn lookup-variable-value
+  {:test #(do
+            (let [env (my-list (make-frame (my-list 1 2)
+                                           (my-list 3 4)))]
+              (is (= (lookup-variable-value 1 env) 3))
+              (is (= (lookup-variable-value 2 env) 4))
+              (is (thrown? clojure.lang.ExceptionInfo
+                           (lookup-variable-value :no env)))))}
+  [var env]
+  (if-let [frame (lookup-env env var)]
+    (cdar frame)
+    (error (str "Unbound variable" var))))
 
+(defn set-variable-value!
+  {:test #(do
+            (let [env (my-list (make-frame (my-list 1 2)
+                                           (my-list 3 4)))]
+              (is (thrown? clojure.lang.ExceptionInfo
+                           (set-variable-value! :no :no env)))
+              (set-variable-value! 1 11 env)
+              (is (= env
+                     (my-list (make-frame (my-list 1 2)
+                                          (my-list 11 4)))))
+              (set-variable-value! 2 22 env)
+              (is (= env
+                     (my-list (make-frame (my-list 1 2)
+                                          (my-list 11 22)))))))}
+  [var val env]
+  (if-let [frame (lookup-env env var)]
+    (set-cdr! (car frame) val)
+    (error (str "Unbound variable -- set!: " var))))
 
-(defn define-variable! [var val env]
-  (let [frame (first-frame env)]
-    (letfn [(scan [vars vals]
-              (cond (nil? vars)
-                    (add-binding-to-frame! var val frame)
-                    (= var (car vars))
-                    (set-car! vals val)
-                    :else
-                    (recur (cdr vars) (cdr vals))))]
-      (scan (frame-variables frame)
-            (frame-values frame)))))
+(defn define-variable!
+  {:test #(do
+            (let [env (my-list (make-frame (my-list 1 2)
+                                           (my-list 3 4)))]
+              (define-variable! 1 11 env)
+              (is (= env
+                     (my-list (make-frame (my-list 1 2)
+                                          (my-list 11 4)))))
+              (define-variable! 3 33 env)
+              (is (= env
+                     (my-list (make-frame (my-list 3 1 2)
+                                          (my-list 33 11 4)))))
+              ))}
+  [var val env]
+  (if-let [frame (lookup-frame (first-frame env) var)]
+    (set-cdr! (car frame) val)
+    (add-binding-to-first-frame! var val env)))
 
 
 ; end environment
@@ -178,10 +176,6 @@
 
 (defn compound-procedure? [p]
   (tagged-list? p 'procedure))
-
-
-(defn define-variable! [var value env]
-  (throw (Exception. (str "NotImplemented"))))
 
 
 (defn first-operand [& args]
