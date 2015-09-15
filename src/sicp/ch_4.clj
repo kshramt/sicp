@@ -162,6 +162,76 @@
     (set-cdr! (car frame) val)
     (add-binding-to-first-frame! var val env)))
 
+(defn -unbind!
+  "Q. 4.13"
+  {:test #(do
+            (let [fr (make-frame (my-list 1 2 3)
+                                 (my-list 4 5 6))]
+              (is (-unbind! 2 fr))
+              (is (= fr
+                     (make-frame (my-list 1 3)
+                                 (my-list 4 6))))
+              (is (not (-unbind! :no fr)))
+              (is (-unbind! 3 fr))
+              (is (= fr
+                     (make-frame (my-list 1)
+                                 (my-list 4))))))}
+  [var frame]
+  (if-let [frame- (cdr frame)]
+    (if (= (caar frame-) var)
+      (do (set-cdr! frame (cdr frame-))
+          true)
+      (recur var frame-))
+    false))
+
+(defn unbind!
+  "Q. 4.13"
+  {:test #(do
+            (let [env (my-list
+                       (make-frame (my-list 1 2 3)
+                                   (my-list 4 5 6))
+                       (make-frame (my-list 7 8)
+                                   (my-list 9 10)))]
+              (are [ub e] (do ub (= env e))
+                (unbind! :no env)
+                (my-list
+                 (make-frame (my-list 1 2 3)
+                             (my-list 4 5 6))
+                 (make-frame (my-list 7 8)
+                             (my-list 9 10)))
+                (unbind! 2 env)
+                (my-list
+                 (make-frame (my-list 1 3)
+                             (my-list 4 6))
+                 (make-frame (my-list 7 8)
+                             (my-list 9 10)))
+                (unbind! 1 env)
+                (my-list
+                 (make-frame (my-list 3)
+                             (my-list 6))
+                 (make-frame (my-list 7 8)
+                             (my-list 9 10)))
+                (unbind! 7 env)
+                (my-list
+                 (make-frame (my-list 3)
+                             (my-list 6))
+                 (make-frame (my-list 8)
+                             (my-list 10)))
+                (unbind! 3 env)
+                (my-list
+                 nil
+                 (make-frame (my-list 8)
+                             (my-list 10)))
+                (unbind! 8 env)
+                (my-list nil nil))))}
+  [var env]
+  (when-not (nil? env)
+    (if-let [frame (first-frame env)]
+      (if (= (caar frame) var)
+        (set-car! env (cdr frame))
+        (or (-unbind! var frame)
+            (recur var (enclosing-environment env))))
+      (recur var (enclosing-environment env)))))
 
 ; end environment
 
