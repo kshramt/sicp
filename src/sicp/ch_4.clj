@@ -931,6 +931,7 @@
 
 
 ; Q. 4.12 skip
+; Q. 4.13 skip
 
 ;; Q. 4.2-a (define x 3) -> application
 
