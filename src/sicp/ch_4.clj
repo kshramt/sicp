@@ -246,7 +246,7 @@
    ['- -]
    ['* *]
    ['/ /]
-   ['eq? =]
+   ['= =]
    ['p_ (fn [& x] (println x) (println (type x)) x)]
    ])
 
@@ -852,6 +852,15 @@
                         (append (list 1 2 3) (list 4 5 6)))
                 (setup-environment)
                 (_eval '(list 1 2 3 4 5 6) (setup-environment))
+                '(begin (define (factorial n)
+                          (define (impl k ret)
+                            (if (= k 1)
+                              ret
+                              (impl ( - k 1) (* k ret))))
+                          (impl n 1))
+                        (factorial 5))
+                (setup-environment)
+                120
                 ))}
   [exp env]
   (cond
@@ -912,8 +921,9 @@
     (if (= input 'quit)
       :done
       (let [output (_eval input the-global-environment)]
-        (println (type input))
+        (println (str "input :: " (type input)))
         (announce-output output-prompt)
+        (println (str "output :: " (type output)))
         (user-print output)
         (recur)))))
 
