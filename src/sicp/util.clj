@@ -28,6 +28,7 @@
 (defmacro p_ [x]
   `(let [x# ~x]
      (println ~(str &form))
+     (clojure.pprint/pprint (type x#))
      (clojure.pprint/pprint x#)
      x#))
 
