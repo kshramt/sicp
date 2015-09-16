@@ -207,6 +207,15 @@
      (my-reverse (impl p1 p2 nil)))))
 
 
+(ann length (All [a b] [(Option (Pair a b)) -> Int]))
+(defn length [p]
+  (loop [p p
+         n 0]
+    (if (nil? p)
+      n
+      (recur (cdr p) (inc n)))))
+
+
 (ann print-my-list [(List Any) -> nil])
 (defn print-my-list [l]
   (let [head (car l)
