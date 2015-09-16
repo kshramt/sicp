@@ -53,6 +53,7 @@
 (declare _eval)
 (def _true (symbol "true"))
 (def _false (symbol "false"))
+(def _nil (symbol "nil"))
 
 
 (defn error
@@ -67,14 +68,14 @@
 (def enclosing-environment cdr)
 (def first-frame car)
 (def the-empty-environment nil)
+(defn make-frame "Q. 4.11" [vars vals] (my-map my-cons vars vals))
 (defn extend-environment [vars vals base-env]
   (if (= (count vars) (count vals))
-    (my-cons (make-frame vars vals) base-env)
+    (my-cons (make-frame (apply my-list vars) (apply my-list vals)) base-env)
     (if (< (count vars) (count vals))
-      (error (str "Too many arguments supplied" vars vals))
-      (error (str "Too few arguments supplied" vars vals)))))
+      (error (str "Too many arguments supplied: " vars vals))
+      (error (str "Too few arguments supplied: " vars vals)))))
 
-(defn make-frame "Q. 4.11" [vars vals] (my-map my-cons vars vals))
 (defn frame-variables "Q. 4.11" [frame] (my-map car frame))
 (defn frame-values "Q. 4.11" [frame] (my-map cdr frame))
 (defn add-binding-to-first-frame! [var val env]
@@ -123,7 +124,7 @@
   [var env]
   (if-let [frame (lookup-env env var)]
     (cdar frame)
-    (error (str "Unbound variable" var))))
+    (error (str "Unbound variable: " var))))
 
 (defn set-variable-value!
   {:test #(do
@@ -160,7 +161,8 @@
   [var val env]
   (if-let [frame (lookup-frame (first-frame env) var)]
     (set-cdr! (car frame) val)
-    (add-binding-to-first-frame! var val env)))
+    (add-binding-to-first-frame! var val env))
+  var)
 
 (defn -unbind!
   "Q. 4.13"
@@ -233,10 +235,44 @@
             (recur var (enclosing-environment env))))
       (recur var (enclosing-environment env)))))
 
+(def primitive-procedures
+  [['null? nil?]
+   ['pair? pair?]
+   ['car car]
+   ['cdr cdr]
+   ['cons my-cons]
+   ['list my-list]
+   ['+ +]
+   ['- -]
+   ['* *]
+   ['/ /]
+   ['eq? =]
+   ['p_ (fn [& x] (println x) (println (type x)) x)]
+   ])
+
+(defn primitive-procedure-names []
+  (map first primitive-procedures))
+
+(defn primitive-procedure-objects []
+  (map (fn [p] ['primitive (second p)]) primitive-procedures))
+
+(defn setup-environment []
+  (let [initial-env (extend-environment (primitive-procedure-names)
+                                        (primitive-procedure-objects)
+                                        the-empty-environment)]
+    (define-variable! _true true initial-env)
+    (define-variable! _false false initial-env)
+    (define-variable! 'null nil initial-env)
+    initial-env))
+
+(def the-global-environment (setup-environment))
+
 ; end environment
 
+(def primitive-implementation second)
+
 (defn apply-primitive-procedure [proc args]
-  (throw (Exception. (str "NotImplemented"))))
+  (apply (primitive-implementation proc) args))
 
 
 (defn tagged-list? [exp tag]
@@ -248,16 +284,12 @@
   (tagged-list? p 'procedure))
 
 
-(defn first-operand [& args]
-  (throw (Exception. (str "NotImplemented"))))
-
-
 (defn make-procedure [parameters body env]
   ['procedure parameters body env])
 
 
-(defn primitive-procedure? [& args]
-  (throw (Exception. (str "NotImplemented"))))
+(defn primitive-procedure? [proc]
+  (tagged-list? proc 'primitive))
 
 
 (defn procedure-body [p]
@@ -273,7 +305,7 @@
 
 
 (defn my-false? [x]
-  (= x _false))
+  (false? x))
 
 
 (defn my-true? [x]
@@ -287,7 +319,13 @@
    (list 'if predicate consequent alternative)))
 
 
-(defn make-lambda [parameters body]
+(defn make-lambda
+  {:test #(do
+            (is (= (make-lambda '(x y)
+                                '((println x)
+                                  (+ x y)))
+                   '(lambda (x y) (println x) (+ x y)))))}
+  [parameters body]
   (cons 'lambda (cons parameters body)))
 
 
@@ -442,7 +480,7 @@
 (defn definition-value [exp]
   (if (symbol? (second exp))
     (nth exp 2)
-    (make-lambda (second (rest exp))
+    (make-lambda (rest (second exp))
                  (rest (rest exp)))))
 
 
@@ -482,7 +520,14 @@
       (string? exp)))
 
 
-(defn eval-definition [exp env]
+(defn eval-definition
+  {:test #(do
+            (eval-definition ['define 'x 1] (setup-environment))
+            (eval-definition ['define ['f] 1] (setup-environment))
+            (eval-definition ['define ['f 'x] 1] (setup-environment))
+            (eval-definition ['define ['f 'x 'y] ['+ 'x 'y]] (setup-environment))
+            )}
+  [exp env]
   (define-variable! (definition-variable exp)
                     (_eval (definition-value exp) env)
                     env))
@@ -624,6 +669,9 @@
     (throw (Exception. (str "No argumets are given for let*: " exp)))))
 
 
+(let [id (atom 0)]
+  (defn my-gensym []
+    (symbol (str "__GENSYM_" (swap! id inc)))))
 
 
 (defn eval-and-special
@@ -770,7 +818,7 @@
                                       (procedure-parameters procedure)
                                       arguments
                                       (procedure-environment procedure)))
-    :else (throw (Exception. (str "unknown procedure type -- _apply: " procedure)))))
+    :else (error (str "unknown procedure type -- _apply: " (type procedure) " :: " procedure))))
 
 
 (let [eval-dispatch-table (make-table)]
@@ -782,10 +830,29 @@
 
 (defn _eval
   "Q. 4.3"
-  {:test #(do (are [exp env val] (= (_eval exp env) val)
+  {:test #(do (are [exp env val] (= (_eval (symbolize-nil-true-false exp) env) val)
                 1 nil 1
                 "str" nil "str"
-                '(quote (a b)) nil '(a b)))}
+                '(quote (a b)) nil '(a b)
+                '(define f 1) (setup-environment) 'f
+                '(define (f x) x) (setup-environment) 'f
+                '(begin 1 2) (setup-environment) 2
+                '(begin (define (f x) x) (f 8)) (setup-environment) 8
+                '(begin (define (f x y) (+ x y)) (f 8 9)) (setup-environment) 17
+                '(if true 1 2) (setup-environment) 1
+                '(if false 1 2) (setup-environment) 2
+                '(if (null? null) 1 2) (setup-environment) 1
+                '(if (null? true) 1 2) (setup-environment) 2
+                '(begin (define (append x y)
+                          (if (null? x)
+                            y
+                            (cons (car x)
+                                  (append (cdr x)
+                                          y))))
+                        (append (list 1 2 3) (list 4 5 6)))
+                (setup-environment)
+                (_eval '(list 1 2 3 4 5 6) (setup-environment))
+                ))}
   [exp env]
   (cond
     (variable? exp) (lookup-variable-value exp env)
@@ -794,7 +861,7 @@
                         (impl exp env)
                         (_apply (_eval (operator exp) env)
                                 (list-of-values (operands exp) env)))
-    :else (error (str "unknown expression type -- _eval: " exp))))
+    :else (error (str "unknown expression type -- _eval: " (type exp) " :: " exp))))
 
 
 (insert-eval-table! 'quote (fn [exp env] (text-of-quotation exp)))
@@ -811,6 +878,46 @@
 (insert-eval-table! 'and eval-and-derived)
 (insert-eval-table! 'or eval-or-derived)
 (insert-eval-table! 'while (fn [exp env] (_eval (expand-while exp) env))) ; Q. 4.10
+
+
+; begin repl
+
+(def input-prompt ";;; M-Eval input:")
+(def output-prompt ";;; M-Eval value:")
+
+(def prompt-for-input println)
+(def announce-output println)
+
+
+(defn user-print [object]
+  (if (compound-procedure? object)
+    (println (list 'compound-procedure
+                   (procedure-parameters object)
+                   (procedure-body object)))
+    (println object))
+  (flush))
+
+(defn symbolize-nil-true-false [exp]
+  (if (sequential? exp)
+    (map symbolize-nil-true-false exp)
+    (case exp
+      true _true
+      false _false
+      nil _nil
+      exp)))
+
+(defn driver-loop []
+  (prompt-for-input input-prompt)
+  (let [input (symbolize-nil-true-false (read))]
+    (if (= input 'quit)
+      :done
+      (let [output (_eval input the-global-environment)]
+        (println (type input))
+        (announce-output output-prompt)
+        (user-print output)
+        (recur)))))
+
+; end REPL
 
 
 ;; Q. 4.2-a (define x 3) -> application
