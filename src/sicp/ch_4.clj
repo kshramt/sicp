@@ -930,6 +930,9 @@
 ; end REPL
 
 
+; Q. 4.14 skip
+; Q. 4.15 skip
+
 ;; Q. 4.2-a (define x 3) -> application
 
 
