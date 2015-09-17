@@ -2,7 +2,6 @@
   :license {:name "GNU General Public License Version 3",
             :url "http://www.gnu.org/licenses/gpl-3.0.en.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/tools.trace "0.7.8"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [org.clojure/core.typed "0.3.11"]]
   :plugins [[lein-typed "0.3.5"]
