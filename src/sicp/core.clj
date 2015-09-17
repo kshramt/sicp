@@ -957,7 +957,7 @@
                             (All [a] [a -> a]))))
 
 (ann one Church)
-(def one (fn [f] (fn [x] (f x))))
+(def one (fn [f] f))
 
 (ann two Church)
 (def two (fn [f] (fn [x] (f (f x)))))

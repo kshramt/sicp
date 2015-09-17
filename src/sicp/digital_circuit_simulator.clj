@@ -226,8 +226,8 @@
         action-procedure (typed/atom :- (Seqable Action) [])]
     (let [set-my-signal! (typed/fn [new-value :- Signal]
                            (when (not= @signal-value new-value)
-                             (do (reset! signal-value new-value)
-                                 (call-each @action-procedure))))
+                             (reset! signal-value new-value)
+                             (call-each @action-procedure)))
           accept-action-procedure! (typed/fn [proc :- Action]
                                      (reset! action-procedure (cons proc @action-procedure))
                                      (proc)) ; Q. 3.31 invoke the new connection

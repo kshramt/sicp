@@ -269,7 +269,7 @@
                     (for-each-except setter
                                      inform-about-value
                                      @constraints))
-                (not (= @value newval))
+                (not= @value newval)
                 (throw (Exception. (str "contradiction: " (list @value newval))))
                 :else :ignored))
              forget-my-value :- [Informant -> Any]
@@ -284,8 +284,8 @@
              connect :- [Constraint -> Any]
              (connect
               [new-constraint]
-              (when (not (some (typed/fn [c :- Constraint] (= new-constraint c))
-                               @constraints))
+              (when (not-any? (typed/fn [c :- Constraint] (= new-constraint c))
+                              @constraints)
                 (reset! constraints
                         (cons new-constraint @constraints)))
               (when (has-value? me)

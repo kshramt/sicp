@@ -108,8 +108,7 @@
                                2)
                    (my-list (my-cons 2 4)))))}
   [env var]
-  (if (nil? env)
-    nil
+  (when-not (nil? env)
     (or (lookup-frame (first-frame env) var)
         (recur (enclosing-environment env) var))))
 

@@ -275,8 +275,7 @@
                 (is (= (count-pairs p3) 3))))}
   ([x] (car (count-pairs x nil)))
   ([x counted]
-   (if (not (pair? x))
-     (my-cons 0 counted)
+   (if (pair? x)
      (if (any? (typed/fn [c :- (Option (NestedPair a))] (= x c)) counted)
        (my-cons 0 counted)
        (let [na-counted (count-pairs (car x) (my-cons x counted))
@@ -284,7 +283,8 @@
          (my-cons (+ (car na-counted)
                      (car nb-counted)
                      1)
-                  (cdr nb-counted)))))))
+                  (cdr nb-counted))))
+     (my-cons 0 counted))))
 
 
 (ann ^:no-check ; avoid internal error
@@ -372,7 +372,7 @@
     ((first fs))))
 
 (defn try-all-par []
-  (map #(squash %)
+  (map squash
        (map #(cons (fn [] (reset! balance-3-38 100)) %)
             (concat
              (all-orders-2 [peter-out peter-in]
@@ -480,10 +480,10 @@
             (do (clear! cell)
                 (recur m))))
         :release
-        (do (if (test-and-set! cell)
-              (recur m)
-              (do (swap! i dec-or-zero)
-                  (clear! cell))))))))
+        (if (test-and-set! cell)
+          (recur m)
+          (do (swap! i dec-or-zero)
+              (clear! cell)))))))
 
 
 (typed/tc-ignore

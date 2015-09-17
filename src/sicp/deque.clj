@@ -134,7 +134,7 @@
 
 (ann front-delete-deque! (All [a] [(Deque a) -> Any]))
 (defn front-delete-deque! [q]
-  (when (not (empty-deque? q))
+  (when-not (empty-deque? q)
     (let [front (front-node-deque q)
           rear (rear-node-deque q)]
       (if (= front rear)
@@ -149,7 +149,7 @@
 
 (ann rear-delete-deque! (All [a] [(Deque a) -> Any]))
 (defn rear-delete-deque! [q]
-  (when (not (empty-deque? q))
+  (when-not (empty-deque? q)
     (let [front (front-node-deque q)
           rear (rear-node-deque q)]
       (if (= front rear)

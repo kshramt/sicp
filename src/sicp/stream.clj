@@ -75,11 +75,11 @@
   (let [already-run? (typed/atom :- Boolean false)
         result (typed/atom :- a nil)]
     (typed/fn []
-      (if (not @already-run?)
+      (if @already-run?
+        @result
         (do (reset! result (proc))
             (reset! already-run? true)
-            @result)
-        @result))))
+            @result)))))
 
 
 (defmacro my-delay [exp]
@@ -133,7 +133,7 @@
 (ann stream-ref (All [a] [(Stream a) Int -> a]))
 (defn stream-ref [s n]
   {:pre (>= n 0)}
-  (if (= n 0)
+  (if (zero? n)
     (stream-car s)
     (let [more (stream-cdr s)]
       (if (stream-null? more)
@@ -144,10 +144,9 @@
 (ann ^:no-check make-stream (All [a] [a a * -> (FiniteStream a)]))
 (defn make-stream [& xs]
   (let [impl (typed/fn imp [s :- (Seqable a)]
-               (if-let [s (seq s)]
+               (when-let [s (seq s)]
                  (cons-stream (first s)
-                              (imp (rest s)))
-                 nil))]
+                              (imp (rest s)))))]
     (impl xs)))
 
 
@@ -156,8 +155,7 @@
                            [(Option (Stream a)) -> (Option (ASeq a))] ; todo: remove me
                            )))
 (defn to-list [stream]
-  (if (stream-null? stream)
-    nil
+  (when-not (stream-null? stream)
     (cons (stream-car stream)
           (to-list (stream-cdr stream)))))
 
