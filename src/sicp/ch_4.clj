@@ -827,6 +827,14 @@
   (def insert-eval-table! (eval-dispatch-table :insert!))
   )
 
+(defn symbolize-nil-true-false [exp]
+  (if (sequential? exp)
+    (map symbolize-nil-true-false exp)
+    (case exp
+      true _true
+      false _false
+      nil _nil
+      exp)))
 
 (defn _eval
   "Q. 4.3"
@@ -905,15 +913,6 @@
                    (procedure-body object)))
     (println object))
   (flush))
-
-(defn symbolize-nil-true-false [exp]
-  (if (sequential? exp)
-    (map symbolize-nil-true-false exp)
-    (case exp
-      true _true
-      false _false
-      nil _nil
-      exp)))
 
 (defn driver-loop []
   (prompt-for-input input-prompt)
