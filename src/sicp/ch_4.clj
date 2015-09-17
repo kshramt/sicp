@@ -113,17 +113,53 @@
         (recur (enclosing-environment env) var))))
 
 (defn lookup-variable-value
+  "Q. 4.16-a"
   {:test #(do
-            (let [env (my-list (make-frame (my-list 1 2)
-                                           (my-list 3 4)))]
+            (let [env (my-list (make-frame (my-list 1 2 :unassigned)
+                                           (my-list 3 4 '*unassigned*)))]
               (is (= (lookup-variable-value 1 env) 3))
               (is (= (lookup-variable-value 2 env) 4))
               (is (thrown? clojure.lang.ExceptionInfo
-                           (lookup-variable-value :no env)))))}
+                           (lookup-variable-value :no env)))
+              (is (thrown? clojure.lang.ExceptionInfo
+                           (lookup-variable-value :unassigned env)))))}
   [var env]
   (if-let [frame (lookup-env env var)]
-    (cdar frame)
+    (let [ret (cdar frame)]
+      (if (= ret '*unassigned*)
+        (error (str "Unassigned var in lookup-variable-value: " var))
+        ret))
     (error (str "Unbound variable: " var))))
+
+(declare definition?
+         make-let
+         definition-variable
+         definition-value)
+(defn scan-out-defines
+  "Q. 4.16-b"
+  {:test #(do
+            (are [in out] (= in out)
+              (scan-out-defines '((define u e1)
+                                  (define v e2)
+                                  e3))
+              '((let ((u (quote *unassigned*))
+                      (v (quote *unassigned*)))
+                  (set! u e1)
+                  (set! v e2)
+                  e3))
+              (scan-out-defines '(e1 e2))
+              '(e1 e2)))}
+  [body]
+  (let [b (group-by definition? body)]
+    (if-let [defs (b true)]
+      [(make-let (map (fn [exp] [(definition-variable exp)
+                                 '(quote *unassigned*)])
+                      defs)
+                 (concat (map (fn [d] ['set! (definition-variable d) (definition-value d)])
+                              defs)
+                         (b false)))]
+      (b false) ; as let is lambda, this branch is required to avoid infinite recursion
+      )))
 
 (defn set-variable-value!
   {:test #(do
@@ -283,9 +319,22 @@
   (tagged-list? p 'procedure))
 
 
-(defn make-procedure [parameters body env]
-  ['procedure parameters body env])
-
+(defn make-procedure
+  "Q. 4.16-c"
+  {:test #(do
+            (is (= (make-procedure '(a b c)
+                                   '((define x a) (define (f x) (+ x b)) (+ x (f b) c))
+                                   nil)
+                   ['procedure
+                    '(a b c)
+                    '((let ((x (quote *unassigned*))
+                            (f (quote *unassigned*)))
+                        (set! x a)
+                        (set! f (lambda (x) (+ x b)))
+                        (+ x (f b) c)))
+                    nil])))}
+  [parameters body env]
+  ['procedure parameters (scan-out-defines body) env])
 
 (defn primitive-procedure? [proc]
   (tagged-list? proc 'primitive))
