@@ -135,19 +135,20 @@
          make-let
          definition-variable
          definition-value)
-(defn scan-out-defines
+(defn scan-out-defines-4-16
   "Q. 4.16-b"
   {:test #(do
             (are [in out] (= in out)
-              (scan-out-defines '((define u e1)
-                                  (define v e2)
-                                  e3))
+              (scan-out-defines-4-16
+               '((define u e1)
+                 (define v e2)
+                 e3))
               '((let ((u (quote *unassigned*))
                       (v (quote *unassigned*)))
                   (set! u e1)
                   (set! v e2)
                   e3))
-              (scan-out-defines '(e1 e2))
+              (scan-out-defines-4-16 '(e1 e2))
               '(e1 e2)))}
   [body]
   (let [b (group-by definition? body)]
@@ -159,6 +160,31 @@
                               defs)
                          (b false)))]
       (b false) ; as let is lambda, this branch is required to avoid infinite recursion
+      )))
+
+(defn scan-out-defines
+  "Q. 4.17"
+  {:test #(do
+            (are [in out] (= in out)
+              (scan-out-defines '((define u e1)
+                                       e3
+                                       (define v e2)))
+              '((define u (quote *unassigned*))
+                (define v (quote *unassigned*))
+                (set! u e1)
+                (set! v e2)
+                e3)
+              (scan-out-defines '(e1 e2))
+              '(e1 e2)))}
+  [body]
+  (let [b (group-by definition? body)]
+    (if-let [defs (b true)]
+      (concat (map (fn [exp] ['define (definition-variable exp) '(quote *unassigned*)])
+                   defs)
+              (map (fn [d] ['set! (definition-variable d) (definition-value d)])
+                   defs)
+              (b false))
+      (b false)
       )))
 
 (defn set-variable-value!
@@ -327,11 +353,11 @@
                                    nil)
                    ['procedure
                     '(a b c)
-                    '((let ((x (quote *unassigned*))
-                            (f (quote *unassigned*)))
-                        (set! x a)
-                        (set! f (lambda (x) (+ x b)))
-                        (+ x (f b) c)))
+                    '((define x (quote *unassigned*))
+                      (define f (quote *unassigned*))
+                      (set! x a)
+                      (set! f (lambda (x) (+ x b)))
+                      (+ x (f b) c))
                     nil])))}
   [parameters body env]
   ['procedure parameters (scan-out-defines body) env])
