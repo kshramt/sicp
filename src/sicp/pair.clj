@@ -8,6 +8,7 @@
             Atom2
             EmptySeqable
             IFn
+            Int
             NonEmptySeqable
             Option
             Pred
@@ -19,6 +20,7 @@
             ann
             ann-protocol
             defalias
+            loop
             ]
     :as typed
     ]))
@@ -207,10 +209,10 @@
      (my-reverse (impl p1 p2 nil)))))
 
 
-(ann length (All [a b] [(Option (Pair a b)) -> Int]))
+(ann length (All [a] [(Option (List a)) -> Int]))
 (defn length [p]
-  (loop [p p
-         n 0]
+  (loop [p :- (Option (List a)) p
+         n :- Int 0]
     (if (nil? p)
       n
       (recur (cdr p) (inc n)))))
