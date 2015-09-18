@@ -217,6 +217,23 @@
     (error (str "No decl nor body provided -- letrec: " exp))))
 ; Q. 4.20-b skip
 
+(deftest q-4-21-b "Q. 4.21-b"
+  (is
+   (=
+    (my-cons true false)
+    (_eval
+     (symbolize-nil-true-false
+      '(begin
+        (define (f x)
+          ((lambda (even? odd?)
+                   (even? even? odd? x))
+           (lambda (ev? od? n)
+                   (if (= n 0) true (od? ev? od? (- n 1))))
+           (lambda (ev? od? n)
+                   (if (= n 0) false (ev? ev? od? (- n 1))))))
+        (cons (f 10) (f 11))))
+     (setup-environment)))))
+
 (defn set-variable-value!
   {:test #(do
             (let [env (my-list (make-frame (my-list 1 2)
@@ -338,6 +355,10 @@
    ['* *]
    ['/ /]
    ['= =]
+   ['< <]
+   ['> >]
+   ['<= <=]
+   ['>= >=]
    ['p_ (fn [& x] (println x) (println (type x)) x)]
    ])
 
@@ -800,7 +821,6 @@
        (range)
        xs))
 
-
 (defn expand-and
   "Q. 4.4"
   {:test #(do
@@ -981,6 +1001,17 @@
                          (fact 10))
                 (setup-environment)
                 3628800
+                '((lambda (n) ; Q. 4.21-a
+                          ((lambda (fib)
+                                   (fib fib n))
+                           (lambda (fb n)
+                                   (if (< n 2)
+                                     1
+                                     (+ (fb fb (- n 1))
+                                        (fb fb (- n 2)))))))
+                  6)
+                (setup-environment)
+                13
                 ))}
   [exp env]
   (cond
