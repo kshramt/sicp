@@ -187,6 +187,8 @@
       (b false)
       )))
 
+; Q. 4.18 No
+
 (defn set-variable-value!
   {:test #(do
             (let [env (my-list (make-frame (my-list 1 2)
