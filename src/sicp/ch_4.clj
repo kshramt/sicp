@@ -190,6 +190,33 @@
 ; Q. 4.18 No
 ; Q. 4.19 skip
 
+(defn expand-letrec
+  "Q. 4.20-a"
+  {:test #(do
+            (is (thrown? clojure.lang.ExceptionInfo (expand-letrec '(letrec))))
+            (are [in out] (= (expand-letrec in) out)
+              '(letrec ())
+              '(let ())
+              '(letrec ((v1 e1)
+                        (v2 e2))
+                       e3)
+              '(let ((v1 (quote *unassigned*))
+                     (v2 (quote *unassigned*)))
+                 (set! v1 e1)
+                 (set! v2 e2)
+                 e3)))}
+  [exp]
+  (if-let [e (next exp)]
+    (let [decl (first e)
+          body (rest e)]
+      (make-let (map (fn [d] [(first d) '(quote *unassigned*)])
+                     decl)
+                (concat (map (fn [d] ['set! (first d) (second d)])
+                             decl)
+                        body)))
+    (error (str "No decl nor body provided -- letrec: " exp))))
+; Q. 4.20-b skip
+
 (defn set-variable-value!
   {:test #(do
             (let [env (my-list (make-frame (my-list 1 2)
@@ -946,6 +973,14 @@
                         (factorial 5))
                 (setup-environment)
                 120
+                '(letrec ((fact
+                           (lambda (n)
+                                   (if (= n 1)
+                                     1
+                                     (* n (fact (- n 1)))))))
+                         (fact 10))
+                (setup-environment)
+                3628800
                 ))}
   [exp env]
   (cond
@@ -972,7 +1007,7 @@
 (insert-eval-table! 'and eval-and-derived)
 (insert-eval-table! 'or eval-or-derived)
 (insert-eval-table! 'while (fn [exp env] (_eval (expand-while exp) env))) ; Q. 4.10
-
+(insert-eval-table! 'letrec (fn [exp env] (_eval (expand-letrec exp) env)))
 
 ; begin repl
 
