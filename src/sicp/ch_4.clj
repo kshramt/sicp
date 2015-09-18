@@ -188,6 +188,7 @@
       )))
 
 ; Q. 4.18 No
+; Q. 4.19 skip
 
 (defn set-variable-value!
   {:test #(do
