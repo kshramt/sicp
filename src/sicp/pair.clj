@@ -123,6 +123,18 @@
 
 
 (declare my-reverse)
+
+(ann ^:no-check reverse-list
+     (All [a] (IFn [nil -> nil]
+                   [(NonEmptySeqable a) -> (List a)])))
+(defn reverse-list [xs]
+  (loop [xs xs
+         ret nil]
+    (if-let [xs (seq xs)]
+      (recur (rest xs)
+             (my-cons (first xs) ret))
+      ret)))
+
 (ann ^:no-check my-list
      (All [a] (IFn [-> nil]
                    [a a * -> (List a)])))
@@ -133,13 +145,7 @@
             (is (= (my-list 1 2 3)
                    (my-cons 1 (my-cons 2 (my-cons 3 nil))))))}
   [& xs]
-  (my-reverse
-   (loop [xs :- (Option (Seqable a)) xs
-          ret :- (Option (List a)) nil]
-     (if-let [xs (seq xs)]
-       (recur (rest xs)
-              (my-cons (first xs) ret))
-       ret))))
+  (my-reverse (reverse-list xs)))
 
 
 (ann pair? (Pred (Pair Any Any)))
@@ -180,8 +186,38 @@
                       out)))))
 
 
-(ann ^:no-check
-     my-map (All [a b c]
+(ann ^:no-check reverse-map
+     (All [a b c]
+          (IFn [[a -> b] nil -> nil]
+               [[a -> b] (List a) -> (List b)]
+               [[a b -> c] nil (List b) -> nil]
+               [[a b -> c] (List a) nil -> nil]
+               [[a b -> c] (List a) (List b) -> (List c)]
+               )))
+(defn reverse-map
+  ([f p]
+   (loop [p p
+          ret nil]
+     (if (nil? p)
+       ret
+       (recur (cdr p)
+              (my-cons (f (car p))
+                       ret)))))
+  ([f p1 p2]
+   (loop [p1 p1
+          p2 p2
+          ret nil]
+     (if (or (nil? p1)
+             (nil? p2))
+       ret
+       (recur (cdr p1)
+              (cdr p2)
+              (my-cons (f (car p1)
+                          (car p2))
+                       ret))))))
+
+
+(ann my-map (All [a b c]
                  (IFn [[a -> b] nil -> nil]
                       [[a -> b] (List a) -> (List b)]
                       [[a b -> c] nil (List b) -> nil]
@@ -197,28 +233,8 @@
               (my-list 2 3)
               (my-map + (my-list 1 2) (my-list 3 4 5))
               (my-list 4 6)))}
-  ([f p]
-   (my-reverse
-    (loop [p p
-           ret nil]
-      (if (nil? p)
-        ret
-        (recur (cdr p)
-               (my-cons (f (car p))
-                        ret))))))
-  ([f p1 p2]
-   (my-reverse
-    (loop [p1 p1
-           p2 p2
-           ret nil]
-      (if (or (nil? p1)
-              (nil? p2))
-        ret
-        (recur (cdr p1)
-               (cdr p2)
-               (my-cons (f (car p1)
-                           (car p2))
-                        ret)))))))
+  ([f p] (my-reverse (reverse-map f p)))
+  ([f p1 p2] (my-reverse (reverse-map f p1 p2))))
 
 
 (ann length (All [a] [(Option (List a)) -> Int]))
