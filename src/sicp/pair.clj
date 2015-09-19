@@ -122,15 +122,24 @@
                     (Rec [this] (Pair a (Option this)))))
 
 
-(ann ^:no-check
-     my-list (All [a] (IFn [-> nil]
-                           [a -> (Pair a nil)]
-                           [a a * -> (List a)])))
-(defn my-list [& xs]
-  (let [impl (typed/fn imp [xs :- (Seqable a)]
-               (when-let [s (seq xs)]
-                 (my-cons (first s) (imp (rest s)))))]
-    (impl xs)))
+(declare my-reverse)
+(ann ^:no-check my-list
+     (All [a] (IFn [-> nil]
+                   [a a * -> (List a)])))
+(defn my-list
+  {:test #(do
+            (is (= (my-list)
+                   nil))
+            (is (= (my-list 1 2 3)
+                   (my-cons 1 (my-cons 2 (my-cons 3 nil))))))}
+  [& xs]
+  (my-reverse
+   (loop [xs :- (Option (Seqable a)) xs
+          ret :- (Option (List a)) nil]
+     (if-let [xs (seq xs)]
+       (recur (rest xs)
+              (my-cons (first xs) ret))
+       ret))))
 
 
 (ann pair? (Pred (Pair Any Any)))
