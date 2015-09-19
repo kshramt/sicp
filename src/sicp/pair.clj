@@ -171,13 +171,13 @@
               (my-reverse (my-list 1 2))
               (my-list 2 1)))}
   [p]
-  (letfn [(impl [in out]
-            (if (nil? in)
-              out
-              (recur (cdr in)
-                     (my-cons (car in)
-                              out))))]
-    (impl p nil)))
+  (loop [in p
+         out nil]
+    (if (nil? in)
+      out
+      (recur (cdr in)
+             (my-cons (car in)
+                      out)))))
 
 
 (ann ^:no-check
@@ -198,24 +198,27 @@
               (my-map + (my-list 1 2) (my-list 3 4 5))
               (my-list 4 6)))}
   ([f p]
-   (letfn [(impl [p ret]
-             (if (nil? p)
-               ret
-               (recur (cdr p)
-                      (my-cons (f (car p))
-                               ret))))]
-     (my-reverse (impl p nil))))
+   (my-reverse
+    (loop [p p
+           ret nil]
+      (if (nil? p)
+        ret
+        (recur (cdr p)
+               (my-cons (f (car p))
+                        ret))))))
   ([f p1 p2]
-   (letfn [(impl [p1 p2 ret]
-             (if (or (nil? p1)
-                     (nil? p2))
-               ret
-               (recur (cdr p1)
-                      (cdr p2)
-                      (my-cons (f (car p1)
-                                  (car p2))
-                               ret))))]
-     (my-reverse (impl p1 p2 nil)))))
+   (my-reverse
+    (loop [p1 p1
+           p2 p2
+           ret nil]
+      (if (or (nil? p1)
+              (nil? p2))
+        ret
+        (recur (cdr p1)
+               (cdr p2)
+               (my-cons (f (car p1)
+                           (car p2))
+                        ret)))))))
 
 
 (ann length (All [a] [(Option (List a)) -> Int]))
