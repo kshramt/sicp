@@ -217,6 +217,8 @@
     (error (str "No decl nor body provided -- letrec: " exp))))
 ; Q. 4.20-b skip
 
+(declare symbolize-nil-true-false
+         setup-environment)
 (deftest q-4-21-b "Q. 4.21-b"
   (is
    (=
@@ -506,21 +508,19 @@
           (let [pred (cond-predicate head)]
             (if (= (first actions) '=>)
               (make-let
-               [['v [(make-lambda [] [pred])]]]
+               [['v pred]
+                ['more (make-lambda [] [(expand-clauses more)])]]
                [(make-if
                  'v
                  (if-let [f (second actions)]
                    [f 'v]
-                   (throw (Exception.
-                           (str "f of pred => f not given -- cond->if: "
-                                clauses))))
-                 (expand-clauses more))])
+                   (error (str "f of pred => f not given -- cond->if: " clauses)))
+                 ['more])])
               (make-if (cond-predicate head)
                        (sequence->exp (cond-actions head))
                        (expand-clauses more))))
           (throw (Exception. (str "no actions -- cond-> if: " clauses))))))
     _false))
-
 
 (defn cond->if
   {:test #(do
@@ -531,12 +531,15 @@
               '(if (ok) 1
                    (if (bad) 2
                        3))
-              (cond->if '(cond ((assoc 'b '((a 1) (b 2))) => cadr)
-                               (else false)))
-              '(let ((v ((lambda () (assoc 'b '((a 1) (b 2)))))))
-                 (if v
-                   (cadr v)
-                   false))))}
+              (cond->if (symbolize-nil-true-false
+                         '(cond ((assoc 'b '((a 1) (b 2))) => cadr)
+                                (else false))))
+              (symbolize-nil-true-false
+               '(let ((v (assoc 'b '((a 1) (b 2))))
+                      (more (lambda () false)))
+                  (if v
+                    (cadr v)
+                    (more))))))}
   [exp]
   (expand-clauses (cond-clauses exp)))
 
