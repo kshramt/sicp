@@ -877,32 +877,36 @@
 (defn expand-or
   "Q. 4.4"
   {:test #(do
-            (are [in out] (= in out)
-              (expand-or '(or))
-              _false
-              (expand-or '(or 1))
-              '(let ((f0 (lambda () 1)))
-                 (let ((v (f0)))
-                   (if v v)))
-              (expand-or '(or (a b) (c d)))
-              '(let ((f0 (lambda () (a b)))
-                     (f1 (lambda () (c d))))
-                 (let ((v (f0)))
-                   (if v v
-                     (let ((v (f1)))
-                       (if v v)))))))}
-  [exp]
-  (if-let [args (operands exp)]
-    (letfn [(expand [s]
-              (make-let
-               [['v (first s)]]
-               [(if-let [more (next s)]
-                  (make-if 'v 'v (expand more))
-                  (make-if 'v 'v))]))]
-      (let [fs (wrap-by-lambda args)]
-        (make-let fs [(expand (map (fn [kv] [(first kv)]) fs))])))
+            (is (= (expand-or '(or (a b) (c d) (e f)))
+                   (symbolize-nil-true-false
+                    '(let ((v (a b))
+                           (more (lambda
+                                  ()
+                                  (let ((v (c d))
+                                        (more (lambda
+                                               ()
+                                               (let ((v (e f)))
+                                                 (if v
+                                                   v
+                                                   false)))))
+                                    (if v
+                                      v
+                                      (more))))))
+                       (if v
+                         v
+                         (more)))))))}
+  [[_ & args]]
+  (if args
+    (letfn [(expand [[head & more]]
+              (if more
+                (make-let [['v head]
+                           ['more (make-lambda []
+                                               [(expand more)])]]
+                          [(make-if 'v 'v ['more])])
+                (make-let [['v head]]
+                          [(make-if 'v 'v _false)])))]
+      (expand args))
     _false))
-
 
 (defn eval-or-derived
   "Q. 4.4"
