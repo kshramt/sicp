@@ -32,6 +32,45 @@
    )
   )
 
+(declare procedure?
+         procedure-parameters
+         procedure-body
+         primitive?)
+
+(defn user-str [object]
+  (str (if (procedure? object)
+         ['compound-procedure
+          (procedure-parameters object)
+          (procedure-body object)]
+         object)))
+
+(defn str-frame [frame]
+  (when-let [[k v] (first frame)]
+    (when-not (primitive? v)
+      (str k "\t" (user-str v) "\n"
+           (str-frame (rest frame))))))
+
+(declare current
+         enclosing)
+(defn str-env [env]
+  (if env
+    (str "^^^^^^^^^^^^^^\n"
+         (str-frame (current env))
+         (str-env (enclosing env)))
+    "=============="))
+
+(defprotocol IEnv
+  (current [env])
+  (enclosing [env])
+  )
+(deftype Env [_current _enclosing]
+ IEnv
+ (current [self] _current)
+ (enclosing [self] _enclosing)
+ Object
+ (toString [self] (str-env self))
+)
+
 (defn error
   ([] (error ""))
   ([msg] (error msg {}))
@@ -55,7 +94,9 @@
     :else exp
     ))
 
-(defn make-frame [vars vals]
+(defn make-frame
+  "Assumption: no parallel access to environment"
+  [vars vals]
   (let [m (java.util.HashMap.)]
     (loop [vars (seq vars)
            vals (seq vals)]
@@ -95,15 +136,12 @@
 (make-pred procedure)
 (make-pred primitive)
 
-(declare user-print)
+(defn user-print [object]
+  (println (user-str object)))
+
 (defn print-env [env]
-  (println "===================")
-  (doseq [e env]
-    (doseq [[k v] e]
-      (when-not (primitive? v)
-        (print k "\t")
-        (user-print v)))
-    (println "@@@@@@@@")))
+  ; use str-env to print nil properly
+  (println (str-env env)))
 
 (defn _print-env [env]
   (print-env env)
@@ -198,8 +236,8 @@
     (error (str "No decl nor body provided -- letrec: " exp))))
 
 (defn define-variable! [var val env]
-  (let [^java.util.HashMap m (first env)]
-    (.put m var val)
+  (let [^java.util.HashMap f (current env)]
+    (.put f var val)
     var))
 
 (defn definition-variable [exp]
@@ -216,12 +254,11 @@
                    (nnext exp)))))
 
 (defn lookup-env [var env]
-  (loop [e (seq env)]
-    (when e
-      (let [^java.util.HashMap m (first e)]
-        (if (.containsKey m var)
-          m
-          (recur (next e)))))))
+  (when env
+    (let [^java.util.HashMap f (current env)]
+      (if (.containsKey f var)
+        f
+        (recur var (enclosing env))))))
 
 (defn set-variable-value! [var val env]
   (if-let [^java.util.HashMap m (lookup-env var env)]
@@ -261,7 +298,7 @@
 
 (defn extend-environment [vars vals base-env]
   (if (= (count vars) (count vals))
-    (cons (make-frame vars vals) base-env)
+    (Env. (make-frame vars vals) base-env)
     (if (< (count vars) (count vals))
       (error (str "Too many arguments supplied: " vars vals))
       (error (str "Too few arguments supplied: " vars vals)))))
@@ -383,14 +420,6 @@
 
 (def prompt-for-input println)
 (def announce-output println)
-
-(defn user-print [object]
-  (if (procedure? object)
-    (println (list 'compound-procedure
-                   (procedure-parameters object)
-                   (procedure-body object)))
-    (println object))
-  (flush))
 
 (defn driver-loop []
   (let [env (setup-environment)]
