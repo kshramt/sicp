@@ -203,7 +203,9 @@
                         (make-if pred
                                  (sequence->exp actions)
                                  (expand more)))
-                      (error (str "no actions -- cond->if: " exp))))))
+                      (make-let [['v pred]
+                                 ['more (make-lambda [] [(expand more)])]]
+                                [(make-if 'v 'v ['more])])))))
               _false))]
     (expand (next exp))))
 
@@ -488,4 +490,5 @@
                             (fb fb (- n 2)))))))
       6)
     13
+    '(cond (false 0) (1)) 1
     ))
