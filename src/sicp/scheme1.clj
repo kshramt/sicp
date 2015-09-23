@@ -56,10 +56,10 @@
          enclosing)
 (defn str-env [env]
   (if env
-    (str "^^^^^^^^^^^^^^\n"
+    (str "^^^^\n"
          (str-frame (current env))
          (str-env (enclosing env)))
-    "=============="))
+    "===="))
 
 (defprotocol IEnv
   (current [env])
