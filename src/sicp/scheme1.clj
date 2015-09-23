@@ -37,12 +37,14 @@
          procedure-body
          primitive?)
 
-(defn user-str [object]
-  (str (if (procedure? object)
-         ['compound-procedure
-          (procedure-parameters object)
-          (procedure-body object)]
-         object)))
+(defn user-str [& objects]
+  (letfn [(conv [o]
+            (if (procedure? o)
+              ['compound-procedure
+               (procedure-parameters o)
+               (procedure-body o)]
+              o))]
+    (apply str (map conv objects))))
 
 (defn str-frame [frame]
   (when-let [[k v] (first frame)]
@@ -136,8 +138,8 @@
 (make-pred procedure)
 (make-pred primitive)
 
-(defn user-print [object]
-  (println (user-str object)))
+(defn user-print [& objects]
+  (apply print (map user-str objects)))
 
 (defn print-env [env]
   ; use str-env to print nil properly
@@ -325,9 +327,8 @@
    ['symbol? symbol?]
    ['number? number?]
    ['string? string?]
-   ['print print]
-   ['println println]
-   ['str str]
+   ['print user-print]
+   ['str user-str]
    ['error error]
    ])
 
@@ -434,7 +435,7 @@
           (let [output (_eval input env)]
             (announce-output output-prompt)
             (println (str "output: " (type output)))
-            (user-print output)
+            (user-print output "\n")
             (recur)))))))
 
 (deftest test-_eval
