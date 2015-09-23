@@ -230,7 +230,7 @@
               (make-let [head] body)))]
     (if (seq pairs)
       (expand pairs)
-      body)))
+      (make-let [] body))))
 
 (defn expand-letrec [[_ pairs & body :as exp]]
   (if pairs
