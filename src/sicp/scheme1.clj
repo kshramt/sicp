@@ -308,7 +308,9 @@
       (error (str "Too few arguments supplied: " vars vals)))))
 
 (def primitive-procedures
-  [['null? nil?]
+  [
+   ['apply _apply]
+   ['null? nil?]
    ['pair? pair?]
    ['car car]
    ['cdr cdr]
@@ -321,9 +323,9 @@
    ['= =]
    ['< <]
    ['> >]
-   ['<= <=]
-   ['>= >=]
    ['eq? =] ; todo:
+   ['false? false?]
+   ['true? true?]
    ['symbol? symbol?]
    ['number? number?]
    ['string? string?]
