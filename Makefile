@@ -24,7 +24,7 @@ NAMES := \
 
 FILE_NAMES := $(subst -,_,$(NAMES))
 type_check_file_names := $(FILE_NAMES:%=src/sicp/%.clj.type_checked)
-unit_test_file_names = $(patsubst %,src/sicp/%.clj.unit_tested,$(FILE_NAMES) ch_4 scheme scheme1)
+unit_test_file_names = $(patsubst %,src/sicp/%.clj.unit_tested,$(FILE_NAMES) ch_4 scheme_util scheme scheme1)
 
 
 ns_of_file = $(subst _,-,$(1))

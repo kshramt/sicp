@@ -41,6 +41,14 @@
      gcd
      sqrt
      ]]
+   [sicp.scheme-util
+    :refer [
+            error
+            null
+            _nil
+            _true
+            _false
+            ]]
    [sicp.util
     :refer [
             p_
@@ -51,16 +59,6 @@
 
 
 (declare _eval)
-(def _true (symbol "true"))
-(def _false (symbol "false"))
-(def _nil (symbol "nil"))
-
-
-(defn error
-  ([] (error ""))
-  ([msg] (error msg {}))
-  ([msg map] (throw (ex-info msg map))))
-
 
 ; begin environment
 
@@ -376,7 +374,7 @@
                                         the-empty-environment)]
     (define-variable! _true true initial-env)
     (define-variable! _false false initial-env)
-    (define-variable! 'null nil initial-env)
+    (define-variable! 'null null initial-env)
     initial-env))
 
 (def the-global-environment (setup-environment))

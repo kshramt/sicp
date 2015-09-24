@@ -25,6 +25,14 @@
             set-cdr!
             ]
     ]
+   [sicp.scheme-util
+    :refer [
+            error
+            null
+            _nil
+            _true
+            _false
+            ]]
    [sicp.util
     :refer [
             p_
@@ -73,19 +81,9 @@
  (toString [self] (str-env self))
 )
 
-(defn error
-  ([] (error ""))
-  ([msg] (error msg {}))
-  ([msg map] (throw (ex-info msg map))))
-
 (declare _eval
          _apply
          )
-
-(def _nil (symbol "nil"))
-(def _true (symbol "true"))
-(def _false (symbol "false"))
-(def null nil)
 
 (defn symbolize [exp]
   (cond
