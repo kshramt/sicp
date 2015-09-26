@@ -1,4 +1,7 @@
 (ns sicp.ch-4
+  "You can't `(car '(1 2))` by `_eval` in this name space
+  since expressions are treated as Clojrue's sequence.  I will
+  implement working Scheme interpreter in sicp.scheme<N>"
   (:require
    [clojure.test :refer [is are deftest]]
    [clojure.core.typed
@@ -1113,5 +1116,3 @@
     (begin? exp) (eval-sequence (begin-actions exp) env)
     (cond? exp) (recur (cond->if exp) env)
     :else (throw (Exception. (str "unknown expression type -- _eval-4-2-b: " exp)))))
-
-
