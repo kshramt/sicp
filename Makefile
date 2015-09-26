@@ -37,17 +37,6 @@ type_check: $(type_check_file_names)
 unit_test: $(unit_test_file_names)
 
 
-define suffix_loop_template =
-src/sicp/ch_3.clj.$(1): src/sicp/pair.clj.$(1)
-src/sicp/deque.clj.$(1): src/sicp/pair.clj.$(1)
-src/sicp/table.clj.$(1): src/sicp/pair.clj.$(1)
-src/sicp/queue.clj.$(1): src/sicp/pair.clj.$(1)
-src/sicp/digital_circuit_simulator.clj.$(1): src/sicp/queue.clj
-endef
-$(foreach suf,unit_tested type_checked, \
-   $(eval $(call suffix_loop_template,$(suf))))
-
-
 src/sicp/%.clj.unit_tested: src/sicp/%.clj
 	$(LEIN) test sicp.$(call ns_of_file,$*) && touch $@
 
