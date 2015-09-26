@@ -414,11 +414,26 @@
 (def procedure-environment cadddr)
 
 (defn extend-environment [vars vals base-env]
-  (if (= (length vars) (length vals))
-    (Env. (make-frame vars vals) base-env)
-    (if (< (length vars) (length vals))
-      (error (str "Too many arguments supplied: " vars vals))
-      (error (str "Too few arguments supplied: " vars vals)))))
+  (letfn [(add-frame [rvrs rvls]
+            (Env. (make-frame (my-reverse rvrs)
+                              (my-reverse rvls))
+                  base-env))]
+    (loop [vrs vars
+           vls vals
+           rvrs nil
+           rvls nil]
+      (if (variable? vrs)
+        (add-frame (my-cons vrs rvrs) (my-cons vls rvls))
+        (if (nil? vrs)
+          (if (nil? vls)
+            (add-frame rvrs rvls)
+            (error (str "Too many arguments supplied: " vars vals)))
+          (if (nil? vls)
+            (error (str "Too few arguments supplied: " vars vals))
+            (recur (cdr vrs)
+                   (cdr vls)
+                   (my-cons (car vrs) rvrs)
+                   (my-cons (car vls) rvls))))))))
 
 (def primitive-procedures
   [
@@ -614,4 +629,8 @@
     13
     '(cond (false 0) (1)) 1
     '(car '(1 2 3)) 1
+    '(begin (define (f . x) x) (f 1 2 3)) (my-list 1 2 3)
+    '(begin (define (f . x) x) (f)) (my-list)
+    '(begin (define (f x . y) (list x y)) (f 1)) (my-list 1 nil)
+    '(begin ((lambda (x . y) (list x y)) 1 2 3)) (my-list 1 (my-list 2 3))
     ))
