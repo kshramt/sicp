@@ -48,9 +48,9 @@
         '(1 2 . 3) (my-cons 1 (my-cons 2 3))
         '(1 2 3 . 4) (my-cons 1 (my-cons 2 (my-cons 3 4)))
         '(define (f x . xs)
-           (list nil null () true false x))
+           (list nil () true false x))
         (my-list 'define (my-cons 'f (my-cons 'x 'xs))
-                 (my-list 'list _nil 'null 'null _true _false 'x)))
+                 (my-list 'list _nil nil _true _false 'x)))
       )
    }
   [exp]
@@ -71,7 +71,7 @@
                                         ret))
                                     (error (str "Invalid use of . (invalid locaition): " exp)))))
                   :else (error (str "Invalid use of . (multiple dots): " exp))))
-              'null))]
+              null))]
     (cond
       (= exp '.) (error (str "Invalid user of .: " exp))
       (nil? exp) _nil

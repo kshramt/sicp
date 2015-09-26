@@ -128,7 +128,8 @@
 
 (defn self-evaluating? [exp]
   (or (number? exp)
-      (string? exp)))
+      (string? exp)
+      (nil? exp)))
 
 (def variable? symbol?)
 
@@ -263,7 +264,7 @@
                     (if (nil? actions)
                       (make-let (my-list (my-list 'v pred)
                                          (my-list 'more (make-lambda
-                                                         'null
+                                                         null
                                                          (my-list
                                                           (expand more)))))
                                 (my-list
@@ -272,7 +273,7 @@
                         (if (= (length actions) 2)
                           (make-let (my-list (my-list 'v pred)
                                              (my-list 'more (make-lambda
-                                                             'null
+                                                             null
                                                              (my-list (expand more)))))
                                     (my-list
                                      (make-if 'v
@@ -312,7 +313,7 @@
                   (make-let (my-list head)
                             (my-list (expand more))))))]
       (if (nil? pairs)
-        (make-let 'null body)
+        (make-let null body)
         (expand pairs)))))
 
 (defn expand-letrec
@@ -461,7 +462,6 @@
                                         (make-emtpy-environment))]
     (define-variable! _true true initial-env)
     (define-variable! _false false initial-env)
-    (define-variable! 'null nil initial-env)
     initial-env))
 
 (defn _apply [proc args]
@@ -568,7 +568,7 @@
     '(begin (define (f x y) (+ x y)) (f 8 9)) 17
     '(if true 1 2) 1
     '(if false 1 2) 2
-    '(if (null? null) 1 2) 1
+    '(if (null? ()) 1 2) 1
     '(if (null? true) 1 2) 2
     '(or) false
     '(or false 1 2) 1
