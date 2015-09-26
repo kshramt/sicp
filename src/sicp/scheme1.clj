@@ -6,21 +6,45 @@
             List
             any?
             car
-            caadr
+            cdr
             caar
             cadr
-            caddr
-            cadddr
-            cdadr
             cdar
-            cdr
             cddr
-            cddr
+            caaar
+            caadr
+            cadar
+            caddr
+            cdaar
+            cdadr
+            cddar
             cdddr
+            caaaar
+            caaadr
+            caadar
+            caaddr
+            cadaar
+            cadadr
+            caddar
+            cadddr
+            cdaaar
+            cdaadr
+            cdadar
+            cdaddr
+            cddaar
+            cddadr
+            cdddar
+            cddddr
+            foldl
+            foldr-tc
+            length
+            my-concat
             my-cons
             my-list
             my-map
+            my-reverse
             pair?
+            reverse-map
             set-car!
             set-cdr!
             ]
@@ -32,6 +56,8 @@
             _nil
             _true
             _false
+            scheme-of
+            list-cons
             ]]
    [sicp.util
     :refer [
@@ -45,20 +71,24 @@
          procedure-body
          primitive?)
 
-(defn user-str [& objects]
+(defn user-str
+  {:test #(do
+            (is (= (user-str (my-list 1 2)) "12")))}
+  [objects]
   (letfn [(conv [o]
-            (if (procedure? o)
-              ['compound-procedure
-               (procedure-parameters o)
-               (procedure-body o)]
-              o))]
-    (apply str (map conv objects))))
+            (str
+             (if (procedure? o)
+               ['compound-procedure
+                (procedure-parameters o)
+                (procedure-body o)]
+               o)))]
+    (foldl (my-map conv) str "" objects)))
 
 (defn str-frame [frame]
   (when-let [[k v] (first frame)]
-    (when-not (primitive? v)
-      (str k "\t" (user-str v) "\n"
-           (str-frame (rest frame))))))
+    (str (when-not (primitive? v)
+           (str k "\t" (user-str (my-list v)) "\n"))
+         (str-frame (rest frame)))))
 
 (declare current
          enclosing)
@@ -85,27 +115,16 @@
          _apply
          )
 
-(defn symbolize [exp]
-  (cond
-    (nil? exp) _nil
-    (true? exp) _true
-    (false? exp) _false
-    (sequential? exp) (map symbolize exp)
-    :else exp
-    ))
-
 (defn make-frame
   "Assumption: no parallel access to environment"
   [vars vals]
   (let [m (java.util.HashMap.)]
-    (loop [vars (seq vars)
-           vals (seq vals)]
-      (if (and vars vals)
-        (do
-          (.put m (first vars) (first vals))
-          (recur (next vars)
-                 (next vals)))
-        m))))
+    (loop [vars vars
+           vals vals]
+      (if (or (nil? vars) (nil? vals))
+        m
+        (do (.put m (car vars) (car vals))
+            (recur (cdr vars) (cdr vals)))))))
 
 (defn self-evaluating? [exp]
   (or (number? exp)
@@ -114,8 +133,8 @@
 (def variable? symbol?)
 
 (defn tagged-list? [tag exp]
-  (and (sequential? exp)
-       (= (first exp) tag)))
+  (and (pair? exp)
+       (= (car exp) tag)))
 
 (defmacro make-pred [sym]
   `(defn ~(symbol (str sym "?")) [exp#]
@@ -136,8 +155,8 @@
 (make-pred procedure)
 (make-pred primitive)
 
-(defn user-print [& objects]
-  (apply print (map user-str objects)))
+(defn user-print [objects]
+  (print (user-str objects)))
 
 (defn print-env [env]
   ; use str-env to print nil properly
@@ -152,90 +171,180 @@
   (not (my-false? x)))
 
 (defn make-begin [s]
-  (cons 'begin s))
+  (my-cons 'begin s))
 
 (defn sequence->exp [s]
-  (if (next s)
+  (if (pair? (cdr s))
     (make-begin s)
-    (first s)))
+    (car s)))
 
 (defn make-let
-  ([pairs body] (cons 'let (cons pairs body)))
-  ([name pairs body] (cons 'let (cons name (cons pairs body)))))
+  ([pairs body] (list-cons 'let pairs body))
+  ([name pairs body] (list-cons 'let name pairs body)))
 
 (defn make-lambda [params body]
-  (cons 'lambda (cons params body)))
+  (list-cons 'lambda params body))
 
 (defn make-if
-  ([pred then] ['if pred then])
-  ([pred then else] ['if pred then else]))
+  ([pred then] (my-list 'if pred then))
+  ([pred then else] (my-list 'if pred then else)))
 
 (declare definition-variable
          definition-value)
 (defn scan-out-defines [body]
-  (let [b (group-by define? body)
-        defs (b true)]
-    (concat (map (fn [d] ['define (definition-variable d) '(quote *unassigned*)]) defs)
-            (map (fn [d] ['set! (definition-variable d) (definition-value d)]) defs)
-            (b false))))
+  (let [b (foldl (fn [acc exp]
+                   (if (define? exp)
+                     (my-cons (my-cons exp (car acc))
+                              (cdr acc))
+                     (my-cons (car acc)
+                              (my-cons exp (cdr acc)))))
+                 (my-cons nil nil)
+                 body)
+        defs (car b)]
+    (my-concat
+     (reverse-map (fn [d] (my-list 'define
+                                   (definition-variable d)
+                                   (my-list 'quote '*unassigned*)))
+                  defs)
+     (reverse-map (fn [d] (my-list 'set!
+                                   (definition-variable d)
+                                   (definition-value d)))
+                  defs)
+     (my-reverse (cdr b)))))
 
 (defn make-procedure [params body env]
-    ['procedure params (scan-out-defines body) env])
+    (my-list 'procedure params (scan-out-defines body) env))
 
-(defn cond->if [exp]
+(defn cond->if
+  {:test #(do
+            (are [in out] (= (cond->if (scheme-of in)) (scheme-of out))
+              '(cond (else 1)) 1
+              '(cond ((a) b)) '(if (a) b false)
+              '(cond ((a) b)
+                     ((c) d))
+              '(if (a)
+                 b
+                 (if (c)
+                   d
+                   false))
+              '(cond ((a)))
+              '(let ((v (a))
+                     (more (lambda () false)))
+                 (if v v (more)))
+              '(cond (a b)
+                     ((c))
+                     (e => f)
+                     (else g))
+              '(if a
+                 b
+                 (let ((v (c))
+                       (more (lambda ()
+                                     (let ((v e)
+                                           (more (lambda () g)))
+                                       (if v
+                                         (f v)
+                                         (more))))))
+                   (if v
+                     v
+                     (more))))
+              ))}
+  [exp]
   (letfn [(expand [exp]
-            (if exp
-              (let [[head & more] exp]
-                (if (= (first head) 'else)
-                  (if more
-                    (error (str "else clauses is not last -- cond->if: " exp))
-                    (sequence->exp (rest head)))
-                  (let [[pred & actions] head]
-                    (if actions
-                      (if (= (first actions) '=>)
-                        (if (= (count actions) 2)
-                          (make-let [['v pred]
-                                     ['more (make-lambda [] [(expand more)])]]
-                                    [(make-if 'v
-                                              [(second actions) 'v]
-                                              ['more])])
+            (if (nil? exp)
+              _false
+              (let [head (car exp)
+                    more (cdr exp)]
+                (if (= (car head) 'else)
+                  (if (nil? more)
+                    (sequence->exp (cdr head))
+                    (error (str "else clauses is not last -- cond->if: " exp)))
+                  (let [pred (car head)
+                        actions (cdr head)]
+                    (if (nil? actions)
+                      (make-let (my-list (my-list 'v pred)
+                                         (my-list 'more (make-lambda
+                                                         'null
+                                                         (my-list
+                                                          (expand more)))))
+                                (my-list
+                                 (make-if 'v 'v (my-list 'more))))
+                      (if (= (car actions) '=>)
+                        (if (= (length actions) 2)
+                          (make-let (my-list (my-list 'v pred)
+                                             (my-list 'more (make-lambda
+                                                             'null
+                                                             (my-list (expand more)))))
+                                    (my-list
+                                     (make-if 'v
+                                              (my-list (cadr actions) 'v)
+                                              (my-list 'more))))
                           (error (str "too few/many actions for => -- cond->if: " exp)))
                         (make-if pred
                                  (sequence->exp actions)
-                                 (expand more)))
-                      (make-let [['v pred]
-                                 ['more (make-lambda [] [(expand more)])]]
-                                [(make-if 'v 'v ['more])])))))
-              _false))]
-    (expand (next exp))))
+                                 (expand more)))))))))]
+    (expand (cdr exp))))
 
-(def if-predicate second)
-(defn if-consequent [exp]
-  (nth exp 2))
-(defn if-alternative [exp]
-  (nth exp 3 _false))
+(def if-predicate cadr)
+(def if-consequent caddr)
+(def if-alternative cadddr)
 
-(defn let->combination [[_ pairs & body]]
-  (let [vars (map first pairs)
-        vals (map second pairs)]
-    (cons (make-lambda vars body) vals)))
+(defn let->combination
+  {:test #(do
+            (are [in out] (= (let->combination (scheme-of in))
+                             (scheme-of out))
+              '(let ((a b)) a)
+              '((lambda (a) a) b)))}
+  [exp]
+  (let [pairs (cadr exp)
+        body (cddr exp)]
+    (let [vars (my-map car pairs)
+          vals (my-map cadr pairs)]
+      (my-cons (make-lambda vars body) vals))))
 
-(defn let*->nested-lets [[_ pairs & body]]
-  (letfn [(expand [[head & more]]
-            (if more
-              (make-let [head]
-                        [(expand more)])
-              (make-let [head] body)))]
-    (if (seq pairs)
-      (expand pairs)
-      (make-let [] body))))
+(defn let*->nested-lets [exp]
+  (let [pairs (cadr exp)
+        body (cddr exp)]
+    (letfn [(expand [pairs]
+              (let [head (car pairs)
+                    more (cdr pairs)]
+                (if (nil? more)
+                  (make-let (my-list head) body)
+                  (make-let (my-list head)
+                            (my-list (expand more))))))]
+      (if (nil? pairs)
+        (make-let 'null body)
+        (expand pairs)))))
 
-(defn expand-letrec [[_ pairs & body :as exp]]
-  (if pairs
-    (make-let (map (fn [p] [(first p) '(quote *unassigned*)]) pairs)
-              (concat (map (fn [p] ['set! (first p) (second p)]) pairs)
-                      body))
-    (error (str "No decl nor body provided -- letrec: " exp))))
+(defn expand-letrec
+  {:test #(do
+            (are [in out] (= (expand-letrec (scheme-of in)) (scheme-of out))
+              '(letrec ((a b)) a)
+              '(let ((a (quote *unassigned*)))
+                 (set! a b)
+                 a)
+              '(letrec ((fact
+                         (lambda (n)
+                                 (if (= n 1)
+                                   1
+                                   (* n (fact (- n 1)))))))
+                       (fact 10))
+              '(let ((fact (quote *unassigned*)))
+                 (set! fact (lambda (n)
+                                    (if (= n 1)
+                                      1
+                                      (* n (fact (- n 1))))))
+                 (fact 10))))}
+  [exp]
+  (let [pairs (cadr exp)
+        body (cddr exp)]
+    (if (nil? pairs)
+      (error (str "No decl nor body provided -- letrec: " exp))
+      (make-let (my-map (fn [p]
+                          (my-list (car p) (my-list 'quote '*unassigned*)))
+                        pairs)
+                (my-concat
+                 (my-map (fn [p] (my-list 'set! (car p) (cadr p))) pairs)
+                 body)))))
 
 (defn define-variable! [var val env]
   (let [^java.util.HashMap f (current env)]
@@ -243,17 +352,17 @@
     var))
 
 (defn definition-variable [exp]
-  (let [var (second exp)]
+  (let [var (cadr exp)]
     (if (symbol? var)
       var
-      (first var))))
+      (car var))))
 
 (defn definition-value [exp]
-  (let [var (second exp)]
+  (let [var (cadr exp)]
     (if (symbol? var)
-      (nth exp 2)
-      (make-lambda (rest var)
-                   (nnext exp)))))
+      (caddr exp)
+      (make-lambda (cdr var)
+                   (cddr exp)))))
 
 (defn lookup-env [var env]
   (when env
@@ -276,32 +385,37 @@
         ret))
     (error (str "Unbound variable: " var))))
 
-(def primitive-implementation second)
+(def primitive-implementation cadr)
 (defn apply-primitive-procedure [proc args]
-  (apply (primitive-implementation proc) args))
+  (letfn [(list-of [p]
+            (reverse
+             (loop [p p
+                    ret nil]
+               (if (nil? p)
+                 ret
+                 (recur (cdr p)
+                        (cons (car p) ret))))))]
+    (apply (primitive-implementation proc) (list-of args))))
 
 (defn eval-sequence [exps env]
-  (if (seq exps)
-    (loop [[head & more] exps]
-      (if more
+  (if (nil? exps)
+    (error (str "Empty exps -- eval-sequence"))
+    (loop [head (car exps)
+           more (cdr exps)]
+      (if (nil? more)
+        (_eval head env)
         (do (_eval head env)
-            (recur more))
-        (_eval head env)))
-    (error (str "Empty exps -- eval-sequence"))))
+            (recur (car more)
+                   (cdr more)))))))
 
-(defn procedure-body [p]
-  (nth p 2))
-
-(defn procedure-environment [p]
-  (nth p 3))
-
-(defn procedure-parameters [p]
-  (second p))
+(def procedure-parameters cadr)
+(def procedure-body caddr)
+(def procedure-environment cadddr)
 
 (defn extend-environment [vars vals base-env]
-  (if (= (count vars) (count vals))
+  (if (= (length vars) (length vals))
     (Env. (make-frame vars vals) base-env)
-    (if (< (count vars) (count vals))
+    (if (< (length vars) (length vals))
       (error (str "Too many arguments supplied: " vars vals))
       (error (str "Too few arguments supplied: " vars vals)))))
 
@@ -333,10 +447,11 @@
    ])
 
 (defn primitive-procedure-names []
-  (map first primitive-procedures))
+  (apply my-list (map first primitive-procedures)))
 
 (defn primitive-procedure-objects []
-  (map (fn [p] ['primitive (second p)]) primitive-procedures))
+  (apply my-list (map (fn [p] (my-list 'primitive (second p)))
+                      primitive-procedures)))
 
 (defn make-emtpy-environment [] nil)
 
@@ -362,61 +477,64 @@
 
 (defn _eval
   [exp env]
-  ;(user-print exp)
+  ;(user-print (my-list exp "\n"))
   ;(print-env env)
-  (if (sequential? exp)
-    (if-let [op (first exp)] ; returns null for ()
-      (case op
-        quote (second exp)
-        set! (set-variable-value!
-              (second exp)
-              (_eval (nth exp 2) env)
-              env)
-        define (define-variable!
-                 (definition-variable exp)
-                 (_eval (definition-value exp) env)
-                 env)
-        if (if (my-true? (_eval (if-predicate exp) env))
-             (recur (if-consequent exp) env)
-             (recur (if-alternative exp) env))
-        lambda (make-procedure (second exp)
-                               (nnext exp)
-                               env)
-        begin (eval-sequence (next exp) env)
-        cond (recur (cond->if exp) env)
-        let (recur (let->combination exp) env)
-        let* (recur (let*->nested-lets exp) env)
-        letrec (recur (expand-letrec exp) env)
-        and (if-let [args (next exp)]
-              (loop [[head & more] args]
-                (let [v (_eval head env)]
-                  (if more
-                    (if (my-true? v)
-                      (recur more)
-                      false)
-                    (if (my-true? v)
-                      v
-                      false))))
-              true)
-        or (if-let [args (next exp)]
-             (loop [[head & more] args]
-               (let [v (_eval head env)]
-                 (if more
-                   (if (my-true? v)
-                     v
-                     (recur more))
-                   (if (my-true? v)
-                     v
-                     false))))
-             false)
-        (_apply (_eval (first exp) env)
-                (map #(_eval % env) (rest exp)))
-        )
-      null)
-    (cond
-      (self-evaluating? exp) exp
-      (variable? exp) (lookup-variable-value exp env)
-      :else (error (str "Unknown expression type -- _eval: " (type exp) " :: " exp)))))
+  (cond
+    (= exp '%print-env) (do (print-env env))
+    (self-evaluating? exp) exp
+    (variable? exp) (lookup-variable-value exp env)
+    (pair? exp)
+    (case (car exp)
+      quote (cadr exp)
+      set! (do
+             (set-variable-value!
+              (cadr exp)
+              (_eval (caddr exp) env)
+              env))
+      define (define-variable!
+               (definition-variable exp)
+               (_eval (definition-value exp) env)
+               env)
+      if (if (my-true? (_eval (if-predicate exp) env))
+           (recur (if-consequent exp) env)
+           (recur (if-alternative exp) env))
+      lambda (make-procedure (cadr exp)
+                             (cddr exp)
+                             env)
+      begin (eval-sequence (cdr exp) env)
+      cond (recur (cond->if exp) env)
+      let (recur (let->combination exp) env)
+      let* (recur (let*->nested-lets exp) env)
+      letrec (recur (expand-letrec exp) env)
+      and (if-let [args (cdr exp)]
+            (loop [head (car args)
+                   more (cdr args)]
+              (let [v (_eval head env)]
+                (if (nil? more)
+                  (if (my-true? v)
+                    v
+                    false)
+                  (if (my-true? v)
+                    (recur (car more)
+                           (cdr more))
+                    false))))
+            true)
+      or (if-let [args (cdr exp)]
+           (loop [head (car args)
+                  more (cdr args)]
+             (let [v (_eval head env)]
+               (if (nil? more)
+                 (if (my-true? v)
+                   v
+                   false)
+                 (if (my-true? v)
+                   v
+                   (recur (car more)
+                          (cdr more))))))
+           false)
+      (_apply (_eval (car exp) env)
+              (my-map #(_eval % env) (cdr exp))))
+    :else (error (str "Unknown expression type -- _eval: " (type exp) " :: " exp))))
 
 (def input-prompt ";;; M-Eval input:")
 (def output-prompt ";;; M-Eval value:")
@@ -428,21 +546,21 @@
   (let [env (setup-environment)]
     (loop []
       (prompt-for-input input-prompt)
-      (let [input (symbolize (read))]
+      (let [input (scheme-of (read))]
         (println (str "input: " (type input) " :: " input))
         (if (= input 'quit)
           :done
           (let [output (_eval input env)]
             (announce-output output-prompt)
             (println (str "output: " (type output)))
-            (user-print output "\n")
+            (user-print (my-list output "\n"))
             (recur)))))))
 
 (deftest test-_eval
-  (are [exp val] (= (_eval (symbolize exp) (setup-environment)) val)
+  (are [exp val] (= (_eval (scheme-of exp) (setup-environment)) val)
     1 1
     "str" "str"
-    '(quote (a b)) '(a b)
+    '(quote (a b)) (my-list 'a 'b)
     '(define f 1) 'f
     '(define (f x) x) 'f
     '(begin 1 2) 2
@@ -465,7 +583,7 @@
                       (append (cdr x)
                               y))))
             (append (list 1 2 3) (list 4 5 6)))
-    (_eval '(list 1 2 3 4 5 6) (setup-environment))
+    (my-list 1 2 3 4 5 6)
     '(begin (define (factorial n)
               (define (impl k ret)
                 (if (= k 1)
@@ -492,4 +610,5 @@
       6)
     13
     '(cond (false 0) (1)) 1
+    '(car '(1 2 3)) 1
     ))
