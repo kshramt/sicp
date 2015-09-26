@@ -550,7 +550,10 @@
         (println (str "input: " (type input) " :: " input))
         (if (= input 'quit)
           :done
-          (let [output (_eval input env)]
+          (let [output (try
+                         (_eval input env)
+                         (catch clojure.lang.ExceptionInfo e
+                           e))]
             (announce-output output-prompt)
             (println (str "output: " (type output)))
             (user-print (my-list output "\n"))
