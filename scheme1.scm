@@ -247,9 +247,10 @@
 (define (expand-letrec exp)
   (let ((pairs (cadr exp))
         (body (cddr exp)))
-    (cons 'let (cons (map (lambda (p) (list (car p) quote-unassigned)) pairs)
-                     (concat (map (lambda (p) (list 'set! (car p) (cadr p))) pairs)
-                             body)))))
+    (list-cons 'let
+               (map (lambda (p) (list (car p) quote-unassigned)) pairs)
+               (concat (map (lambda (p) (list 'set! (car p) (cadr p))) pairs)
+                       body))))
 
 (define (define-variable! var val env)
   (let* ((frame (current env))
