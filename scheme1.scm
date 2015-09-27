@@ -351,7 +351,7 @@
 (define if-predicate cadr)
 (define if-consequent caddr)
 (define (if-alternative exp)
-  (let [alt (cdddr)]
+  (let ((alt (cdddr exp)))
     (if (null? alt)
         false
         (car alt))))
