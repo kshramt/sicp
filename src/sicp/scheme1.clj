@@ -157,7 +157,8 @@
 (make-pred primitive)
 
 (defn user-print [objects]
-  (print (user-str objects)))
+  (print (user-str objects))
+  (flush))
 
 (defn print-env [env]
   ; use str-env to print nil properly
@@ -287,20 +288,34 @@
 
 (def if-predicate cadr)
 (def if-consequent caddr)
-(def if-alternative cadddr)
+(defn if-alternative [exp]
+  (let [else (cdddr exp)]
+    (if (nil? else)
+      _false
+      (car else))))
 
 (defn let->combination
   {:test #(do
             (are [in out] (= (let->combination (scheme-of in))
                              (scheme-of out))
               '(let ((a b)) a)
-              '((lambda (a) a) b)))}
+              '((lambda (a) a) b)
+              '(let l ((a b)) a)
+              '(let () (define (l a) a) (l b))))}
   [exp]
-  (let [pairs (cadr exp)
-        body (cddr exp)]
-    (let [vars (my-map car pairs)
-          vals (my-map cadr pairs)]
-      (my-cons (make-lambda vars body) vals))))
+  (let [args (cdr exp)]
+    (if (variable? (car args))
+      (let [name (car args)
+            pairs (cadr args)
+            vars (my-map car pairs)
+            vals (my-map cadr pairs)
+            body (cddr args)]
+        (my-list 'let null (list-cons 'define (list-cons name vars) body) (list-cons name vals)))
+      (let [pairs (car args)
+            vars (my-map car pairs)
+            vals (my-map cadr pairs)
+            body (cdr args)]
+        (list-cons (make-lambda vars body) vals)))))
 
 (defn let*->nested-lets [exp]
   (let [pairs (cadr exp)
@@ -396,6 +411,7 @@
                  ret
                  (recur (cdr p)
                         (cons (car p) ret))))))]
+    ;(println proc (type args) (when-not (any? #(pair? %) args) args))
     (apply (primitive-implementation proc) (list-of args))))
 
 (defn eval-sequence [exps env]
@@ -435,32 +451,12 @@
                    (my-cons (car vrs) rvrs)
                    (my-cons (car vls) rvls))))))))
 
-(def primitive-procedures
-  [
-   ['apply _apply]
-   ['null? nil?]
-   ['pair? pair?]
-   ['car car]
-   ['cdr cdr]
-   ['cons my-cons]
-   ['list my-list]
-   ['+ +]
-   ['- -]
-   ['* *]
-   ['/ /]
-   ['= =]
-   ['< <]
-   ['> >]
-   ['eq? =] ; todo:
-   ['false? false?]
-   ['true? true?]
-   ['symbol? symbol?]
-   ['number? number?]
-   ['string? string?]
-   ['print user-print]
-   ['str user-str]
-   ['error error]
-   ])
+(defn open-input-file [file]
+  (clojure.java.io/reader file))
+
+(deftype EOF [])
+
+(declare primitive-procedures)
 
 (defn primitive-procedure-names []
   (apply my-list (map first primitive-procedures)))
@@ -477,6 +473,7 @@
                                         (make-emtpy-environment))]
     (define-variable! _true true initial-env)
     (define-variable! _false false initial-env)
+    (define-variable! 'EOF EOF initial-env)
     initial-env))
 
 (defn _apply [proc args]
@@ -488,12 +485,12 @@
                         (procedure-parameters proc)
                         args
                         (procedure-environment proc)))
-    :else (error (str "Unknown procedure type -- _apply: " (type proc) " :: " proc))))
+    :else (error (str "Unknown procedure type -- scheme1.clj/_apply: " (type proc) " :: " proc))))
 
 (defn _eval
   [exp env]
-  ;(user-print (my-list exp "\n"))
-  ;(print-env env)
+  ;; (user-print (my-list "EXP: " exp "\n"))
+  ;; (print-env env)
   (cond
     (= exp '%print-env) (do (print-env env))
     (self-evaluating? exp) exp
@@ -551,6 +548,39 @@
               (my-map #(_eval % env) (cdr exp))))
     :else (error (str "Unknown expression type -- _eval: " (type exp) " :: " exp))))
 
+(def primitive-procedures
+  [
+   ['apply _apply]
+   ['null? nil?]
+   ['pair? pair?]
+   ['car car]
+   ['cdr cdr]
+   ['set-car! set-car!]
+   ['set-cdr! set-cdr!]
+   ['cons my-cons]
+   ['list my-list]
+   ['+ +]
+   ['- -]
+   ['* *]
+   ['/ /]
+   ['= =]
+   ['< <]
+   ['> >]
+   ['eq? =] ; todo:
+   ['false? false?]
+   ['true? true?]
+   ['symbol? symbol?]
+   ['number? number?]
+   ['string? string?]
+   ['read (fn [pbr] (scheme-of (read pbr false EOF)))]
+   ['current-input-port (fn [] *in*)]
+   ['open-input-file open-input-file]
+   ['%pushback-reader (fn [r] (java.io.PushbackReader. r))]
+   ['__print user-print]
+   ['__str user-str]
+   ['error error]
+   ])
+
 (def input-prompt ";;; M-Eval input:")
 (def output-prompt ";;; M-Eval value:")
 
@@ -573,6 +603,23 @@
             (println (str "output: " (type output)))
             (user-print (my-list output "\n"))
             (recur)))))))
+
+(defn eval-file [env file]
+  (let [fp (java.io.PushbackReader.
+            (clojure.java.io/reader file))]
+    (loop []
+      (let [s (scheme-of (read fp false EOF))]
+        (if (= s EOF)
+          env
+          (do (_eval s env)
+              (recur)))))))
+
+(defn eval-files [env & files]
+  (loop [files files]
+    (if (seq files)
+      (do (eval-file env (first files))
+          (recur (rest files)))
+      env)))
 
 (deftest test-_eval
   (are [exp val] (= (_eval (scheme-of exp) (setup-environment)) val)
@@ -634,3 +681,12 @@
     '(begin (define (f x . y) (list x y)) (f 1)) (my-list 1 nil)
     '(begin ((lambda (x . y) (list x y)) 1 2 3)) (my-list 1 (my-list 2 3))
     ))
+
+
+;(clojure.test/run-tests *ns*)
+#_(do (my-list
+     (eval-files (setup-environment)
+                 "std.scm"
+                 "scheme1.scm"
+                 "scheme.scm"))
+    :ok)
