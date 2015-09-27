@@ -85,13 +85,28 @@
 
 ; base environment
 (define (user-str objects)
-  (define (conv o)
-    (str (if (procedure? o)
-             (list 'compound-procedure
-                   (procedure-parameters o)
-                   (procedure-body o))
-             o)))
-  (trans/foldl (trans/map conv) str "" objects))
+  (define (str-obj obj)
+    (cond
+     ((eq? obj))
+     ((null? obj) "()")
+     ((pair? obj)
+      (str "("
+           (if (procedure? obj)
+               (str "compound-procedure "
+                    (str-obj (procedure-parameters obj)) " "
+                    (str-obj (procedure-body obj)))
+               (str (str-obj (car obj))
+                    (str-list-body (cdr obj))))
+           ")"))
+     (else (str obj))))
+  (define (str-list-body more)
+    (cond
+     ((null? more) "")
+     ((pair? more) (str " "
+                        (str-obj (car more))
+                        (str-list-body (cdr more))))
+     (else (str " . " (str-obj more)))))
+  (trans/foldl (trans/map str-obj) str "" objects))
 
 (define (user-print objects)
   (print (user-str objects)))

@@ -73,16 +73,36 @@
 
 (defn user-str
   {:test #(do
-            (is (= (user-str (my-list 1 2)) "12")))}
+            (are [in out] (= (user-str (scheme-of in)) out)
+              '(1 2) "12"
+              '(((1 2) ((5 . 6) . 4))) "((1 2) ((5 . 6) . 4))"
+              '((procedure (a b) ((+ a b)) :env))
+              "(compound-procedure (a b) ((+ a b)))"
+              '(((procedure (f) ((f))) (procedure (a b) ((+ a b)) :env)))
+              "((compound-procedure (f) ((f))) (compound-procedure (a b) ((+ a b))))"
+              ))}
   [objects]
-  (letfn [(conv [o]
-            (str
-             (if (procedure? o)
-               ['compound-procedure
-                (procedure-parameters o)
-                (procedure-body o)]
-               o)))]
-    (foldl (my-map conv) str "" objects)))
+  (letfn [(str-obj [obj]
+            (cond
+              (nil? obj) "()"
+              (pair? obj)
+              (str "("
+                   (if (procedure? obj)
+                     (str "compound-procedure "
+                          (str-obj (procedure-parameters obj)) " "
+                          (str-obj (procedure-body obj)))
+                     (str (str-obj (car obj))
+                          (str-list-body (cdr obj))))
+                   ")")
+              :else (str obj)))
+          (str-list-body [more]
+            (cond
+              (nil? more) ""
+              (pair? more) (str  " "
+                                 (str-obj (car more))
+                                 (str-list-body (cdr more)))
+              :else (str " . " (str-obj more))))]
+    (foldl (my-map str-obj) str "" objects)))
 
 (defn str-frame [frame]
   (when-let [[k v] (first frame)]
