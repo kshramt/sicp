@@ -13,6 +13,15 @@
            (setup-environment))
     5040)
  "\n"
+ (= (_eval '(letrec ((fact
+                      (lambda (n)
+                        (if (= n 1)
+                            1
+                            (* n (fact (- n 1)))))))
+              (fact 5))
+           (setup-environment))
+    120)
+ "\n"
  (= (_eval '((lambda (n)
                ((lambda (fib)
                   (fib fib n))
