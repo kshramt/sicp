@@ -1,4 +1,7 @@
 ; eval & apply
+(define unassigned (symbol (str "*unassigned-" *nest-level* "*")))
+(define quote-unassigned (list 'quote unassigned))
+
 (define (_eval exp env)
   ;(user-print (list "EXP: " exp "\n"))
   (cond
@@ -28,9 +31,11 @@
                         (list-of-values (operands exp) env)))
    (else (error (str "Unsupported expression -- _eval: " exp)))))
 
-(define (p_ x)
-  (user-print (list "P_\t" x "\n"))
-  x)
+(define (p_ . x)
+  (cond
+   ((= (length x) 1) (user-print (list "P_\t" (car x) "\n")) (car x))
+   ((= (length x) 2) (user-print (list "P_\t" (car x) "\t" (cadr x) "\n")) (cadr x))
+   (error (str "Arity error -- P_: " x))))
 
 (define (_apply proc args)
   (cond
@@ -118,6 +123,8 @@
                       the-empty-environment)))
     (define-variable! 'true true initial-env)
     (define-variable! 'false false initial-env)
+    (define-variable! 'EOF EOF initial-env)
+    (define-variable! '*nest-level* (+ *nest-level* 1) initial-env)
     initial-env))
 (define the-empty-environment ())
 (define (primitive-procedure-names) (map car primitive-procedures))
@@ -134,6 +141,7 @@
    (cons 'set-cdr! set-cdr!)
    (cons 'cons cons)
    (cons 'list list)
+   (cons 'symbol symbol)
    (cons '+ +)
    (cons '- -)
    (cons '* *)
@@ -184,7 +192,7 @@
                    body))
          (defs (reverse (car b)))
          (body (reverse (cdr b))))
-    (concat (map (lambda (d) (list 'define (definition-variable d) '(quote *unassigned*))) defs)
+    (concat (map (lambda (d) (list 'define (definition-variable d) quote-unassigned)) defs)
             (map (lambda (d) (list 'set! (definition-variable d) (definition-value d))) defs)
             body)))
 
@@ -239,7 +247,7 @@
 (define (expand-letrec exp)
   (let ((pairs (cadr exp))
         (body (cddr exp)))
-    (cons 'let (cons (map (lambda (p) (list (car p) '(quote *unassigned*))) pairs)
+    (cons 'let (cons (map (lambda (p) (list (car p) quote-unassigned)) pairs)
                      (concat (map (lambda (p) (list 'set! (car p) (cadr p))) pairs)
                              body)))))
 
@@ -302,8 +310,8 @@
   (let ((vals (lookup-env var env)))
     (if vals
         (let ((val (car vals)))
-          (if (eq? val '*unassigned*)
-              (error (str "Unassigned var -- lookup-variable-value: " var))
+          (if (eq? val unassigned)
+              (error (str "Unassigned var -- scheme1.scm/lookup-variable-value: " var))
               val))
         (error (str "Unbound variable -- lookup-variable-value: " var)))))
 

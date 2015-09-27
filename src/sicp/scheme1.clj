@@ -211,6 +211,10 @@
   ([pred then] (my-list 'if pred then))
   ([pred then else] (my-list 'if pred then else)))
 
+(def nest-level 0)
+(def unassigned (symbol (str "*unassigned-" nest-level "*")))
+(def quote-unassigned (my-list 'quote unassigned))
+
 (declare definition-variable
          definition-value)
 (defn scan-out-defines [body]
@@ -226,7 +230,7 @@
     (my-concat
      (reverse-map (fn [d] (my-list 'define
                                    (definition-variable d)
-                                   (my-list 'quote '*unassigned*)))
+                                   quote-unassigned))
                   defs)
      (reverse-map (fn [d] (my-list 'set!
                                    (definition-variable d)
@@ -355,7 +359,7 @@
   {:test #(do
             (are [in out] (= (expand-letrec (scheme-of in)) (scheme-of out))
               '(letrec ((a b)) a)
-              '(let ((a (quote *unassigned*)))
+              '(let ((a (quote *unassigned-0*)))
                  (set! a b)
                  a)
               '(letrec ((fact
@@ -364,7 +368,7 @@
                                    1
                                    (* n (fact (- n 1)))))))
                        (fact 10))
-              '(let ((fact (quote *unassigned*)))
+              '(let ((fact (quote *unassigned-0*)))
                  (set! fact (lambda (n)
                                     (if (= n 1)
                                       1
@@ -376,7 +380,7 @@
     (if (nil? pairs)
       (error (str "No decl nor body provided -- letrec: " exp))
       (make-let (my-map (fn [p]
-                          (my-list (car p) (my-list 'quote '*unassigned*)))
+                          (my-list (car p) quote-unassigned))
                         pairs)
                 (my-concat
                  (my-map (fn [p] (my-list 'set! (car p) (cadr p))) pairs)
@@ -416,8 +420,8 @@
   [var env]
   (if-let [^java.util.HashMap m (lookup-env var env)]
     (let [ret (.get m var)]
-      (if (= ret '*unassigned*)
-        (error (str "Unassigned var -- lookup-variable-value: " var))
+      (if (= ret unassigned)
+        (error (str "Unassigned var -- scheme1.clj/lookup-variable-value: " var))
         ret))
     (error (str "Unbound variable: " var))))
 
@@ -494,6 +498,7 @@
     (define-variable! _true true initial-env)
     (define-variable! _false false initial-env)
     (define-variable! 'EOF EOF initial-env)
+    (define-variable! '*nest-level* (inc nest-level) initial-env)
     initial-env))
 
 (defn _apply [proc args]
@@ -579,6 +584,7 @@
    ['set-cdr! set-cdr!]
    ['cons my-cons]
    ['list my-list]
+   ['symbol symbol]
    ['+ +]
    ['- -]
    ['* *]
@@ -702,8 +708,6 @@
     '(begin ((lambda (x . y) (list x y)) 1 2 3)) (my-list 1 (my-list 2 3))
     ))
 
-
-;(clojure.test/run-tests *ns*)
 #_(do (my-list
      (eval-files (setup-environment)
                  "std.scm"
