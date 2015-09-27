@@ -92,7 +92,6 @@
 (define (user-str objects)
   (define (str-obj obj)
     (cond
-     ((eq? obj))
      ((null? obj) "()")
      ((pair? obj)
       (str "("
