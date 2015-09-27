@@ -230,7 +230,8 @@
         (body (cddr exp)))
     (let ((vars (map car pairs))
           (vals (map cadr pairs)))
-      (cons (list 'lambda vars body) vals))))
+      (list-cons (list-cons 'lambda vars body)
+                 vals))))
 
 (define (let*->nested-let exp)
   (let ((pairs (cadr exp))
