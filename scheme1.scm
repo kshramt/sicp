@@ -371,7 +371,8 @@
 
 (define (self-evaluating? exp)
   (or (number? exp)
-      (string? exp)))
+      (string? exp)
+      (null? exp)))
 
 (define variable? symbol?)
 
