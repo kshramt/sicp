@@ -317,8 +317,7 @@
         (error (str "Unbound variable -- lookup-variable-value: " var)))))
 
 (define (eval-definition var val env)
-  (define-variable! var val env)
-  var)
+  (define-variable! var val env))
 
 (define (eval-sequence exps env)
   (if (null? exps)
