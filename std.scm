@@ -14,7 +14,7 @@
 (define (concat . xss)
   (define (concat2 x y)
     (foldr-tc cons x y))
-  (foldr-tc concat2 xss ()))
+  (foldr-tc concat2 xss '()))
 
 (define (foldl f init xs)
   (if (null? xs)
@@ -37,7 +37,7 @@
 (define (map f xs) (reverse (reverse-map f xs)))
 (define (reverse-map f xs)
   (let loop ((xs xs)
-             (ret ()))
+             (ret '()))
     (if (null? xs)
         ret
         (loop (cdr xs)
@@ -49,7 +49,7 @@
 
 (define (reverse xs)
   (let loop ((xs xs)
-             (ret ()))
+             (ret '()))
     (if (null? xs)
         ret
         (loop (cdr xs) (cons (car xs) ret)))))

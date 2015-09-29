@@ -148,8 +148,7 @@
 
 (defn self-evaluating? [exp]
   (or (number? exp)
-      (string? exp)
-      (nil? exp)))
+      (string? exp)))
 
 (def variable? symbol?)
 
@@ -571,7 +570,9 @@
            false)
       (_apply (_eval (car exp) env)
               (my-map #(_eval % env) (cdr exp))))
-    :else (error (str "Unknown expression type -- _eval: " (type exp) " :: " exp))))
+    :else (error (if (nil? exp)
+                   (str "Syntax error -- _eval: empty expression ()")
+                   (str "Unknown expression type -- _eval: " (type exp) " :: " exp)))))
 
 (def primitive-procedures
   [
