@@ -660,7 +660,7 @@
     '(begin (define (f x y) (+ x y)) (f 8 9)) 17
     '(if true 1 2) 1
     '(if false 1 2) 2
-    '(if (null? ()) 1 2) 1
+    '(if (null? '()) 1 2) 1
     '(if (null? true) 1 2) 2
     '(or) false
     '(or false 1 2) 1
