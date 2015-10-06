@@ -511,6 +511,15 @@
                         (procedure-environment proc)))
     :else (error (str "Unknown procedure type -- scheme1.clj/_apply: " (type proc) " :: " proc))))
 
+(defn read-scheme-file [file]
+  (let [fp (java.io.PushbackReader.
+            (clojure.java.io/reader file))]
+    (loop [s nil]
+      (let [e (scheme-of (read fp false EOF))]
+        (if (= e EOF)
+          (make-begin (my-reverse s))
+          (recur (my-cons e s)))))))
+
 (defn _eval
   [exp env]
   ;; (user-print (my-list "EXP: " exp "\n"))
@@ -568,6 +577,7 @@
                    (recur (car more)
                           (cdr more))))))
            false)
+      include (recur (read-scheme-file (cadr exp)) env)
       (_apply (_eval (car exp) env)
               (my-map #(_eval % env) (cdr exp))))
     :else (error (if (nil? exp)
@@ -599,10 +609,10 @@
    ['symbol? symbol?]
    ['number? number?]
    ['string? string?]
-   ['read (fn [pbr] (scheme-of (read pbr false EOF)))]
    ['current-input-port (fn [] *in*)]
    ['open-input-file open-input-file]
-   ['%pushback-reader (fn [r] (java.io.PushbackReader. r))]
+   ['open (fn [file] (java.io.PushbackReader. (clojure.java.io/reader file)))]
+   ['read (fn [pbrdr] (scheme-of (read pbrdr false EOF)))]
    ['__print user-print]
    ['__str user-str]
    ['error error]
@@ -632,14 +642,7 @@
             (recur)))))))
 
 (defn eval-file [env file]
-  (let [fp (java.io.PushbackReader.
-            (clojure.java.io/reader file))]
-    (loop []
-      (let [s (scheme-of (read fp false EOF))]
-        (if (= s EOF)
-          env
-          (do (_eval s env)
-              (recur)))))))
+  (_eval (read-scheme-file file) env))
 
 (defn eval-files [env & files]
   (loop [files files]
@@ -709,9 +712,6 @@
     '(begin ((lambda (x . y) (list x y)) 1 2 3)) (my-list 1 (my-list 2 3))
     ))
 
-#_(do (my-list
-     (eval-files (setup-environment)
-                 "std.scm"
-                 "scheme1.scm"
-                 "scheme.scm"))
+#_(do (eval-files (setup-environment)
+                "scheme.scm")
     :ok)

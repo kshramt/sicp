@@ -1,3 +1,5 @@
+(include "std.scm")
+
 ; eval & apply
 (define unassigned (symbol (str "*unassigned-" *nest-level* "*")))
 (define quote-unassigned (list 'quote unassigned))
@@ -51,7 +53,7 @@
 
 ; REPL
 (define (driver-loop env fp)
-  (let ((fp (%pushback-reader fp)))
+  (let ((fp (open fp)))
     (let loop ()
       (print input-prompt "\n")
       (let ((input (read fp)))
@@ -157,7 +159,6 @@
    (cons 'read read)
    (cons 'current-input-port current-input-port)
    (cons 'open-input-file open-input-file)
-   (cons '%pushback-reader %pushback-reader)
    (cons '__print user-print)
    (cons '__str user-str)
    (cons 'error error)
