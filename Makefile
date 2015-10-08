@@ -24,18 +24,22 @@ NAMES := \
 
 FILE_NAMES := $(subst -,_,$(NAMES))
 type_check_file_names := $(FILE_NAMES:%=src/sicp/%.clj.type_checked)
-unit_test_file_names = $(patsubst %,src/sicp/%.clj.unit_tested,$(FILE_NAMES) ch_4 scheme_util scheme scheme1)
+unit_test_file_names := $(patsubst %,src/sicp/%.clj.unit_tested,$(FILE_NAMES) ch_4 scheme_util scheme scheme1 core)
+scheme_test_file_names := src/sicp/core.clj.scheme_tesed
 
 
 ns_of_file = $(subst _,-,$(1))
 
 
-.PHONY: all check type_check unit_test
+.PHONY: all check type_check unit_test scheme_test
 all:
-check: type_check unit_test
+check: type_check unit_test scheme_test
 type_check: $(type_check_file_names)
 unit_test: $(unit_test_file_names)
+scheme_test: $(scheme_test_file_names)
 
+src/sicp/core.clj.scheme_tesed: src/sicp/core.clj scheme.scm
+	lein run scheme.scm && touch $@
 
 src/sicp/%.clj.unit_tested: src/sicp/%.clj
 	$(LEIN) test sicp.$(call ns_of_file,$*) && touch $@
