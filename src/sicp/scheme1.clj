@@ -618,26 +618,27 @@
    ['error error]
    ])
 
-(def input-prompt ";;; M-Eval input:")
-(def output-prompt ";;; M-Eval value:")
+(def input-prompt "> ")
+(def output-prompt "")
 
-(def prompt-for-input println)
-(def announce-output println)
+(defn prompt-for-input [x]
+  (print x)
+  (flush))
+(def announce-output print)
 
 (defn driver-loop []
-  (let [env (setup-environment)]
+  (let [env (setup-environment)
+        fp (java.io.PushbackReader. *in*)]
     (loop []
       (prompt-for-input input-prompt)
-      (let [input (scheme-of (read))]
-        (println (str "input: " (type input) " :: " input))
-        (if (= input 'quit)
+      (let [input (scheme-of (read fp false EOF))]
+        (if (= input EOF)
           :done
           (let [output (try
                          (_eval input env)
                          (catch clojure.lang.ExceptionInfo e
                            e))]
             (announce-output output-prompt)
-            (println (str "output: " (type output)))
             (user-print (my-list output "\n"))
             (recur)))))))
 
@@ -716,4 +717,4 @@
   (if file
     (eval-files (setup-environment)
                 file)
-    (error "no input file")))
+    (driver-loop)))
