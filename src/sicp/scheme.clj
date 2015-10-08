@@ -4,3 +4,5 @@
    [sicp.scheme1]
    )
   )
+
+(def main sicp.scheme1/main)

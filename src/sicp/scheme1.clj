@@ -712,6 +712,8 @@
     '(begin ((lambda (x . y) (list x y)) 1 2 3)) (my-list 1 (my-list 2 3))
     ))
 
-#_(do (eval-files (setup-environment)
-                "scheme.scm")
-    :ok)
+(defn main [[file & args]]
+  (if file
+    (eval-files (setup-environment)
+                file)
+    (error "no input file")))
