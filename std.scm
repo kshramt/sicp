@@ -1,3 +1,13 @@
+(define (assert . x)
+  (let ((n (length x)))
+    (cond
+     ((= n 1) (or (car x) (error "Assertion failure")))
+     ((= n 2) (or (car x) (error (cadr x))))
+     (else (error (str "Arity error -- assert: " n))))))
+(define (test x)
+  (print ".")
+  (assert (true? x) "Test failure"))
+
 (define (print . x) (__print x))
 (define (str . x) (__str x))
 
