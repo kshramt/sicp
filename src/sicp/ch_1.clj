@@ -1,4 +1,4 @@
-(ns sicp.core
+(ns sicp.ch-1
   (:require [clojure.test :refer [is are deftest]]
             [clojure.pprint]
             [clojure.math.numeric-tower :refer [floor expt sqrt]]
@@ -3627,13 +3627,3 @@ To improve concurrency of development:
 ) ; typed/tc-ignore
 
 ; 3.1 assignment and local state
-
-;(clojure.test/run-tests 'sicp.core)
-
-(ann -main [String * -> '{:type Keyword
-                          :test Int
-                          :pass Int
-                          :fail Int
-                          :error Int}])
-(defn -main [& args]
-  (clojure.test/run-tests 'sicp.core))

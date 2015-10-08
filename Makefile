@@ -11,7 +11,7 @@ PANDOC_FLAGS := --standalone --mathml --to=html5 --smart --self-contained
 LEIN := lein
 
 NAMES := \
-   core \
+   ch-1 \
    ch-2-4 \
    ch-3 \
    pair \

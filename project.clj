@@ -9,6 +9,5 @@
   :min-lein-version "2.0.0"
   :description "SICP in Clojure"
   :global-vars {*warn-on-reflection* true}
-  :core.typed {:check [sicp.core]}
   :profiles {:uberjar {:aot :all}}
   :main sicp.core)
