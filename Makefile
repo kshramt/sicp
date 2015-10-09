@@ -38,7 +38,7 @@ type_check: $(type_check_file_names)
 unit_test: $(unit_test_file_names)
 scheme_test: $(scheme_test_file_names)
 
-%.scm.scheme_tested: %.scm test-case.scm src/sicp/core.clj src/sicp/scheme.clj src/sicp/scheme1.clj
+%-test.scm.scheme_tested: %-test.scm test-case.scm %.scm src/sicp/core.clj src/sicp/scheme.clj src/sicp/scheme1.clj
 	lein run $< && touch $@
 
 src/sicp/%.clj.unit_tested: src/sicp/%.clj
